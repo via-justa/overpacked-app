@@ -1,0 +1,5 @@
+output: internal/api/api.gen.go
+package-name: api
+generate:
+  - models
+  - std-http
