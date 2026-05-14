@@ -1,0 +1,66 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: overpacked-app-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-packing_light}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - packing_light_db_data:/var/lib/postgresql/data
+
+  backend:
+    image: golang:1.26-alpine
+    depends_on:
+      db:
+        condition: service_healthy
+    working_dir: /workspace/backend
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-packing_light}?sslmode=disable
+      APP_USERNAME: ${APP_USERNAME:-admin}
+      APP_PASSWORD: ${APP_PASSWORD:-pw123}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+      SERVER_ADDR: ${SERVER_ADDR:-0.0.0.0:8000}
+    volumes:
+      - ../:/workspace
+      - ${HOME}/go/pkg/mod:/go/pkg/mod
+      - ${HOME}/Library/Caches/go-build:/root/.cache/go-build
+    ports:
+      - "8000:8000"
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        go run ./cmd/api
+
+  frontend:
+    image: node:24-alpine
+    depends_on:
+      backend:
+        condition: service_started
+    working_dir: /workspace/frontend
+    environment:
+      VITE_API_BASE_URL: ""
+      VITE_DEV_PROXY_TARGET: ${VITE_DEV_PROXY_TARGET:-http://backend:8000}
+    volumes:
+      - ../:/workspace
+      - packing_light_frontend_node_modules:/workspace/frontend/node_modules
+    ports:
+      - "5173:5173"
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        npm ci --legacy-peer-deps
+        npm run dev -- --host 0.0.0.0 --port 5173
+
+volumes:
+  packing_light_db_data:
+  packing_light_frontend_node_modules:
