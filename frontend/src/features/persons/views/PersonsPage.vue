@@ -322,7 +322,7 @@ const onSubmitForm = async () => {
 
     <div v-else data-element="persons-list" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <article v-for="person in personsQuery.data.value" :key="person.id" data-element="person-card"
-        :data-person-id="person.id" class="border-line-subtle bg-surface-elevated rounded-2xl border p-4 shadow-panel">
+        :data-person-id="person.id" class="surface-panel p-4">
         <h3 class="text-ink text-lg font-semibold">{{ normalizeTitleWords(person.name) }}</h3>
 
         <div class="text-copy-muted mt-2 space-y-1 text-sm">

@@ -154,7 +154,7 @@ const getExpandedFieldDisplays = (set: ItemSet): ExpandedFieldDisplay[] => {
 <template>
   <div v-if="setsViewMode === 'cards'" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
     <article v-for="set in sets" :key="set.id"
-      class="border-line-subtle bg-surface-elevated rounded-2xl border p-4 shadow-panel">
+      class="surface-panel p-4">
       <h3 class="text-ink text-lg font-semibold">{{ normalizeTitleWords(set.name) }}</h3>
       <p class="text-copy-muted mt-2 text-sm">
         {{ getItemTypeLabel(set.set_category) }}
@@ -175,7 +175,7 @@ const getExpandedFieldDisplays = (set: ItemSet): ExpandedFieldDisplay[] => {
     </article>
   </div>
 
-  <section v-else class="border-line-subtle bg-surface-elevated overflow-visible rounded-2xl border shadow-panel">
+  <section v-else class="surface-panel overflow-visible">
     <div class="border-line-subtle relative border-b py-3 pl-12 pr-4">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-3">

@@ -101,7 +101,7 @@ const onDraftBlur = (itemId: string) => {
       </div>
 
       <section class="border-line-subtle bg-surface-muted mt-4 rounded-xl border p-3">
-        <h3 class="text-copy text-xs font-semibold uppercase tracking-[0.08em]">Add Item</h3>
+        <h3 class="heading-section">Add Item</h3>
         <div class="mt-3 grid gap-2 sm:grid-cols-[1fr_8rem_1fr_auto]">
           <AppSelect v-model="addItemIdModel">
             <option value="">Select gear item</option>

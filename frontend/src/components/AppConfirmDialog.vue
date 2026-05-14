@@ -34,7 +34,7 @@ const onConfirm = () => {
 <template>
   <AppTemplateDialog :model-value="open" data-element="app-confirm-dialog" width="min(28rem, calc(100vw - 2rem))"
     @update:model-value="$emit('update:open', $event)">
-    <article class="border-line-subtle bg-surface-elevated rounded-2xl border p-4 shadow-panel">
+    <article class="surface-panel p-4">
       <header class="mb-2">
         <h3 class="text-copy text-sm font-semibold uppercase tracking-[0.08em]">{{ title }}</h3>
       </header>

@@ -485,7 +485,7 @@ const onCancel = () => {
         </div>
 
         <div class="border-line-subtle border-t pt-4">
-          <h3 class="text-copy text-sm font-semibold uppercase tracking-[0.08em]">Defaults</h3>
+          <h3 class="heading-section">Defaults</h3>
           <div class="mt-3 grid gap-3 md:grid-cols-3">
             <div class="grid gap-1">
               <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Default quantity</span>
@@ -515,7 +515,7 @@ const onCancel = () => {
         </div>
 
         <div class="border-line-subtle border-t pt-4">
-          <h3 class="text-copy text-sm font-semibold uppercase tracking-[0.08em]">Additional properties</h3>
+          <h3 class="heading-section">Additional properties</h3>
 
           <div class="grid gap-3 md:grid-cols-2">
             <template v-if="values.type === 'consumable'">

@@ -18,7 +18,7 @@ withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-  <article class="border-line-subtle bg-surface-elevated rounded-2xl border p-4 shadow-panel">
+  <article class="surface-panel p-4">
     <!-- Optional image slot -->
     <div v-if="imageSrc" class="bg-surface-soft -m-4 mb-4 aspect-4/3 overflow-hidden rounded-t-2xl">
       <img :src="imageSrc" :alt="imageAlt ?? title" class="h-full w-full object-cover" />

@@ -21,7 +21,7 @@ const formatType = (value: string) => {
 
 <template>
   <article data-element="item-card" :data-item-id="item.id"
-    class="border-line-subtle bg-surface-elevated overflow-hidden rounded-2xl border shadow-panel">
+    class="surface-panel overflow-hidden">
     <div v-if="imageSrc" class="bg-surface-soft aspect-4/3 overflow-hidden">
       <img :src="imageSrc" :alt="normalizeTitleWords(item.name)" class="h-full w-full object-cover" />
     </div>

@@ -23,7 +23,7 @@ defineEmits<{
 <template>
   <AppTemplateDialog :model-value="open" :width="width ?? 'min(36rem, calc(100vw - 2rem))'"
     :data-element="dataElement" @update:model-value="$emit('update:open', $event)">
-    <article class="border-line-subtle bg-surface-elevated rounded-2xl border p-4 shadow-panel flex flex-col">
+    <article class="surface-panel p-4 flex flex-col">
       <h2 class="text-ink text-lg font-semibold shrink-0">{{ title }}</h2>
       <div class="flex-1 mt-4">
         <slot />

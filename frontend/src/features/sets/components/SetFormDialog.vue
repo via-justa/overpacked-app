@@ -51,12 +51,12 @@ const canSubmit = computed(() => {
     :title="editingSetId ? 'Edit Set' : 'Create Set'" :can-submit="canSubmit" :is-submitting="isSubmittingSet"
     @update:open="onDialogUpdate" @submit="emit('submit')" @cancel="closeDialog">
     <label class="grid gap-1">
-      <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Set name</span>
+      <span class="label-field">Set name</span>
       <input v-model="setNameModel" class="input-shell" type="text" placeholder="Weekend Essentials" />
     </label>
 
     <div class="mt-3 grid gap-1">
-      <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Set category</span>
+        <span class="label-field">Set category</span>
       <AppSelect v-model="setCategoryModel">
         <option value="">Select category</option>
         <option v-for="itemType in itemTypeOptions" :key="itemType.id" :value="itemType.id">

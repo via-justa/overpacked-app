@@ -107,19 +107,19 @@ const onCancel = () => {
 
     <div :class="bare ? 'contents' : 'mt-4 grid gap-3'">
       <label class="grid gap-1">
-        <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Name</span>
+        <span class="label-field">Name</span>
         <input data-element="person-name" class="input-shell" :value="values.name" type="text"
           @input="updateField('name', ($event.target as HTMLInputElement).value)" />
       </label>
 
       <div class="grid gap-1">
-        <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Gender</span>
+        <span class="label-field">Gender</span>
         <AppToggleGroup name="gender" data-element="person-gender" :model-value="values.gender" :options="genderOptions"
           fit-content @update:model-value="(value) => updateField('gender', value as PersonFormValues['gender'])" />
       </div>
 
       <div class="grid gap-1">
-        <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Birthdate</span>
+        <span class="label-field">Birthdate</span>
         <DatePicker data-element="person-birthdate" v-model="birthdateModel" class="app-date-picker w-full" fluid
           show-icon icon-display="input" date-format="dd-mm-yy" :pt="{ panel: { class: 'app-date-panel' } }"
           :manual-input="false" />
@@ -138,7 +138,7 @@ const onCancel = () => {
       </div>
 
       <div class="grid gap-1">
-        <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Conditioning Level</span>
+        <span class="label-field">Conditioning Level</span>
         <AppToggleGroup name="conditioning-level" data-element="person-conditioning-level"
           :model-value="values.conditioning_level" :options="conditioningLevelOptions" fit-content
           @update:model-value="(value) => updateField('conditioning_level', value as PersonFormValues['conditioning_level'])" />

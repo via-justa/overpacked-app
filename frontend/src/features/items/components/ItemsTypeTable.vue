@@ -159,11 +159,11 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
 </script>
 
 <template>
-  <section class="border-line-subtle bg-surface-elevated overflow-visible rounded-2xl border shadow-panel">
+  <section class="surface-panel overflow-visible">
     <div class="border-line-subtle relative border-b py-3 pl-12 pr-4">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-3">
-          <h3 class="text-copy text-sm font-semibold uppercase tracking-[0.08em]">{{ title }}</h3>
+          <h3 class="heading-section">{{ title }}</h3>
           <AppToggleGroup :name="`items-table-detail-mode-${title.toLowerCase().replace(/\s+/g, '-')}`"
             data-element="items-table-detail-mode" :model-value="tableDetailMode" :options="detailModeOptions"
             fit-content

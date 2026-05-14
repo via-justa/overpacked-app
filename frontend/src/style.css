@@ -35,8 +35,6 @@
   --shadow-soft: 0 10px 24px -18px rgb(120 113 108 / 0.28);
   --backdrop-blur-soft: 12px;
 
-  --app-text: var(--color-ink);
-
   --app-shell-gradient-start: color-mix(in srgb, var(--color-warning-200) 28%, var(--color-surface-base));
   --app-shell-gradient-middle: var(--color-surface-muted);
   --app-shell-gradient-end: color-mix(in srgb, var(--color-brand-200) 36%, var(--color-surface-base));
@@ -73,8 +71,7 @@
   --field-font-size: 0.875rem;
   --field-icon: var(--color-copy-subtle);
   --field-icon-width: 2.5rem;
-  --field-transition-duration: 0.2s;
-  --field-transition-easing: ease;
+  --field-transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
 
   --field-overlay-background: var(--color-surface-elevated);
   --field-overlay-text: var(--color-copy);
@@ -101,8 +98,7 @@
   --checkbox-focus-width: 2px;
   --checkbox-focus-offset: 2px;
   --checkbox-transition-duration: 0.15s;
-  --checkbox-transition-easing: ease;
-  --checkbox-icon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5L3.5 7.5L8.5 2.5' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+  --checkbox-transition: border-color 0.15s ease, background-color 0.15sata:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5L3.5 7.5L8.5 2.5' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
   --checkbox-icon-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M2 5H8' stroke='white' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
   --checkbox-icon-size: 70%;
 
@@ -126,8 +122,7 @@
   --toggle-label-shadow-selected: 0 1px 2px rgb(0 0 0 / 0.08);
   --toggle-transition-duration: 150ms;
   --toggle-transition-easing: ease;
-}
-
+}: all 150ms
 @utility app-shell-gradient {
   background-image: linear-gradient(to bottom right,
       var(--app-shell-gradient-start),
@@ -157,6 +152,54 @@
   box-shadow: var(--surface-chip-shadow);
 }
 
+/* ─── Typography Utilities ─────────────────────────────────────────────── */
+
+@utility label-field {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-copy);
+}
+
+@utility label-section {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-copy);
+}
+
+@utility label-section-subtle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-copy-subtle);
+}
+
+@utility heading-section {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-copy);
+}
+
+/* ─── Layout Utilities ─────────────────────────────────────────────────── */
+
+@utility flex-center {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@utility flex-center-block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @utility input-shell {
   border: 1px solid var(--field-border);
   border-radius: var(--field-radius);
@@ -167,11 +210,7 @@
   outline: none;
   transition:
     border-color var(--field-transition-duration) var(--field-transition-easing),
-    box-shadow var(--field-transition-duration) var(--field-transition-easing),
-    background-color var(--field-transition-duration) var(--field-transition-easing),
-    color var(--field-transition-duration) var(--field-transition-easing);
-}
-
+    box-shado var(--field-transition
 @utility input-shell-focus {
   border-color: var(--field-border-focus);
   box-shadow: var(--field-focus-shadow);
@@ -204,11 +243,7 @@
   box-shadow: none;
   transition:
     border-color var(--field-transition-duration) var(--field-transition-easing),
-    box-shadow var(--field-transition-duration) var(--field-transition-easing),
-    background-color var(--field-transition-duration) var(--field-transition-easing),
-    color var(--field-transition-duration) var(--field-transition-easing);
-}
-
+    box-shado var(--field-transition
 .app-select-field.p-select:not(.p-disabled):hover {
   border-color: var(--field-border-hover);
 }
@@ -296,7 +331,7 @@ body {
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  color: var(--app-text);
+  color: var(--color-ink);
 }
 
 /* ─── Global checkbox style ─── */
@@ -312,9 +347,7 @@ input[type='checkbox'] {
   background-color: var(--checkbox-background);
   transition:
     border-color var(--checkbox-transition-duration) var(--checkbox-transition-easing),
-    background-color var(--checkbox-transition-duration) var(--checkbox-transition-easing);
-  vertical-align: middle;
-}
+    backgroun var(--checkbox-transition
 
 input[type='checkbox']:checked {
   background-color: var(--checkbox-background-selected);
@@ -366,7 +399,7 @@ input[type='checkbox']:focus-visible {
   color: var(--toggle-label-text);
   transition: all var(--toggle-transition-duration) var(--toggle-transition-easing);
 }
-
+var(--toggle-transition
 .toggle-option-label:hover {
   background: var(--toggle-label-background-hover);
 }
@@ -391,11 +424,7 @@ input[type='checkbox']:focus-visible {
   padding: var(--field-padding-y) var(--field-padding-x);
   transition:
     border-color var(--field-transition-duration) var(--field-transition-easing),
-    box-shadow var(--field-transition-duration) var(--field-transition-easing),
-    background-color var(--field-transition-duration) var(--field-transition-easing),
-    color var(--field-transition-duration) var(--field-transition-easing);
-}
-
+    box-shado var(--field-transition
 .app-date-picker .p-inputtext:focus {
   border-color: var(--field-border-focus);
   box-shadow: var(--field-focus-shadow);
