@@ -1,0 +1,179 @@
+name: PR Title Auto Label
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  label-from-title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply labels from PR title keywords
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issue_number = pr.number;
+            const title = (pr.title || "").toLowerCase();
+            const stickyMarker = "<!-- pr-title-auto-label -->";
+            const statePrefix = "<!-- pr-title-auto-label-state:";
+
+            const rules = [
+              { label: "breaking-change", patterns: [/\bbreaking\b/, /breaking\s+change/, /!:/] },
+              { label: "feature", patterns: [/^feat(\(.+\))?:/, /\bfeature\b/] },
+              { label: "enhancement", patterns: [/\benhancement\b/, /\bimprovement\b/, /\bimprove\b/] },
+              { label: "bug", patterns: [/\bbug\b/, /^bug(\(.+\))?:/] },
+              { label: "fix", patterns: [/^fix(\(.+\))?:/, /\bfix\b/, /\bhotfix\b/] },
+              { label: "chore", patterns: [/^chore(\(.+\))?:/, /\bchore\b/] },
+              { label: "refactor", patterns: [/^refactor(\(.+\))?:/, /\brefactor\b/, /\bcleanup\b/] },
+              { label: "dependencies", patterns: [/\bdeps\b/, /\bdependency\b/, /\bdependencies\b/, /\brenovate\b/, /\bbump\b/] },
+              { label: "major", patterns: [/\bmajor\b/] },
+              { label: "minor", patterns: [/\bminor\b/] },
+              { label: "patch", patterns: [/\bpatch\b/] },
+              { label: "skip-changelog", patterns: [/\bskip\s*changelog\b/, /\bno\s*changelog\b/] },
+            ];
+
+            const managedLabels = rules.map((rule) => rule.label);
+            const nonSkipManagedLabels = managedLabels.filter((label) => label !== "skip-changelog");
+
+            const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
+              owner,
+              repo,
+              issue_number,
+            });
+
+            const existing = new Set(currentLabels.map((label) => label.name));
+            const hasSkipChangelog = existing.has("skip-changelog");
+
+            let matchedLabels = [];
+            let toAdd = [];
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number,
+              per_page: 100,
+            });
+
+            const stickyComment = comments.find((comment) =>
+              (comment.body || "").includes(stickyMarker)
+            );
+
+            let previousBotManaged = [];
+            if (stickyComment?.body) {
+              const stateMatch = stickyComment.body.match(
+                /<!-- pr-title-auto-label-state:(.*?)-->/s
+              );
+              if (stateMatch?.[1]) {
+                try {
+                  const parsed = JSON.parse(stateMatch[1].trim());
+                  if (Array.isArray(parsed.managedLabels)) {
+                    previousBotManaged = parsed.managedLabels.filter((label) =>
+                      managedLabels.includes(label)
+                    );
+                  }
+                } catch (error) {
+                  core.warning(`Could not parse previous sticky state: ${error.message}`);
+                }
+              }
+            }
+
+            let toRemove = [];
+
+            if (hasSkipChangelog) {
+              // skip-changelog overrides title parsing; clear all other managed labels.
+              toRemove = Array.from(existing).filter((label) => nonSkipManagedLabels.includes(label));
+            } else {
+              matchedLabels = rules
+                .filter((rule) => rule.patterns.some((pattern) => pattern.test(title)))
+                .map((rule) => rule.label);
+
+              toAdd = matchedLabels.filter((label) => !existing.has(label));
+              toRemove = previousBotManaged.filter(
+                (label) => existing.has(label) && !matchedLabels.includes(label)
+              );
+            }
+
+            for (const label of toRemove) {
+              try {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number,
+                  name: label,
+                });
+              } catch (error) {
+                if (error.status !== 404) {
+                  throw error;
+                }
+              }
+            }
+
+            if (!hasSkipChangelog && matchedLabels.length === 0) {
+              core.info(`No release-drafter keywords found in PR title.`);
+            }
+
+            if (!hasSkipChangelog && toAdd.length === 0) {
+              core.info(`No new labels to add from title.`);
+            } else if (toAdd.length > 0) {
+              core.info(`Applying labels from title: ${toAdd.join(", ")}`);
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number,
+                labels: toAdd,
+              });
+            }
+
+            const nextBotManaged = Array.from(
+              new Set([
+                ...previousBotManaged.filter((label) => !toRemove.includes(label)),
+                ...toAdd,
+                ...(hasSkipChangelog ? ["skip-changelog"] : []),
+              ])
+            ).filter((label) => managedLabels.includes(label));
+
+            const listText = (items) => (items.length ? items.map((x) => `\`${x}\``).join(", ") : "none");
+            const summary = [
+              stickyMarker,
+              "## PR Title Auto Label",
+              `- Added by bot: ${listText(toAdd)}`,
+              `- Removed by bot: ${listText(toRemove)}`,
+              `- Matched from title: ${hasSkipChangelog ? "skipped due to skip-changelog" : listText(matchedLabels)}`,
+              `- skip-changelog already present: ${hasSkipChangelog ? "yes" : "no"}`,
+              `${statePrefix}${JSON.stringify({ managedLabels: nextBotManaged })} -->`,
+            ].join("\n");
+
+            if (stickyComment) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: stickyComment.id,
+                body: summary,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body: summary,
+              });
+            }
+
+            if (!hasSkipChangelog && toAdd.length === 0) {
+              core.setFailed(
+                `No labels were added from PR title and skip-changelog label is not present. ` +
+                `Update the PR title with a keyword (feature/fix/chore/refactor/dependencies/etc.) or add skip-changelog.`
+              );
+            }
