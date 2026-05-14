@@ -5,7 +5,6 @@ import { useMutation, useQuery } from '@tanstack/vue-query'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
 import { useToast } from 'primevue/usetoast'
-import AppTemplateDialog from '../../../components/AppTemplateDialog.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { queryClient } from '../../../lib/query/client'
 import { getSettings } from '../../settings/api/settingsApi'
@@ -15,7 +14,7 @@ import {
   removePerson,
   updatePerson,
 } from '../api/personsApi'
-import PersonFormCard from '../components/PersonFormCard.vue'
+import PersonFormDialog from '../components/PersonFormDialog.vue'
 import type { Person, PersonCreate, PersonFormValues, PersonUpdate } from '../types'
 import type { WeightUnit } from '../../settings/types'
 
@@ -255,7 +254,6 @@ const activeFormValues = computed<PersonFormValues>({
 })
 
 const formTitle = computed(() => (isCreateMode.value ? 'Add Person' : 'Edit Person'))
-const formSubmitLabel = computed(() => (isCreateMode.value ? 'Create Person' : 'Save Changes'))
 const formLoading = computed(() => (isCreateMode.value ? createMutation.isPending.value : updateMutation.isPending.value))
 
 const openCreateDialog = () => {
@@ -334,13 +332,12 @@ const onSubmitForm = async () => {
 
 <template>
   <section data-component="persons-page" class="flex w-full flex-col gap-4">
-    <AppTemplateDialog v-model="isFormDialogOpen" data-element="persons-form-dialog"
-      width="min(36rem, calc(100vw - 2rem))" @hide="onCancelEdit">
-      <PersonFormCard :data-element="isCreateMode ? 'persons-create-form' : 'persons-edit-form'" :title="formTitle"
-        :submit-label="formSubmitLabel" :values="activeFormValues" :weight-input-label="inputWeightLabel"
-        :weight-options="weightOptions" :loading="formLoading" show-cancel
-        @update:values="(values) => { activeFormValues = values }" @submit="onSubmitForm" @cancel="onCancelEdit" />
-    </AppTemplateDialog>
+    <PersonFormDialog :open="isFormDialogOpen" :is-create-mode="isCreateMode" :title="formTitle"
+      :values="activeFormValues" :weight-input-label="inputWeightLabel"
+      :weight-options="weightOptions" :loading="formLoading"
+      @update:open="(value) => { if (!value) onCancelEdit(); isFormDialogOpen = value }"
+      @update:values="(values) => { activeFormValues = values }" @submit="onSubmitForm"
+      @cancel="onCancelEdit" />
 
     <Message v-if="personsQuery.isError.value" data-element="persons-error" severity="error" :closable="false">
       {{ personsQuery.error.value instanceof Error ? personsQuery.error.value.message : 'Unable to load persons.' }}

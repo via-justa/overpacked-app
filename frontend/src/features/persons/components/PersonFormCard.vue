@@ -14,6 +14,8 @@ const props = defineProps<{
   weightOptions: number[]
   loading?: boolean
   showCancel?: boolean
+  showButtons?: boolean
+  bare?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -100,10 +102,10 @@ const onCancel = () => {
 
 <template>
   <section data-component="person-form-card"
-    class="border-line-subtle bg-surface-elevated rounded-2xl border p-4 shadow-panel backdrop-blur sm:p-5">
-    <h2 class="text-ink text-lg font-semibold">{{ title }}</h2>
+    :class="bare ? 'grid gap-3' : 'border-line-subtle bg-surface-elevated rounded-2xl border p-4 shadow-panel backdrop-blur sm:p-5'">
+    <h2 v-if="!bare" class="text-ink text-lg font-semibold">{{ title }}</h2>
 
-    <div class="mt-4 grid gap-3">
+    <div :class="bare ? 'contents' : 'mt-4 grid gap-3'">
       <label class="grid gap-1">
         <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Name</span>
         <input data-element="person-name" class="input-shell" :value="values.name" type="text"
@@ -143,7 +145,7 @@ const onCancel = () => {
       </div>
     </div>
 
-    <footer data-element="person-form-actions" class="mt-4 flex flex-wrap items-center gap-2">
+    <footer v-if="!bare && showButtons !== false" data-element="person-form-actions" class="mt-4 flex flex-wrap items-center gap-2">
       <Button data-element="person-form-submit" :label="submitLabel" icon="pi pi-check"
         :disabled="!canSubmit || loading" :loading="loading" @click="onSubmit" />
       <Button v-if="showCancel" data-element="person-form-cancel" label="Cancel" icon="pi pi-times" severity="secondary"

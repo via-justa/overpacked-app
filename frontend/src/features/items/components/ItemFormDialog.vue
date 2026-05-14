@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppTemplateDialog from '../../../components/AppTemplateDialog.vue'
+import AppFormCreateDialog from '../../../components/AppFormCreateDialog.vue'
 import ItemFormCard from './ItemFormCard.vue'
 import type { ItemFormValues, ItemTypeField, Manufacturer } from '../types'
 
@@ -7,7 +7,6 @@ defineProps<{
   open: boolean
   isCreateMode: boolean
   title: string
-  submitLabel: string
   values: ItemFormValues
   itemTypeOptions: Array<{ label: string; value: string }>
   dynamicFields: ItemTypeField[]
@@ -28,14 +27,14 @@ defineEmits<{
 </script>
 
 <template>
-  <AppTemplateDialog :model-value="open" data-element="items-form-dialog" width="min(36rem, calc(100vw - 2rem))"
-    @update:model-value="$emit('update:open', $event)">
+  <AppFormCreateDialog :open="open" data-element="items-form-dialog" width="min(36rem, calc(100vw - 2rem))"
+    :title="title" :can-submit="!isLoading" :is-submitting="isLoading"
+    @update:open="$emit('update:open', $event)" @submit="$emit('submit')" @cancel="$emit('cancel')">
     <ItemFormCard :data-element="isCreateMode ? 'items-create-form' : 'items-edit-form'" :title="title"
-      :submit-label="submitLabel" :values="values" :item-type-options="itemTypeOptions" :dynamic-fields="dynamicFields"
+      submit-label="Save" :values="values" :item-type-options="itemTypeOptions" :dynamic-fields="dynamicFields"
       :dynamic-fields-loading="dynamicFieldsLoading" :manufacturers="manufacturers"
-      :weight-input-label="weightInputLabel" :volume-input-label="volumeInputLabel" :loading="isLoading" show-cancel
-      @update:values="$emit('update:values', $event)"
-      @request:manufacturer-create="$emit('request:manufacturer-create')" @submit="$emit('submit')"
-      @cancel="$emit('cancel')" />
-  </AppTemplateDialog>
+      :weight-input-label="weightInputLabel" :volume-input-label="volumeInputLabel" :loading="isLoading"
+      bare @update:values="$emit('update:values', $event)"
+      @request:manufacturer-create="$emit('request:manufacturer-create')" />
+  </AppFormCreateDialog>
 </template>

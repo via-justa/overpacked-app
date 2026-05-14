@@ -4,8 +4,10 @@ import { useMutation, useQuery } from '@tanstack/vue-query'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
 import { useToast } from 'primevue/usetoast'
+import AppConfirmDialog from '../../../components/AppConfirmDialog.vue'
 import AppSelect from '../../../components/AppSelect.vue'
-import AppTemplateDialog from '../../../components/AppTemplateDialog.vue'
+import AppFormCreateDialog from '../../../components/AppFormCreateDialog.vue'
+import AppFormEditDialog from '../../../components/AppFormEditDialog.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { queryClient } from '../../../lib/query/client'
 import { createItemType, listItemTypeFields, listItemTypes, removeItemType, replaceItemTypeFields, updateItemType } from '../api/itemsApi'
@@ -37,6 +39,7 @@ const formValues = ref({ name: '', description: '' })
 const fieldValues = ref<CategoryFieldForm[]>([{ name: '', type: 'string', selectOptions: '' }])
 const formError = ref('')
 const isFieldsLoading = ref(false)
+const isDeleteConfirmOpen = ref(false)
 
 const itemTypesQuery = useQuery({
   queryKey: ['item-types'],
@@ -48,7 +51,6 @@ const itemTypeOptions = computed(() =>
 )
 
 const dialogTitle = computed(() => (mode.value === 'create' ? 'Add Category' : 'Edit Category'))
-const submitLabel = computed(() => (mode.value === 'create' ? 'Create' : 'Save'))
 
 const canCreate = computed(() => {
   if (!formValues.value.name.trim()) return false
@@ -89,6 +91,7 @@ const reset = () => {
   fieldValues.value = [{ name: '', type: 'string', selectOptions: '' }]
   formError.value = ''
   isFieldsLoading.value = false
+  isDeleteConfirmOpen.value = false
 }
 
 const close = () => {
@@ -306,105 +309,100 @@ const onUpdate = async () => {
   }
 }
 
-const onDelete = async () => {
+const onDeleteRequest = () => {
   if (!editingId.value || isPending.value) return
   formError.value = ''
   if (usageCount.value > 0) {
     formError.value = `This category is used by ${usageCount.value} gear items. Delete those items first.`
     return
   }
-  const confirmed = globalThis.window?.confirm('Delete selected category? This action cannot be undone.') ?? false
-  if (!confirmed) return
+  isDeleteConfirmOpen.value = true
+}
+
+const onDelete = async () => {
+  if (!editingId.value || isPending.value) return
+  isDeleteConfirmOpen.value = false
   await deleteMutation.mutateAsync(editingId.value)
 }
 </script>
 
 <template>
-  <AppTemplateDialog :model-value="open" data-element="category-create-dialog" width="min(30rem, calc(100vw - 2rem))"
-    @update:model-value="(v) => emit('update:open', v as boolean)" @hide="close">
-    <section
-      class="border-line-subtle bg-surface-elevated flex max-h-[calc(100vh-8rem)] w-full flex-col rounded-2xl border p-4 shadow-panel backdrop-blur sm:p-5">
-      <h3 class="text-ink shrink-0 text-lg font-semibold">{{ dialogTitle }}</h3>
-      <div class="mt-3 grid grid-cols-2 gap-2">
-        <Button data-element="category-mode-create" label="Create" icon="pi pi-plus"
-          :severity="mode === 'create' ? undefined : 'secondary'" :outlined="mode !== 'create'"
-          class="w-full justify-center" @click="void setMode('create')" />
-        <Button data-element="category-mode-edit" label="Edit" icon="pi pi-pencil"
-          :severity="mode === 'edit' ? undefined : 'secondary'" :outlined="mode !== 'edit'"
-          class="w-full justify-center" @click="void setMode('edit')" />
-      </div>
+  <component :is="mode === 'edit' ? AppFormEditDialog : AppFormCreateDialog"
+    :open="open" data-element="category-create-dialog" width="min(30rem, calc(100vw - 2rem))"
+    :title="dialogTitle" :can-submit="canSubmit && !isFieldsLoading"
+    :is-submitting="createMutation.isPending.value || updateMutation.isPending.value"
+    :is-deleting="deleteMutation.isPending.value"
+    @update:open="(v: boolean) => { emit('update:open', v); if (!v) close() }"
+    @submit="mode === 'create' ? onCreate() : onUpdate()" @cancel="close" @delete="onDeleteRequest">
+    <div class="mt-3 grid grid-cols-2 gap-2">
+      <Button data-element="category-mode-create" label="Create" icon="pi pi-plus"
+        :severity="mode === 'create' ? undefined : 'secondary'" :outlined="mode !== 'create'"
+        class="w-full justify-center" @click="void setMode('create')" />
+      <Button data-element="category-mode-edit" label="Edit" icon="pi pi-pencil"
+        :severity="mode === 'edit' ? undefined : 'secondary'" :outlined="mode !== 'edit'"
+        class="w-full justify-center" @click="void setMode('edit')" />
+    </div>
 
-      <div class="mt-4 flex-1 overflow-y-auto pr-1">
-        <div class="grid gap-3">
-          <div v-if="mode === 'edit'" class="grid gap-1">
-            <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Category</span>
-            <AppSelect data-element="category-edit-target" :model-value="editingId"
-              @update:model-value="(value) => { void onEditTargetChange(value) }">
-              <option v-for="category in itemTypeOptions" :key="category.id" :value="category.id">
-                {{ category.name }}
-              </option>
-            </AppSelect>
-          </div>
+    <div class="mt-4 overflow-y-auto pr-1">
+      <div class="grid gap-3">
+        <div v-if="mode === 'edit'" class="grid gap-1">
+          <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Category</span>
+          <AppSelect data-element="category-edit-target" :model-value="editingId"
+            @update:model-value="(value) => { void onEditTargetChange(value) }">
+            <option v-for="category in itemTypeOptions" :key="category.id" :value="category.id">
+              {{ category.name }}
+            </option>
+          </AppSelect>
+        </div>
 
-          <label class="grid gap-1">
-            <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Name</span>
-            <input data-element="category-name" class="input-shell" :value="formValues.name" type="text"
-              @input="formValues.name = ($event.target as HTMLInputElement).value" />
-          </label>
+        <label class="grid gap-1">
+          <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Name</span>
+          <input data-element="category-name" class="input-shell" :value="formValues.name" type="text"
+            @input="formValues.name = ($event.target as HTMLInputElement).value" />
+        </label>
 
-          <div class="grid gap-2">
-            <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Properties</span>
-            <p v-if="isFieldsLoading" class="text-copy-subtle text-sm">Loading category fields...</p>
-            <div v-for="(field, index) in fieldValues" :key="`field-${index}`"
-              class="border-line-subtle bg-surface-muted grid gap-2 rounded-lg border p-2">
-              <div class="grid gap-2 sm:grid-cols-[1fr,12rem,auto]">
-                <input :data-element="`category-field-name-${index}`" class="input-shell" :value="field.name"
-                  type="text" placeholder="Property name"
-                  @input="updateField(index, { ...field, name: ($event.target as HTMLInputElement).value })" />
-                <AppSelect :data-element="`category-field-type-${index}`" :model-value="field.type"
-                  @update:model-value="(value) => updateField(index, { ...field, type: value as CategoryFieldType, selectOptions: value === 'select' ? field.selectOptions : '' })">
-                  <option v-for="option in categoryFieldTypeOptions" :key="option.value" :value="option.value">
-                    {{ option.label }}
-                  </option>
-                </AppSelect>
-                <Button :data-element="`category-field-remove-${index}`" icon="pi pi-trash" severity="secondary"
-                  outlined :disabled="fieldValues.length <= 1" @click="removeField(index)" />
-              </div>
-              <input v-if="field.type === 'select'" :data-element="`category-field-options-${index}`"
-                class="input-shell" :value="field.selectOptions" type="text"
-                placeholder="Select options (comma separated)"
-                @input="updateField(index, { ...field, selectOptions: ($event.target as HTMLInputElement).value })" />
+        <div class="grid gap-2">
+          <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Properties</span>
+          <p v-if="isFieldsLoading" class="text-copy-subtle text-sm">Loading category fields...</p>
+          <div v-for="(field, index) in fieldValues" :key="`field-${index}`"
+            class="border-line-subtle bg-surface-muted grid gap-2 rounded-lg border p-2">
+            <div class="grid gap-2 sm:grid-cols-[1fr,12rem,auto]">
+              <input :data-element="`category-field-name-${index}`" class="input-shell" :value="field.name"
+                type="text" placeholder="Property name"
+                @input="updateField(index, { ...field, name: ($event.target as HTMLInputElement).value })" />
+              <AppSelect :data-element="`category-field-type-${index}`" :model-value="field.type"
+                @update:model-value="(value) => updateField(index, { ...field, type: value as CategoryFieldType, selectOptions: value === 'select' ? field.selectOptions : '' })">
+                <option v-for="option in categoryFieldTypeOptions" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </AppSelect>
+              <Button :data-element="`category-field-remove-${index}`" icon="pi pi-trash" severity="secondary"
+                outlined :disabled="fieldValues.length <= 1" @click="removeField(index)" />
             </div>
-            <Button data-element="category-field-add" label="Add field" icon="pi pi-plus" severity="secondary" outlined
-              @click="addField" />
+            <input v-if="field.type === 'select'" :data-element="`category-field-options-${index}`"
+              class="input-shell" :value="field.selectOptions" type="text"
+              placeholder="Select options (comma separated)"
+              @input="updateField(index, { ...field, selectOptions: ($event.target as HTMLInputElement).value })" />
           </div>
-
-          <label class="grid gap-1">
-            <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Description</span>
-            <textarea data-element="category-description" class="input-shell min-h-4.5rem"
-              :value="formValues.description"
-              @input="formValues.description = ($event.target as HTMLTextAreaElement).value" />
-          </label>
+          <Button data-element="category-field-add" label="Add field" icon="pi pi-plus" severity="secondary" outlined
+            @click="addField" />
         </div>
 
-        <Message v-if="formError" severity="error" :closable="false" class="mt-3">
-          {{ formError }}
-        </Message>
+        <label class="grid gap-1">
+          <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Description</span>
+          <textarea data-element="category-description" class="input-shell min-h-4.5rem"
+            :value="formValues.description"
+            @input="formValues.description = ($event.target as HTMLTextAreaElement).value" />
+        </label>
       </div>
 
-      <div class="mt-4 flex shrink-0 items-center justify-between gap-3">
-        <div class="flex flex-wrap items-center gap-2">
-          <Button data-element="category-create-submit" :label="submitLabel" icon="pi pi-check"
-            :disabled="!canSubmit || isPending || isFieldsLoading"
-            :loading="createMutation.isPending.value || updateMutation.isPending.value"
-            @click="mode === 'create' ? onCreate() : onUpdate()" />
-          <Button data-element="category-create-cancel" label="Cancel" icon="pi pi-times" severity="secondary" outlined
-            :disabled="isPending" @click="close" />
-        </div>
-        <Button v-if="mode === 'edit'" data-element="category-delete" label="Delete" icon="pi pi-trash"
-          severity="danger" outlined class="ml-auto" :disabled="isPending" :loading="deleteMutation.isPending.value"
-          @click="onDelete" />
-      </div>
-    </section>
-  </AppTemplateDialog>
+      <Message v-if="formError" severity="error" :closable="false" class="mt-3">
+        {{ formError }}
+      </Message>
+    </div>
+  </component>
+
+  <AppConfirmDialog :open="isDeleteConfirmOpen" title="Delete Category"
+    message="Delete selected category? This action cannot be undone." confirm-label="Delete"
+    confirm-tone="danger" @update:open="isDeleteConfirmOpen = $event" @confirm="onDelete" />
 </template>

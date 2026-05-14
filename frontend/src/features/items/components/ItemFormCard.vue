@@ -28,6 +28,8 @@ const props = defineProps<{
   volumeInputLabel: 'ml' | 'fl oz'
   loading?: boolean
   showCancel?: boolean
+  showButtons?: boolean
+  bare?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -368,8 +370,10 @@ const onCancel = () => {
 
 <template>
   <section data-component="item-form-card"
-    class="border-line-subtle bg-surface-elevated flex max-h-[calc(100vh-8rem)] flex-col rounded-2xl border p-4 shadow-panel backdrop-blur sm:p-5">
-    <h2 class="text-ink shrink-0 text-lg font-semibold">{{ title }}</h2>
+    :class="bare
+      ? 'flex flex-col'
+      : 'border-line-subtle bg-surface-elevated flex max-h-[calc(100vh-8rem)] flex-col rounded-2xl border p-4 shadow-panel backdrop-blur sm:p-5'">
+    <h2 v-if="!bare" class="text-ink shrink-0 text-lg font-semibold">{{ title }}</h2>
 
     <div class="mt-4 flex-1 overflow-y-auto pr-1">
       <div class="space-y-4">
@@ -782,7 +786,7 @@ const onCancel = () => {
       </div>
     </div>
 
-    <footer data-element="item-form-actions" class="mt-4 flex shrink-0 flex-wrap items-center gap-2">
+    <footer v-if="!bare && showButtons !== false" data-element="item-form-actions" class="mt-4 flex shrink-0 flex-wrap items-center gap-2">
       <Button data-element="item-form-submit" :label="submitLabel" icon="pi pi-check"
         :disabled="!canSubmit || loading || Object.keys(validationErrors).length > 0" :loading="loading"
         @click="onSubmit" />

@@ -1370,7 +1370,6 @@ const activeFormValues = computed<ItemFormValues>({
 })
 
 const formTitle = computed(() => (isCreateMode.value ? 'Add Item' : 'Edit Item'))
-const formSubmitLabel = computed(() => (isCreateMode.value ? 'Create' : 'Save Changes'))
 const formLoading = computed(() => (isCreateMode.value ? createMutation.isPending.value : updateMutation.isPending.value))
 
 const closeCreateOptions = () => {
@@ -1546,7 +1545,7 @@ const onSubmitForm = async () => {
       @edit="onEditFromDetails" @delete="onDeleteFromDetails" />
 
     <ItemFormDialog :open="isFormDialogOpen" :is-create-mode="isCreateMode" :title="formTitle"
-      :submit-label="formSubmitLabel" :values="activeFormValues" :item-type-options="itemFormTypeOptions"
+      :values="activeFormValues" :item-type-options="itemFormTypeOptions"
       :dynamic-fields="itemFormDynamicFields" :dynamic-fields-loading="itemTypeFieldsQuery.isPending.value"
       :manufacturers="manufacturersQuery.data.value ?? []" :weight-input-label="weightInputLabel"
       :volume-input-label="volumeInputLabel" :is-loading="formLoading" @update:open="isFormDialogOpen = $event"

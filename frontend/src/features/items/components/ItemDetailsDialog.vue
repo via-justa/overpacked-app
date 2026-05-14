@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
 import AppBooleanValue from '../../../components/AppBooleanValue.vue'
-import AppTemplateDialog from '../../../components/AppTemplateDialog.vue'
+import AppFormViewDialog from '../../../components/AppFormViewDialog.vue'
 import AppNotSetValue from '../../../components/AppNotSetValue.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import type { Item } from '../types'
@@ -33,10 +33,9 @@ defineEmits<{
 </script>
 
 <template>
-  <AppTemplateDialog :model-value="open" data-element="item-details-dialog" width="min(44rem, calc(100vw - 2rem))"
-    @update:model-value="$emit('update:open', $event)">
-    <article v-if="selectedItem" data-element="item-details-card"
-      class="border-line-subtle bg-surface-elevated rounded-2xl border p-5 shadow-panel backdrop-blur">
+  <AppFormViewDialog :open="open" title="Item Details" data-element="item-details-dialog"
+    width="min(44rem, calc(100vw - 2rem))" @update:open="$emit('update:open', $event)">
+    <article v-if="selectedItem" data-element="item-details-card" class="px-1">
       <div v-if="getImageSrc(selectedItem)"
         class="border-line-subtle bg-surface-muted mb-4 overflow-hidden rounded-xl border">
         <img :src="getImageSrc(selectedItem)" :alt="normalizeTitleWords(selectedItem.name)"
@@ -83,5 +82,5 @@ defineEmits<{
           :loading="isDeleteLoading" @click="$emit('delete', selectedItem.id)" />
       </div>
     </article>
-  </AppTemplateDialog>
+  </AppFormViewDialog>
 </template>
