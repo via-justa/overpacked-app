@@ -1,0 +1,17 @@
+Thank you for installing Overpacked App.
+
+1. Validate frontend service:
+   kubectl get svc {{ include "overpacked-app.frontend.fullname" . }} -n {{ .Release.Namespace }}
+
+2. If ingress is enabled, point DNS to your ingress controller and visit:
+   {{- if .Values.ingress.enabled }}
+   {{- range .Values.ingress.hosts }}
+   http{{ if $.Values.ingress.tls }}s{{ end }}://{{ .host }}
+   {{- end }}
+   {{- else }}
+   Use port-forward:
+   kubectl port-forward svc/{{ include "overpacked-app.frontend.fullname" . }} 8080:{{ .Values.frontend.service.port }} -n {{ .Release.Namespace }}
+   {{- end }}
+
+3. CloudNativePG mode is {{ .Values.database.mode | quote }}.
+   Ensure the CloudNativePG operator and CRDs are installed before deploying with cloudnativepg mode.

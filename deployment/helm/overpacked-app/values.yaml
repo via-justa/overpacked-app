@@ -1,0 +1,202 @@
+# Override the short chart name used in generated resource names.
+nameOverride: ""
+# Override the full release-based resource prefix.
+fullnameOverride: ""
+
+serviceAccount:
+  # Create a dedicated ServiceAccount for chart-managed pods.
+  create: true
+  # Extra annotations to attach to the ServiceAccount.
+  annotations: {}
+  # Provide an existing ServiceAccount name instead of creating one.
+  name: ""
+
+# CloudNativePG operator dependency settings.
+cloudnativePgOperator:
+  # Install the CloudNativePG operator dependency with this chart.
+  enabled: true
+  # Values passed through to the CloudNativePG operator subchart.
+  config:
+    # Limit the operator to the release namespace when false.
+    clusterWide: true
+
+# Extra pod annotations applied to backend and frontend workloads.
+podAnnotations: {}
+
+backend:
+  # Number of backend pods to run.
+  replicaCount: 1
+  image:
+    # Backend image repository.
+    repository: ghcr.io/via-justa/overpacked-app/backend
+    # Backend image tag to deploy.
+    tag: latest
+    # Kubernetes image pull policy.
+    pullPolicy: IfNotPresent
+  service:
+    # Kubernetes Service type for the backend.
+    type: ClusterIP
+    # Service port exposed inside the cluster.
+    port: 8000
+  # Container port the backend listens on.
+  containerPort: 8000
+  # Use an existing Secret instead of creating one from chart values.
+  existingSecret: ""
+  secretKeys:
+    # Secret key name for the backend username.
+    appUsername: APP_USERNAME
+    # Secret key name for the backend password.
+    appPassword: APP_PASSWORD
+    # Secret key name for the JWT secret.
+    jwtSecret: JWT_SECRET
+    # Secret key name for the database connection string.
+    databaseUrl: DATABASE_URL
+  auth:
+    # Backend login username.
+    username: admin
+    # Backend login password.
+    password: change-me
+    # JWT signing secret used by the backend.
+    jwtSecret: change-me-jwt-secret
+  # Additional environment variables for the backend container.
+  extraEnv: []
+  resources:
+    # CPU and memory requests/limits for the backend.
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  livenessProbe:
+    # HTTP path used for backend liveness checks.
+    path: /api/health
+    # Delay before liveness probes start.
+    initialDelaySeconds: 10
+    # How often to run liveness probes.
+    periodSeconds: 10
+    # Timeout for a single liveness probe.
+    timeoutSeconds: 5
+  readinessProbe:
+    # HTTP path used for backend readiness checks.
+    path: /api/health
+    # Delay before readiness probes start.
+    initialDelaySeconds: 5
+    # How often to run readiness probes.
+    periodSeconds: 10
+    # Timeout for a single readiness probe.
+    timeoutSeconds: 5
+  podDisruptionBudget:
+    # Keep a minimum number of backend pods available during disruptions.
+    enabled: false
+    # Minimum backend pods that must remain available.
+    minAvailable: 1
+
+frontend:
+  # Number of frontend pods to run.
+  replicaCount: 1
+  image:
+    # Frontend image repository.
+    repository: ghcr.io/via-justa/overpacked-app/frontend
+    # Frontend image tag to deploy.
+    tag: latest
+    # Kubernetes image pull policy.
+    pullPolicy: IfNotPresent
+  service:
+    # Kubernetes Service type for the frontend.
+    type: ClusterIP
+    # Service port exposed inside the cluster.
+    port: 80
+  # Container port the frontend listens on.
+  containerPort: 80
+  # Backend upstream used by nginx when the app is deployed.
+  backendUpstream: ""
+  resources:
+    # CPU and memory requests/limits for the frontend.
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+  livenessProbe:
+    # HTTP path used for frontend liveness checks.
+    path: /
+    # Delay before liveness probes start.
+    initialDelaySeconds: 10
+    # How often to run liveness probes.
+    periodSeconds: 10
+    # Timeout for a single liveness probe.
+    timeoutSeconds: 5
+  readinessProbe:
+    # HTTP path used for frontend readiness checks.
+    path: /
+    # Delay before readiness probes start.
+    initialDelaySeconds: 5
+    # How often to run readiness probes.
+    periodSeconds: 10
+    # Timeout for a single readiness probe.
+    timeoutSeconds: 5
+  podDisruptionBudget:
+    # Keep a minimum number of frontend pods available during disruptions.
+    enabled: false
+    # Minimum frontend pods that must remain available.
+    minAvailable: 1
+
+ingress:
+  # Enable external ingress for the frontend.
+  enabled: true
+  # Optional ingress class name, for example nginx or traefik.
+  className: ""
+  # Extra annotations for your ingress controller.
+  annotations: {}
+  # Host rules exposed by the ingress.
+  hosts:
+    - host: overpacked.local
+      paths:
+        # Root path routed to the frontend service.
+        - path: /
+          pathType: Prefix
+  # TLS configuration for ingress hosts.
+  tls: []
+
+database:
+  # Database mode: cloudnativepg for operator-managed PostgreSQL or external for an existing DB.
+  mode: cloudnativepg
+  external:
+    # PostgreSQL host name or IP used only when database.mode=external.
+    host: ""
+    # PostgreSQL port used only when database.mode=external.
+    port: 5432
+    # PostgreSQL SSL mode used only when database.mode=external.
+    sslmode: disable
+  auth:
+    # PostgreSQL application username.
+    username: app
+    # PostgreSQL application password.
+    password: change-me-db-password
+    # PostgreSQL database name.
+    database: packing_light
+  superuser:
+    # CloudNativePG superuser name.
+    username: postgres
+    # CloudNativePG superuser password.
+    password: change-me-superuser-password
+  cloudnativepg:
+    # Number of PostgreSQL instances managed by CloudNativePG.
+    instances: 1
+    # PostgreSQL image used by the CloudNativePG cluster.
+    imageName: ghcr.io/cloudnative-pg/postgresql:16
+    storage:
+      # Persistent volume size for the database.
+      size: 20Gi
+      # Optional storage class name for the database PVC.
+      storageClass: ""
+    resources:
+      # CPU and memory requests/limits for PostgreSQL pods.
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: "1"
+        memory: 2Gi

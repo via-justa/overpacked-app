@@ -1,0 +1,15 @@
+{{- if .Values.backend.podDisruptionBudget.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "overpacked-app.backend.fullname" . }}
+  labels:
+    {{- include "overpacked-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  minAvailable: {{ .Values.backend.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "overpacked-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: backend
+{{- end }}

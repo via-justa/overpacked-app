@@ -1,0 +1,26 @@
+{{- if eq .Values.database.mode "cloudnativepg" }}
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ include "overpacked-app.db.clusterName" . }}
+  labels:
+    {{- include "overpacked-app.labels" . | nindent 4 }}
+spec:
+  instances: {{ .Values.database.cloudnativepg.instances }}
+  imageName: {{ .Values.database.cloudnativepg.imageName | quote }}
+  superuserSecret:
+    name: {{ printf "%s-db-superuser" (include "overpacked-app.fullname" .) }}
+  bootstrap:
+    initdb:
+      database: {{ .Values.database.auth.database | quote }}
+      owner: {{ .Values.database.auth.username | quote }}
+      secret:
+        name: {{ printf "%s-db-auth" (include "overpacked-app.fullname" .) }}
+  storage:
+    size: {{ .Values.database.cloudnativepg.storage.size | quote }}
+    {{- if .Values.database.cloudnativepg.storage.storageClass }}
+    storageClass: {{ .Values.database.cloudnativepg.storage.storageClass | quote }}
+    {{- end }}
+  resources:
+    {{- toYaml .Values.database.cloudnativepg.resources | nindent 4 }}
+{{- end }}
