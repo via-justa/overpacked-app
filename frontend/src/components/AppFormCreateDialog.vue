@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import Button from 'primevue/button'
 import AppTemplateDialog from './AppTemplateDialog.vue'
+import AppDialogActions from './AppDialogActions.vue'
 
 defineProps<{
   open: boolean
@@ -27,12 +27,8 @@ defineEmits<{
         <slot />
       </div>
 
-      <footer class="mt-4 flex flex-wrap items-center gap-2 shrink-0">
-        <Button label="Save" icon="pi pi-check" :disabled="canSubmit === false || isSubmitting"
-          :loading="isSubmitting ?? false" @click="$emit('submit')" />
-        <Button label="Cancel" icon="pi pi-times" severity="secondary" outlined
-          :disabled="isSubmitting ?? false" @click="$emit('cancel')" />
-      </footer>
+      <AppDialogActions mode="create" :can-submit="canSubmit" :is-creating="isSubmitting"
+        @submit="$emit('submit')" @cancel="$emit('cancel')" />
     </article>
   </AppTemplateDialog>
 </template>

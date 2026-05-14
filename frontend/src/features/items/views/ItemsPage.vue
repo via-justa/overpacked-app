@@ -2,10 +2,14 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
-import Message from 'primevue/message'
 import { useToast } from 'primevue/usetoast'
 import AppToggleGroup from '../../../components/AppToggleGroup.vue'
 import AppConfirmDialog from '../../../components/AppConfirmDialog.vue'
+import AppQueryError from '../../../components/AppQueryError.vue'
+import AppLoadingState from '../../../components/AppLoadingState.vue'
+import AppEmptyState from '../../../components/AppEmptyState.vue'
+import AppCategoryFilter from '../../../components/AppCategoryFilter.vue'
+import AppSummaryCard from '../../../components/AppSummaryCard.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { queryClient } from '../../../lib/query/client'
 import { listItems, listItemTypeFields, listItemTypes, listManufacturers, removeItem, updateItem, createItem } from '../api/itemsApi'
@@ -1486,43 +1490,25 @@ const onSubmitForm = async () => {
 
     <ItemsImportDialog v-model:open="isImportDialogOpen" />
 
-    <Message v-if="itemsQuery.isError.value" data-element="items-error" severity="error" :closable="false">
-      {{ itemsQuery.error.value instanceof Error ? itemsQuery.error.value.message : 'Unable to load gear.' }}
-    </Message>
+    <AppQueryError :query="itemsQuery" fallback-message="Unable to load gear." data-element="items-error" />
 
-    <Message v-if="manufacturersQuery.isError.value" data-element="items-manufacturers-error" severity="error"
-      :closable="false">
-      {{ manufacturersQuery.error.value instanceof Error ? manufacturersQuery.error.value.message :
-        'Unable to load manufacturers.' }}
-    </Message>
+    <AppQueryError :query="manufacturersQuery" fallback-message="Unable to load manufacturers."
+      data-element="items-manufacturers-error" />
 
     <ItemsCreateOptionsMenu :open="isCreateOptionsOpen" :position="createOptionsPosition" :options="createTargetOptions"
       @update:open="isCreateOptionsOpen = $event" @select="onSelectCreateTarget" />
 
-    <div v-if="itemsQuery.isPending.value" data-element="items-loading"
-      class="border-line-subtle bg-surface-muted text-copy-muted rounded-2xl border px-4 py-3 text-sm font-medium">
-      Loading gear...
-    </div>
+    <AppLoadingState v-if="itemsQuery.isPending.value" message="Loading gear..." data-element="items-loading" />
 
-    <div v-else-if="canShowEmptyState" data-element="items-empty-state"
-      class="border-line-subtle bg-surface-elevated text-copy-muted rounded-2xl border px-5 py-6 text-sm">
-      Your closet is currently operating at true ultralight standards. Add some gear to get started!
-    </div>
+    <AppEmptyState v-else-if="canShowEmptyState"
+      message="Your closet is currently operating at true ultralight standards. Add some gear to get started!"
+      data-element="items-empty-state" />
 
     <div v-else data-element="items-list" class="space-y-3">
       <div data-element="items-summary" class="grid gap-2 sm:grid-cols-3">
-        <div class="border-line-subtle bg-surface-elevated text-copy rounded-xl border px-3 py-2 text-sm">
-          <span class="text-copy-subtle text-xs font-semibold uppercase tracking-[0.08em]">Total gear</span>
-          <p class="text-ink mt-1 text-base font-semibold">{{ filteredSummary.totalItems }}</p>
-        </div>
-        <div class="border-line-subtle bg-surface-elevated text-copy rounded-xl border px-3 py-2 text-sm">
-          <span class="text-copy-subtle text-xs font-semibold uppercase tracking-[0.08em]">Total weight</span>
-          <p class="text-ink mt-1 text-base font-semibold">{{ filteredSummary.totalWeightLabel }}</p>
-        </div>
-        <div class="border-line-subtle bg-surface-elevated text-copy rounded-xl border px-3 py-2 text-sm">
-          <span class="text-copy-subtle text-xs font-semibold uppercase tracking-[0.08em]">Total value</span>
-          <p class="text-ink mt-1 text-base font-semibold">{{ filteredSummary.totalValueLabel }}</p>
-        </div>
+        <AppSummaryCard label="Total gear" :value="filteredSummary.totalItems" />
+        <AppSummaryCard label="Total weight" :value="filteredSummary.totalWeightLabel" />
+        <AppSummaryCard label="Total value" :value="filteredSummary.totalValueLabel" />
       </div>
 
       <!-- Click-outside backdrop -->
@@ -1533,17 +1519,8 @@ const onSubmitForm = async () => {
             :options="itemViewOptions" fit-content
             @update:model-value="(value) => { itemsViewMode = value as ItemsViewMode }" />
 
-          <nav data-element="items-type-filter" aria-label="Item type filter"
-            class="text-copy-subtle flex flex-wrap items-center text-xs font-semibold uppercase tracking-[0.08em]">
-            <template v-for="(option, index) in itemTypeFilterOptions" :key="option.value">
-              <span v-if="index > 0" class="text-line mx-1">/</span>
-              <button type="button" class="rounded px-2 py-1 transition"
-                :class="itemTypeFilter === option.value ? 'bg-brand-50 text-brand-800' : 'text-copy-subtle hover:bg-surface-soft hover:text-copy'"
-                @click="itemTypeFilter = option.value">
-                {{ option.label }}
-              </button>
-            </template>
-          </nav>
+          <AppCategoryFilter v-model="itemTypeFilter" :options="itemTypeFilterOptions" label="Item type filter"
+            data-element="items-type-filter" />
         </div>
       </div>
 

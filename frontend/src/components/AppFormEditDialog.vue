@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import Button from 'primevue/button'
 import AppTemplateDialog from './AppTemplateDialog.vue'
+import AppDialogActions from './AppDialogActions.vue'
 
 defineProps<{
   open: boolean
@@ -29,17 +29,8 @@ defineEmits<{
         <slot />
       </div>
 
-      <footer class="mt-4 flex flex-wrap items-center justify-between gap-2 shrink-0">
-        <div class="flex flex-wrap items-center gap-2">
-          <Button label="Save" icon="pi pi-check" :disabled="canSubmit === false || isSubmitting || isDeleting"
-            :loading="isSubmitting ?? false" @click="$emit('submit')" />
-          <Button label="Cancel" icon="pi pi-times" severity="secondary" outlined
-            :disabled="(isSubmitting ?? false) || (isDeleting ?? false)" @click="$emit('cancel')" />
-        </div>
-        <Button label="Delete" icon="pi pi-trash" severity="danger" outlined
-          :disabled="(isSubmitting ?? false) || (isDeleting ?? false)" :loading="isDeleting ?? false"
-          @click="$emit('delete')" />
-      </footer>
+      <AppDialogActions mode="edit" :can-submit="canSubmit" :is-updating="isSubmitting"
+        :is-deleting="isDeleting" @submit="$emit('submit')" @cancel="$emit('cancel')" @delete="$emit('delete')" />
     </article>
   </AppTemplateDialog>
 </template>

@@ -2,10 +2,13 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
-import Message from 'primevue/message'
 import { useToast } from 'primevue/usetoast'
 import AppConfirmDialog from '../../../components/AppConfirmDialog.vue'
 import AppToggleGroup from '../../../components/AppToggleGroup.vue'
+import AppQueryError from '../../../components/AppQueryError.vue'
+import AppLoadingState from '../../../components/AppLoadingState.vue'
+import AppEmptyState from '../../../components/AppEmptyState.vue'
+import AppSummaryCard from '../../../components/AppSummaryCard.vue'
 import type { AppItemTableField } from '../../../components/AppItemTableRowContent.vue'
 import ItemDetailsDialog from '../../items/components/ItemDetailsDialog.vue'
 import SetDetailsDialog from '../components/SetDetailsDialog.vue'
@@ -844,44 +847,24 @@ const onUpdateItemDraft = (payload: { itemId: string; field: 'quantity' | 'notes
       @add-item="onAddItem" @save-set-item="onSaveSetItem"
       @request-remove-set-item="(payload) => { requestRemoveSetItem(payload.itemId, payload.itemName) }" />
 
-    <Message v-if="setsQuery.isError.value" data-element="sets-error" severity="error" :closable="false">
-      {{ setsQuery.error.value instanceof Error ? setsQuery.error.value.message : 'Unable to load sets.' }}
-    </Message>
+    <AppQueryError :query="setsQuery" fallback-message="Unable to load sets." data-element="sets-error" />
 
-    <Message v-if="itemsQuery.isError.value" data-element="sets-items-error" severity="error" :closable="false">
-      {{ itemsQuery.error.value instanceof Error ? itemsQuery.error.value.message : 'Unable to load gear items.' }}
-    </Message>
+    <AppQueryError :query="itemsQuery" fallback-message="Unable to load gear items." data-element="sets-items-error" />
 
-    <Message v-if="manufacturersQuery.isError.value" data-element="sets-manufacturers-error" severity="error"
-      :closable="false">
-      {{ manufacturersQuery.error.value instanceof Error ? manufacturersQuery.error.value.message :
-        'Unable to load manufacturers.' }}
-    </Message>
+    <AppQueryError :query="manufacturersQuery" fallback-message="Unable to load manufacturers."
+      data-element="sets-manufacturers-error" />
 
-    <div v-if="setsQuery.isPending.value" data-element="sets-loading"
-      class="border-line-subtle bg-surface-muted text-copy-muted rounded-2xl border px-4 py-3 text-sm font-medium">
-      Loading sets...
-    </div>
+    <AppLoadingState v-if="setsQuery.isPending.value" message="Loading sets..." data-element="sets-loading" />
 
-    <div v-else-if="canShowEmptyState" data-element="sets-empty-state"
-      class="border-line-subtle bg-surface-elevated text-copy-muted rounded-2xl border px-5 py-6 text-sm">
-      Your organizational system is currently powered by memory and hope. Add your first set to get started!
-    </div>
+    <AppEmptyState v-else-if="canShowEmptyState"
+      message="Your organizational system is currently powered by memory and hope. Add your first set to get started!"
+      data-element="sets-empty-state" />
 
     <div v-else class="space-y-3">
       <div class="grid gap-2 sm:grid-cols-3">
-        <div class="border-line-subtle bg-surface-elevated text-copy rounded-xl border px-3 py-2 text-sm">
-          <span class="text-copy-subtle text-xs font-semibold uppercase tracking-[0.08em]">Total sets</span>
-          <p class="text-ink mt-1 text-base font-semibold">{{ setSummary.totalSets }}</p>
-        </div>
-        <div class="border-line-subtle bg-surface-elevated text-copy rounded-xl border px-3 py-2 text-sm">
-          <span class="text-copy-subtle text-xs font-semibold uppercase tracking-[0.08em]">Assigned items</span>
-          <p class="text-ink mt-1 text-base font-semibold">{{ setSummary.totalItems }}</p>
-        </div>
-        <div class="border-line-subtle bg-surface-elevated text-copy rounded-xl border px-3 py-2 text-sm">
-          <span class="text-copy-subtle text-xs font-semibold uppercase tracking-[0.08em]">Total weight</span>
-          <p class="text-ink mt-1 text-base font-semibold">{{ setSummary.totalWeightLabel }}</p>
-        </div>
+        <AppSummaryCard label="Total sets" :value="setSummary.totalSets" />
+        <AppSummaryCard label="Assigned items" :value="setSummary.totalItems" />
+        <AppSummaryCard label="Total weight" :value="setSummary.totalWeightLabel" />
       </div>
 
       <div class="flex flex-wrap items-center justify-between gap-3">

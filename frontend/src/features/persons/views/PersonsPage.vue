@@ -3,9 +3,11 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import Button from 'primevue/button'
-import Message from 'primevue/message'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { useMutationWithToast } from '../../../composables/useMutationWithToast'
+import AppQueryError from '../../../components/AppQueryError.vue'
+import AppLoadingState from '../../../components/AppLoadingState.vue'
+import AppEmptyState from '../../../components/AppEmptyState.vue'
 import {
   createPerson,
   listPersons,
@@ -310,19 +312,13 @@ const onSubmitForm = async () => {
       @update:values="(values) => { activeFormValues = values }" @submit="onSubmitForm"
       @cancel="onCancelEdit" />
 
-    <Message v-if="personsQuery.isError.value" data-element="persons-error" severity="error" :closable="false">
-      {{ personsQuery.error.value instanceof Error ? personsQuery.error.value.message : 'Unable to load persons.' }}
-    </Message>
+    <AppQueryError :query="personsQuery" fallback-message="Unable to load persons." data-element="persons-error" />
 
-    <div v-if="personsQuery.isPending.value" data-element="persons-loading"
-      class="border-line-subtle bg-surface-muted text-copy-muted rounded-2xl border px-4 py-3 text-sm font-medium">
-      Loading persons...
-    </div>
+    <AppLoadingState v-if="personsQuery.isPending.value" message="Loading persons..." data-element="persons-loading" />
 
-    <div v-else-if="canShowEmptyState" data-element="persons-empty-state"
-      class="border-line-subtle bg-surface-elevated text-copy-muted rounded-2xl border px-5 py-6 text-sm">
-      Current crew count: 0. Morale remains surprisingly high. Add your first person to get started!
-    </div>
+    <AppEmptyState v-else-if="canShowEmptyState"
+      message="Current crew count: 0. Morale remains surprisingly high. Add your first person to get started!"
+      data-element="persons-empty-state" />
 
     <div v-else data-element="persons-list" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <article v-for="person in personsQuery.data.value" :key="person.id" data-element="person-card"
