@@ -1,15 +1,32 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useMutation, useQuery } from '@tanstack/vue-query'
+import { useQuery } from '@tanstack/vue-query'
 import Message from 'primevue/message'
 import { useToast } from 'primevue/usetoast'
 import AppToggleGroup from '../../../components/AppToggleGroup.vue'
 import AppConfirmDialog from '../../../components/AppConfirmDialog.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { queryClient } from '../../../lib/query/client'
-import { getSettings } from '../../settings/api/settingsApi'
 import { listItems, listItemTypeFields, listItemTypes, listManufacturers, removeItem, updateItem, createItem } from '../api/itemsApi'
+import { useMutationWithToast } from '../../../composables/useMutationWithToast'
+import { useInlineMutation } from '../../../composables/useInlineMutation'
+import { useSettings } from '../../../composables/useSettings'
+import {
+  gramsToInput as convertGramsToInput,
+  inputToGrams as convertInputToGrams,
+  mlToInput as convertMlToInput,
+  inputToMl as convertInputToMl,
+  toRoundedString as roundToString,
+  formatDisplayWeight,
+} from '../../../lib/units/conversions'
+import {
+  formatNumber as formatNumberDisplay,
+  formatValue as formatValueDisplay,
+  formatCarryStatus as formatCarryStatusDisplay,
+  formatType as formatTypeDisplay,
+  formatText as formatTextDisplay,
+} from '../../../lib/format/display'
 import ItemDetailsDialog from '../components/ItemDetailsDialog.vue'
 import ItemFormDialog from '../components/ItemFormDialog.vue'
 import ItemsCreateOptionsMenu from '../components/ItemsCreateOptionsMenu.vue'
@@ -19,16 +36,11 @@ import ItemsCategoryDialog from '../components/ItemsCategoryDialog.vue'
 import ItemsImportDialog from '../components/ItemsImportDialog.vue'
 import type { Item, ItemCreate, ItemFormValues, ItemTypeField, ItemUpdate, KnownItemType } from '../types'
 import { KNOWN_ITEM_TYPES, isKnownItemType } from '../types'
-import type { Currency } from '../../settings/types'
 
 const toast = useToast()
+const { executeInlineMutation } = useInlineMutation()
 const route = useRoute()
 const router = useRouter()
-
-const GRAMS_PER_OUNCE = 28.349523125
-const GRAMS_PER_KILOGRAM = 1000
-const OUNCES_PER_POUND = 16
-const ML_PER_FL_OZ = 29.5735295625
 
 type WeightInputUnit = 'g' | 'oz'
 type VolumeInputUnit = 'ml' | 'fl_oz'
@@ -122,32 +134,30 @@ const toRoundedString = (value: number): string => {
   if (!Number.isFinite(value)) {
     return ''
   }
-
-  return Number.parseFloat(value.toFixed(2)).toString()
+  return roundToString(value)
 }
 
 const toIntegerString = (value?: number | null): string => {
   if (typeof value !== 'number') {
     return ''
   }
-
   return String(Math.trunc(value))
 }
 
 const gramsToInput = (value: number, unit: WeightInputUnit): number => {
-  return unit === 'oz' ? value / GRAMS_PER_OUNCE : value
+  return convertGramsToInput(value, unit)
 }
 
 const inputToGrams = (value: number, unit: WeightInputUnit): number => {
-  return unit === 'oz' ? value * GRAMS_PER_OUNCE : value
+  return convertInputToGrams(value, unit)
 }
 
 const mlToInput = (value: number, unit: VolumeInputUnit): number => {
-  return unit === 'fl_oz' ? value / ML_PER_FL_OZ : value
+  return convertMlToInput(value, unit)
 }
 
 const inputToMl = (value: number, unit: VolumeInputUnit): number => {
-  return unit === 'fl_oz' ? value * ML_PER_FL_OZ : value
+  return convertInputToMl(value, unit)
 }
 
 const readStoredItemsViewMode = (): ItemsViewMode => {
@@ -537,33 +547,15 @@ const toPayload = (values: ItemFormValues, dynamicFields: ItemTypeField[]): Item
   return payload
 }
 
-const formatDisplayWeight = (valueGrams: number): string => {
-  if (weightInputUnit.value === 'oz') {
-    const ounces = gramsToInput(valueGrams, 'oz')
-    if (Math.abs(ounces) >= OUNCES_PER_POUND) {
-      return `${toRoundedString(ounces / OUNCES_PER_POUND)} lb`
-    }
-
-    return `${toRoundedString(ounces)} oz`
-  }
-
-  if (Math.abs(valueGrams) >= GRAMS_PER_KILOGRAM) {
-    return `${toRoundedString(valueGrams / GRAMS_PER_KILOGRAM)} kg`
-  }
-
-  return `${toRoundedString(valueGrams)} g`
-}
-
 const formatWeight = (value?: number | null) => {
   if (typeof value !== 'number') {
     return 'Not set'
   }
-
-  return formatDisplayWeight(value)
+  return formatDisplayWeight(value, weightInputUnit.value)
 }
 
 const formatTotalWeight = (valueGrams: number): string => {
-  return formatDisplayWeight(valueGrams)
+  return formatDisplayWeight(valueGrams, weightInputUnit.value)
 }
 
 const formatVolume = (value?: number | null) => {
@@ -575,49 +567,23 @@ const formatVolume = (value?: number | null) => {
 }
 
 const formatNumber = (value?: number | null) => {
-  if (typeof value !== 'number') {
-    return 'Not set'
-  }
-
-  return toRoundedString(value)
+  return formatNumberDisplay(value, toRoundedString)
 }
 
 const formatValue = (value?: number | null): string => {
-  if (!value) {
-    return 'Not set'
-  }
-  const formatted = formatNumber(value)
-  const currencySymbol = currency.value === 'usd' ? '$' : '€'
-  return `${formatted} ${currencySymbol}`
+  return formatValueDisplay(value, currency.value, toRoundedString)
 }
 
 const formatCarryStatus = (value?: string | null) => {
-  if (!value) {
-    return 'Not set'
-  }
-
-  if (value === 'packed') {
-    return 'Packed'
-  }
-  if (value === 'worn') {
-    return 'Worn'
-  }
-  return value
+  return formatCarryStatusDisplay(value)
 }
 
 const formatType = (value: string) => {
-  return value
-    .split('_')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
+  return formatTypeDisplay(value)
 }
 
 const formatText = (value?: string | null) => {
-  if (!value?.trim()) {
-    return 'Not set'
-  }
-
-  return value
+  return formatTextDisplay(value)
 }
 
 const getItemImageSrc = (item: Item) => {
@@ -721,14 +687,9 @@ const getDetailedEntries = (item: Item) => {
   return entries
 }
 
-const settingsQuery = useQuery({
-  queryKey: ['settings'],
-  queryFn: getSettings,
-})
-
-const weightInputUnit = computed<WeightInputUnit>(() => settingsQuery.data.value?.weight_unit ?? 'g')
-const volumeInputUnit = computed<VolumeInputUnit>(() => settingsQuery.data.value?.volume_unit ?? 'ml')
-const currency = computed<Currency>(() => settingsQuery.data.value?.currency ?? 'usd')
+const { weightUnit, volumeUnit, currency } = useSettings()
+const weightInputUnit = computed<WeightInputUnit>(() => weightUnit.value)
+const volumeInputUnit = computed<VolumeInputUnit>(() => volumeUnit.value)
 const weightInputLabel = computed<'g' | 'oz'>(() => (weightInputUnit.value === 'oz' ? 'oz' : 'g'))
 const volumeInputLabel = computed<'ml' | 'fl oz'>(() => (volumeInputUnit.value === 'fl_oz' ? 'fl oz' : 'ml'))
 
@@ -1056,74 +1017,59 @@ const withItemsRefresh = async (task: () => Promise<void>) => {
 }
 
 const onRowToggleActive = async (item: Item) => {
-  try {
-    await withItemsRefresh(async () => {
-      await updateItem(item.id, { is_active: !item.is_active })
-    })
-    toast.add({
-      severity: 'success',
-      summary: 'Item updated',
-      detail: `Item is now ${item.is_active ? 'inactive' : 'active'}.`,
-      life: 2500,
-    })
-  } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Update failed',
-      detail: error instanceof Error ? error.message : 'Unable to update item.',
-      life: 3500,
-    })
-  }
+  await executeInlineMutation(
+    async () => {
+      await withItemsRefresh(async () => {
+        await updateItem(item.id, { is_active: !item.is_active })
+      })
+    },
+    {
+      successSummary: 'Item updated',
+      successDetail: `Item is now ${item.is_active ? 'inactive' : 'active'}.`,
+      errorSummary: 'Update failed',
+      errorDetail: 'Unable to update item.',
+    }
+  )
 }
 
 const onRowToggleDefault = async (item: Item) => {
-  try {
-    await withItemsRefresh(async () => {
-      await updateItem(item.id, { is_default: !item.is_default })
-    })
-    toast.add({
-      severity: 'success',
-      summary: 'Item updated',
-      detail: item.is_default ? 'Item is no longer default.' : 'Item is now default.',
-      life: 2500,
-    })
-  } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Update failed',
-      detail: error instanceof Error ? error.message : 'Unable to update item.',
-      life: 3500,
-    })
-  }
+  await executeInlineMutation(
+    async () => {
+      await withItemsRefresh(async () => {
+        await updateItem(item.id, { is_default: !item.is_default })
+      })
+    },
+    {
+      successSummary: 'Item updated',
+      successDetail: item.is_default ? 'Item is no longer default.' : 'Item is now default.',
+      errorSummary: 'Update failed',
+      errorDetail: 'Unable to update item.',
+    }
+  )
 }
 
 const onRowDuplicate = async (item: Item) => {
-  try {
-    const duplicateValues = toFormValues(item)
-    duplicateValues.name = `${item.name} Copy`
-    const payload = toPayload(duplicateValues, []) as ItemCreate
-    if (!isKnownItemType(item.type) && item.attributes) {
-      payload.attributes = item.attributes
+  await executeInlineMutation(
+    async () => {
+      const duplicateValues = toFormValues(item)
+      duplicateValues.name = `${item.name} Copy`
+      const payload = toPayload(duplicateValues, []) as ItemCreate
+      if (!isKnownItemType(item.type) && item.attributes) {
+        payload.attributes = item.attributes
+      }
+
+      await withItemsRefresh(async () => {
+        await createItem(payload)
+      })
+    },
+    {
+      successSummary: 'Item duplicated',
+      successDetail: 'A copy was created successfully.',
+      errorSummary: 'Duplicate failed',
+      errorDetail: 'Unable to duplicate item.',
+      successLife: 3000,
     }
-
-    await withItemsRefresh(async () => {
-      await createItem(payload)
-    })
-
-    toast.add({
-      severity: 'success',
-      summary: 'Item duplicated',
-      detail: 'A copy was created successfully.',
-      life: 3000,
-    })
-  } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Duplicate failed',
-      detail: error instanceof Error ? error.message : 'Unable to duplicate item.',
-      life: 3500,
-    })
-  }
+  )
 }
 
 const onRowDelete = async (item: Item) => {
@@ -1260,74 +1206,54 @@ const onConfirmDelete = async () => {
   }
 }
 
-const createMutation = useMutation({
+const createMutation = useMutationWithToast<Item, Error, ItemCreate>({
   mutationFn: createItem,
-  onSuccess: async () => {
+  successMessage: {
+    summary: 'Item created',
+    detail: 'New item has been added.',
+  },
+  errorMessage: {
+    summary: 'Create failed',
+    detail: 'Unable to create item.',
+  },
+  invalidateQueries: [['items']],
+  onSuccess: () => {
     createValues.value = emptyFormValues()
     isFormDialogOpen.value = false
-    await queryClient.invalidateQueries({ queryKey: ['items'] })
-    toast.add({
-      severity: 'success',
-      summary: 'Item created',
-      detail: 'New item has been added.',
-      life: 3000,
-    })
-  },
-  onError: (error) => {
-    toast.add({
-      severity: 'error',
-      summary: 'Create failed',
-      detail: error instanceof Error ? error.message : 'Unable to create item.',
-      life: 3500,
-    })
   },
 })
 
-const updateMutation = useMutation({
+const updateMutation = useMutationWithToast<Item, Error, { itemId: string; payload: ItemUpdate }>({
   mutationFn: async (params: { itemId: string; payload: ItemUpdate }) => {
     return updateItem(params.itemId, params.payload)
   },
-  onSuccess: async () => {
+  successMessage: {
+    summary: 'Item updated',
+    detail: 'Item details were saved.',
+  },
+  errorMessage: {
+    summary: 'Update failed',
+    detail: 'Unable to update item.',
+  },
+  invalidateQueries: [['items']],
+  onSuccess: () => {
     editingItemId.value = null
     editValues.value = emptyFormValues()
     isFormDialogOpen.value = false
-    await queryClient.invalidateQueries({ queryKey: ['items'] })
-    toast.add({
-      severity: 'success',
-      summary: 'Item updated',
-      detail: 'Item details were saved.',
-      life: 3000,
-    })
-  },
-  onError: (error) => {
-    toast.add({
-      severity: 'error',
-      summary: 'Update failed',
-      detail: error instanceof Error ? error.message : 'Unable to update item.',
-      life: 3500,
-    })
   },
 })
 
-const deleteMutation = useMutation({
+const deleteMutation = useMutationWithToast<void, Error, string>({
   mutationFn: removeItem,
-  onSuccess: async () => {
-    await queryClient.invalidateQueries({ queryKey: ['items'] })
-    toast.add({
-      severity: 'success',
-      summary: 'Item deleted',
-      detail: 'Item was removed successfully.',
-      life: 3000,
-    })
+  successMessage: {
+    summary: 'Item deleted',
+    detail: 'Item was removed successfully.',
   },
-  onError: (error) => {
-    toast.add({
-      severity: 'error',
-      summary: 'Delete failed',
-      detail: error instanceof Error ? error.message : 'Unable to delete item.',
-      life: 3500,
-    })
+  errorMessage: {
+    summary: 'Delete failed',
+    detail: 'Unable to delete item.',
   },
+  invalidateQueries: [['items']],
 })
 
 const canShowEmptyState = computed(() => {

@@ -48,6 +48,8 @@ This file defines repository-level guidance for coding agents working in this pr
 - A pack is used by exactly one person.
 - Packs contain items through a many-to-many relationship (PACK_ITEMS).
 - Packs can track which sets contributed items through PACK_SETS.
+- Sets added to packs are inflated
+- items added directly to packs take priority over inflated sets
 
 ### Items
 - Items support multiple types; defined in ITEM_TYPES table.

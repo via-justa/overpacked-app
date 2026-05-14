@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useMutation, useQuery } from '@tanstack/vue-query'
+import { useQuery } from '@tanstack/vue-query'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
-import { useToast } from 'primevue/usetoast'
 import AppConfirmDialog from '../../../components/AppConfirmDialog.vue'
 import AppSelect from '../../../components/AppSelect.vue'
 import AppFormCreateDialog from '../../../components/AppFormCreateDialog.vue'
 import AppFormEditDialog from '../../../components/AppFormEditDialog.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
-import { queryClient } from '../../../lib/query/client'
+import { useMutationWithToast } from '../../../composables/useMutationWithToast'
 import { createItemType, listItemTypeFields, listItemTypes, removeItemType, replaceItemTypeFields, updateItemType } from '../api/itemsApi'
 import type { Item, ItemTypeCreate, ItemTypeField, ItemTypeFieldInput, ItemTypeUpdate } from '../types'
 import { slugifyCategoryId } from '../utils/itemUtils'
@@ -30,8 +29,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:open', value: boolean): void
 }>()
-
-const toast = useToast()
 
 const mode = ref<CategoryDialogMode>('create')
 const editingId = ref('')
@@ -211,64 +208,58 @@ watch(
   },
 )
 
-const createMutation = useMutation({
+const createMutation = useMutationWithToast<{ id: string; name: string }, Error, { categoryPayload: ItemTypeCreate; fields: ItemTypeFieldInput[] }>({
   mutationFn: async (payload: { categoryPayload: ItemTypeCreate; fields: ItemTypeFieldInput[] }) => {
     const created = await createItemType(payload.categoryPayload)
     await replaceItemTypeFields(created.id, payload.fields)
     return created
   },
-  onSuccess: async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['item-types'] }),
-      queryClient.invalidateQueries({ queryKey: ['items'] }),
-    ])
-    close()
-    toast.add({ severity: 'success', summary: 'Category created', detail: 'New category has been added.', life: 3000 })
+  successMessage: {
+    summary: 'Category created',
+    detail: 'New category has been added.',
   },
-  onError: (err) => {
-    toast.add({
-      severity: 'error',
-      summary: 'Create failed',
-      detail: err instanceof Error ? err.message : 'Unable to create category.',
-      life: 3500,
-    })
+  errorMessage: {
+    summary: 'Create failed',
+    detail: 'Unable to create category.',
+  },
+  invalidateQueries: [['item-types'], ['items']],
+  onSuccess: () => {
+    close()
   },
 })
 
-const updateMutation = useMutation({
+const updateMutation = useMutationWithToast<void, Error, { typeId: string; payload: ItemTypeUpdate; fields: ItemTypeFieldInput[] }>({
   mutationFn: async (params: { typeId: string; payload: ItemTypeUpdate; fields: ItemTypeFieldInput[] }) => {
     await updateItemType(params.typeId, params.payload)
     await replaceItemTypeFields(params.typeId, params.fields)
   },
-  onSuccess: async () => {
-    await queryClient.invalidateQueries({ queryKey: ['item-types'] })
-    toast.add({ severity: 'success', summary: 'Category updated', detail: 'Category details were saved.', life: 3000 })
+  successMessage: {
+    summary: 'Category updated',
+    detail: 'Category details were saved.',
   },
-  onError: (err) => {
-    toast.add({
-      severity: 'error',
-      summary: 'Update failed',
-      detail: err instanceof Error ? err.message : 'Unable to update category.',
-      life: 3500,
-    })
+  errorMessage: {
+    summary: 'Update failed',
+    detail: 'Unable to update category.',
   },
+  invalidateQueries: [['item-types']],
 })
 
-const deleteMutation = useMutation({
+const deleteMutation = useMutationWithToast<void, Error, string>({
   mutationFn: removeItemType,
-  onSuccess: async () => {
-    await queryClient.invalidateQueries({ queryKey: ['item-types'] })
+  successMessage: {
+    summary: 'Category deleted',
+    detail: 'Category was deleted.',
+  },
+  errorMessage: {
+    summary: 'Delete failed',
+    detail: 'Unable to delete category.',
+  },
+  invalidateQueries: [['item-types']],
+  onSuccess: () => {
     close()
-    toast.add({ severity: 'success', summary: 'Category deleted', detail: 'Category was deleted.', life: 3000 })
   },
   onError: (err) => {
     formError.value = err instanceof Error ? err.message : 'Unable to delete category.'
-    toast.add({
-      severity: 'error',
-      summary: 'Delete failed',
-      detail: err instanceof Error ? err.message : 'Unable to delete category.',
-      life: 3500,
-    })
   },
 })
 

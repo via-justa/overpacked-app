@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useMutation, useQuery } from '@tanstack/vue-query'
+import { useQuery } from '@tanstack/vue-query'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
-import { useToast } from 'primevue/usetoast'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
-import { queryClient } from '../../../lib/query/client'
-import { getSettings } from '../../settings/api/settingsApi'
+import { useMutationWithToast } from '../../../composables/useMutationWithToast'
 import {
   createPerson,
   listPersons,
@@ -16,24 +14,17 @@ import {
 } from '../api/personsApi'
 import PersonFormDialog from '../components/PersonFormDialog.vue'
 import type { Person, PersonCreate, PersonFormValues, PersonUpdate } from '../types'
-import type { WeightUnit } from '../../settings/types'
 
 import { getPersonRecommendedMaxWeightGrams } from '../utils'
+import { useSettings } from '../../../composables/useSettings'
+import { GRAMS_PER_KILOGRAM, LB_PER_KG } from '../../../lib/units/conversions'
 
-const toast = useToast()
 const route = useRoute()
 const router = useRouter()
-const GRAMS_PER_KILOGRAM = 1000
-const LB_PER_KG = 2.2046226218
 
 type BodyWeightInputUnit = 'kg' | 'lb'
 
-const settingsQuery = useQuery({
-  queryKey: ['settings'],
-  queryFn: getSettings,
-})
-
-const weightUnit = computed<WeightUnit>(() => settingsQuery.data.value?.weight_unit ?? 'g')
+const { weightUnit } = useSettings()
 const defaultInputUnit = computed<BodyWeightInputUnit>(() => (weightUnit.value === 'oz' ? 'lb' : 'kg'))
 const inputWeightLabel = computed<'kg' | 'lb'>(() => (defaultInputUnit.value === 'lb' ? 'lb' : 'kg'))
 
@@ -163,74 +154,54 @@ const editingPersonId = ref<string | null>(null)
 const editValues = ref<PersonFormValues>(emptyFormValues())
 const isFormDialogOpen = ref(false)
 
-const createMutation = useMutation({
+const createMutation = useMutationWithToast<Person, Error, PersonCreate>({
   mutationFn: createPerson,
-  onSuccess: async () => {
+  successMessage: {
+    summary: 'Person created',
+    detail: 'New person has been added.',
+  },
+  errorMessage: {
+    summary: 'Create failed',
+    detail: 'Unable to create person.',
+  },
+  invalidateQueries: [['persons']],
+  onSuccess: () => {
     createValues.value = emptyFormValues()
     isFormDialogOpen.value = false
-    await queryClient.invalidateQueries({ queryKey: ['persons'] })
-    toast.add({
-      severity: 'success',
-      summary: 'Person created',
-      detail: 'New person has been added.',
-      life: 3000,
-    })
-  },
-  onError: (error) => {
-    toast.add({
-      severity: 'error',
-      summary: 'Create failed',
-      detail: error instanceof Error ? error.message : 'Unable to create person.',
-      life: 3500,
-    })
   },
 })
 
-const updateMutation = useMutation({
+const updateMutation = useMutationWithToast<Person, Error, { personId: string; payload: PersonUpdate }>({
   mutationFn: async (params: { personId: string; payload: PersonUpdate }) => {
     return updatePerson(params.personId, params.payload)
   },
-  onSuccess: async () => {
+  successMessage: {
+    summary: 'Person updated',
+    detail: 'Person details were saved.',
+  },
+  errorMessage: {
+    summary: 'Update failed',
+    detail: 'Unable to update person.',
+  },
+  invalidateQueries: [['persons']],
+  onSuccess: () => {
     editingPersonId.value = null
     editValues.value = emptyFormValues()
     isFormDialogOpen.value = false
-    await queryClient.invalidateQueries({ queryKey: ['persons'] })
-    toast.add({
-      severity: 'success',
-      summary: 'Person updated',
-      detail: 'Person details were saved.',
-      life: 3000,
-    })
-  },
-  onError: (error) => {
-    toast.add({
-      severity: 'error',
-      summary: 'Update failed',
-      detail: error instanceof Error ? error.message : 'Unable to update person.',
-      life: 3500,
-    })
   },
 })
 
-const deleteMutation = useMutation({
+const deleteMutation = useMutationWithToast<void, Error, string>({
   mutationFn: removePerson,
-  onSuccess: async () => {
-    await queryClient.invalidateQueries({ queryKey: ['persons'] })
-    toast.add({
-      severity: 'success',
-      summary: 'Person deleted',
-      detail: 'Person was removed successfully.',
-      life: 3000,
-    })
+  successMessage: {
+    summary: 'Person deleted',
+    detail: 'Person was removed successfully.',
   },
-  onError: (error) => {
-    toast.add({
-      severity: 'error',
-      summary: 'Delete failed',
-      detail: error instanceof Error ? error.message : 'Unable to delete person.',
-      life: 3500,
-    })
+  errorMessage: {
+    summary: 'Delete failed',
+    detail: 'Unable to delete person.',
   },
+  invalidateQueries: [['persons']],
 })
 
 const canShowEmptyState = computed(() => {

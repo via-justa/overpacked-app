@@ -14,7 +14,15 @@ import SetsCollectionView from '../components/SetsCollectionView.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { queryClient } from '../../../lib/query/client'
 import { listItemTypes, listItems, listManufacturers } from '../../items/api/itemsApi'
-import { getSettings } from '../../settings/api/settingsApi'
+import { useSettings } from '../../../composables/useSettings'
+import { toRoundedString, formatDisplayWeight, mlToInput } from '../../../lib/units/conversions'
+import {
+  formatNumber as formatNumberDisplay,
+  formatValue as formatValueDisplay,
+  formatCarryStatus as formatCarryStatusDisplay,
+  formatType as formatTypeDisplay,
+  formatText as formatTextDisplay,
+} from '../../../lib/format/display'
 import {
   addSetItem,
   createSet,
@@ -31,11 +39,6 @@ import type { Item, ItemTypeEntity } from '../../items/types'
 const toast = useToast()
 const route = useRoute()
 const router = useRouter()
-
-const GRAMS_PER_OUNCE = 28.349523125
-const GRAMS_PER_KILOGRAM = 1000
-const OUNCES_PER_POUND = 16
-const ML_PER_FL_OZ = 29.5735295625
 
 type SetsViewMode = 'cards' | 'table'
 type TableDetailMode = 'simple' | 'expanded'
@@ -63,13 +66,6 @@ const readStoredSetsTableDetailMode = (): TableDetailMode => {
   return stored === 'simple' || stored === 'expanded' ? stored : 'simple'
 }
 
-const toRoundedString = (value: number): string => {
-  if (!Number.isFinite(value)) {
-    return ''
-  }
-
-  return Number.parseFloat(value.toFixed(2)).toString()
-}
 
 const formatDate = (value: string): string => {
   const parsed = new Date(value)
@@ -83,28 +79,12 @@ const formatDate = (value: string): string => {
   return `${day}-${month}-${year}`
 }
 
-const settingsQuery = useQuery({
-  queryKey: ['settings'],
-  queryFn: getSettings,
-})
+const { weightUnit, volumeUnit, currency } = useSettings()
+const weightInputUnit = computed<WeightInputUnit>(() => weightUnit.value)
 
-const weightInputUnit = computed<WeightInputUnit>(() => settingsQuery.data.value?.weight_unit ?? 'g')
-
-const formatDisplayWeight = (valueGrams: number): string => {
-  if (weightInputUnit.value === 'oz') {
-    const ounces = valueGrams / GRAMS_PER_OUNCE
-    if (Math.abs(ounces) >= OUNCES_PER_POUND) {
-      return `${toRoundedString(ounces / OUNCES_PER_POUND)} lb`
-    }
-
-    return `${toRoundedString(ounces)} oz`
-  }
-
-  if (Math.abs(valueGrams) >= GRAMS_PER_KILOGRAM) {
-    return `${toRoundedString(valueGrams / GRAMS_PER_KILOGRAM)} kg`
-  }
-
-  return `${toRoundedString(valueGrams)} g`
+// Wrapper for formatDisplayWeight that uses current weightInputUnit
+const formatWeight = (valueGrams: number): string => {
+  return formatDisplayWeight(valueGrams, weightInputUnit.value)
 }
 
 const setsQuery = useQuery({
@@ -164,8 +144,7 @@ const allSets = computed<ItemSet[]>(() => setsQuery.data.value ?? [])
 
 const itemTypeOptions = computed<ItemTypeEntity[]>(() => itemTypesQuery.data.value ?? [])
 
-const volumeInputUnit = computed<VolumeInputUnit>(() => settingsQuery.data.value?.volume_unit ?? 'ml')
-const currency = computed<'usd' | 'eur'>(() => settingsQuery.data.value?.currency ?? 'usd')
+const volumeInputUnit = computed<VolumeInputUnit>(() => volumeUnit.value)
 
 const manufacturersById = computed(() => {
   const map = new Map<string, string>()
@@ -190,42 +169,19 @@ const getItemTypeLabel = (categoryId: string): string => {
 }
 
 const formatType = (value: string) => {
-  return value
-    .split('_')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
+  return formatTypeDisplay(value)
 }
 
 const formatText = (value?: string | null) => {
-  if (!value?.trim()) {
-    return 'Not set'
-  }
-
-  return value
+  return formatTextDisplay(value)
 }
 
 const formatNumber = (value?: number | null) => {
-  if (typeof value !== 'number') {
-    return 'Not set'
-  }
-
-  return toRoundedString(value)
+  return formatNumberDisplay(value, toRoundedString)
 }
 
 const formatCarryStatus = (value?: string | null) => {
-  if (!value) {
-    return 'Not set'
-  }
-
-  if (value === 'packed') {
-    return 'Packed'
-  }
-
-  if (value === 'worn') {
-    return 'Worn'
-  }
-
-  return value
+  return formatCarryStatusDisplay(value)
 }
 
 const formatVolume = (value?: number | null) => {
@@ -234,19 +190,14 @@ const formatVolume = (value?: number | null) => {
   }
 
   if (volumeInputUnit.value === 'fl_oz') {
-    return `${toRoundedString(value / ML_PER_FL_OZ)} fl oz`
+    return `${toRoundedString(mlToInput(value, 'fl_oz'))} fl oz`
   }
 
   return `${toRoundedString(value)} ml`
 }
 
 const formatValue = (value?: number | null): string => {
-  if (typeof value !== 'number') {
-    return 'Not set'
-  }
-
-  const currencySymbol = currency.value === 'usd' ? '$' : '€'
-  return `${toRoundedString(value)} ${currencySymbol}`
+  return formatValueDisplay(value, currency.value, toRoundedString)
 }
 
 const getItemImageSrc = (item: Item) => {
@@ -274,7 +225,7 @@ const getItemDetailedEntries = (item: Item): DetailEntry[] => {
     { label: 'Is default', value: '', booleanValue: item.is_default },
     {
       label: 'Weight',
-      value: typeof item.weight_grams === 'number' ? formatDisplayWeight(item.weight_grams) : 'Not set',
+      value: typeof item.weight_grams === 'number' ? formatWeight(item.weight_grams) : 'Not set',
     },
     { label: 'Volume', value: formatVolume(item.volume_ml) },
     { label: 'Value', value: formatValue(item.value) },
@@ -324,7 +275,7 @@ const itemTableFields = computed<AppItemTableField[]>(() => {
         if (typeof item.weight_grams !== 'number') {
           return 'Not set'
         }
-        return formatDisplayWeight(item.weight_grams)
+        return formatWeight(item.weight_grams)
       },
     },
     {
@@ -407,7 +358,7 @@ const setSummary = computed(() => {
   return {
     totalSets: sets.length,
     totalItems,
-    totalWeightLabel: formatDisplayWeight(totalWeight),
+    totalWeightLabel: formatWeight(totalWeight),
   }
 })
 
@@ -886,7 +837,7 @@ const onUpdateItemDraft = (payload: { itemId: string; field: 'quantity' | 'notes
       :available-items-for-add="availableItemsForAdd" :add-item-id="addItemId" :add-item-quantity="addItemQuantity"
       :add-item-notes="addItemNotes" :is-adding-item="isAddingItem" :item-drafts-by-id="itemDraftsById"
       :saving-item-ids="savingItemIds" :get-item-type-label="getItemTypeLabel"
-      :format-display-weight="formatDisplayWeight" @update:model-value="(value) => { if (!value) closeDetailsDialog() }"
+      :format-display-weight="formatWeight" @update:model-value="(value) => { if (!value) closeDetailsDialog() }"
       @update:add-item-id="(value) => { addItemId = value }"
       @update:add-item-quantity="(value) => { addItemQuantity = value }"
       @update:add-item-notes="(value) => { addItemNotes = value }" @update-item-draft="onUpdateItemDraft"
@@ -942,7 +893,7 @@ const onUpdateItemDraft = (payload: { itemId: string; field: 'quantity' | 'notes
       <SetsCollectionView :sets="allSets" :sets-view-mode="setsViewMode" :table-detail-mode="tableDetailMode"
         :selection-mode="tableSelectionMode" :selected-set-ids="selectedSetIds" :set-stats-by-id="setStatsById"
         :set-items-by-set-id="setItemsBySetId" :item-table-fields="itemTableFields"
-        :get-item-type-label="getItemTypeLabel" :format-display-weight="formatDisplayWeight" :format-date="formatDate"
+        :get-item-type-label="getItemTypeLabel" :format-display-weight="formatWeight" :format-date="formatDate"
         @open-details="onOpenDetails" @open-item-details="onOpenItemDetails" @start-edit="onStartEdit"
         @request-delete="requestDeleteSet" @update:table-detail-mode="(mode) => { tableDetailMode = mode }"
         @update:selection-mode="onUpdateTableSelectionMode" @toggle:set-selection="onToggleSetSelection"

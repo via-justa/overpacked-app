@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useMutation } from '@tanstack/vue-query'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
-import { useToast } from 'primevue/usetoast'
 import AppConfirmDialog from '../../../components/AppConfirmDialog.vue'
 import AppSelect from '../../../components/AppSelect.vue'
 import AppFormCreateDialog from '../../../components/AppFormCreateDialog.vue'
 import AppFormEditDialog from '../../../components/AppFormEditDialog.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
-import { queryClient } from '../../../lib/query/client'
+import { useMutationWithToast } from '../../../composables/useMutationWithToast'
 import { createManufacturer, removeManufacturer, updateManufacturer } from '../api/itemsApi'
 import type { Item, Manufacturer, ManufacturerCreate, ManufacturerUpdate } from '../types'
 
@@ -25,8 +23,6 @@ const emit = defineEmits<{
   (e: 'update:open', value: boolean): void
   (e: 'manufacturer-created', id: string): void
 }>()
-
-const toast = useToast()
 
 const mode = ref<ManufacturerDialogMode>('create')
 const editingId = ref('')
@@ -99,71 +95,53 @@ watch(
   },
 )
 
-const createMutation = useMutation({
+const createMutation = useMutationWithToast<Manufacturer, Error, ManufacturerCreate>({
   mutationFn: createManufacturer,
-  onSuccess: async (manufacturer) => {
-    await queryClient.invalidateQueries({ queryKey: ['manufacturers'] })
+  successMessage: {
+    summary: 'Manufacturer created',
+    detail: 'Manufacturer was added and selected.',
+  },
+  errorMessage: {
+    summary: 'Create failed',
+    detail: 'Unable to create manufacturer.',
+  },
+  invalidateQueries: [['manufacturers']],
+  onSuccess: (manufacturer) => {
     emit('manufacturer-created', manufacturer.id)
     close()
-    toast.add({
-      severity: 'success',
-      summary: 'Manufacturer created',
-      detail: 'Manufacturer was added and selected.',
-      life: 3000,
-    })
-  },
-  onError: (err) => {
-    toast.add({
-      severity: 'error',
-      summary: 'Create failed',
-      detail: err instanceof Error ? err.message : 'Unable to create manufacturer.',
-      life: 3500,
-    })
   },
 })
 
-const updateMutation = useMutation({
+const updateMutation = useMutationWithToast<Manufacturer, Error, { manufacturerId: string; payload: ManufacturerUpdate }>({
   mutationFn: async (params: { manufacturerId: string; payload: ManufacturerUpdate }) =>
     updateManufacturer(params.manufacturerId, params.payload),
-  onSuccess: async () => {
-    await queryClient.invalidateQueries({ queryKey: ['manufacturers'] })
-    toast.add({
-      severity: 'success',
-      summary: 'Manufacturer updated',
-      detail: 'Manufacturer details were saved.',
-      life: 3000,
-    })
+  successMessage: {
+    summary: 'Manufacturer updated',
+    detail: 'Manufacturer details were saved.',
   },
-  onError: (err) => {
-    toast.add({
-      severity: 'error',
-      summary: 'Update failed',
-      detail: err instanceof Error ? err.message : 'Unable to update manufacturer.',
-      life: 3500,
-    })
+  errorMessage: {
+    summary: 'Update failed',
+    detail: 'Unable to update manufacturer.',
   },
+  invalidateQueries: [['manufacturers']],
 })
 
-const deleteMutation = useMutation({
+const deleteMutation = useMutationWithToast<void, Error, string>({
   mutationFn: removeManufacturer,
-  onSuccess: async () => {
-    await queryClient.invalidateQueries({ queryKey: ['manufacturers'] })
+  successMessage: {
+    summary: 'Manufacturer deleted',
+    detail: 'Manufacturer was deleted.',
+  },
+  errorMessage: {
+    summary: 'Delete failed',
+    detail: 'Unable to delete manufacturer.',
+  },
+  invalidateQueries: [['manufacturers']],
+  onSuccess: () => {
     reset()
-    toast.add({
-      severity: 'success',
-      summary: 'Manufacturer deleted',
-      detail: 'Manufacturer was deleted.',
-      life: 3000,
-    })
   },
   onError: (err) => {
     formError.value = err instanceof Error ? err.message : 'Unable to delete manufacturer.'
-    toast.add({
-      severity: 'error',
-      summary: 'Delete failed',
-      detail: err instanceof Error ? err.message : 'Unable to delete manufacturer.',
-      life: 3500,
-    })
   },
 })
 
