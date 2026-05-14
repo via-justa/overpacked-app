@@ -1,0 +1,22 @@
+# Repository-level ignores
+# Keep language/package specific ignores in backend/.gitignore and frontend/.gitignore.
+
+# Environment files (root-level)
+.env
+.env.*
+!.env.example
+
+# OS/editor artifacts at repo root
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Local container/runtime leftovers
+docker-compose.override.yml
