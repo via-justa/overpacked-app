@@ -1,0 +1,157 @@
+
+erDiagram
+    PACKS ||--o{ PACK_ITEMS : contains
+    PACKS ||--o{ PACK_SETS : set_contributions
+    ITEM_SETS ||--o{ PACK_SETS : contributes_to
+    PERSONS ||--o{ PACKS : carries
+
+    ITEMS ||--o{ PACK_ITEMS : included_in
+    ITEMS ||--o{ SET_ITEMS : grouped_in_sets
+
+    ITEM_SETS ||--o{ SET_ITEMS : groups
+    ITEM_TYPES ||--o{ ITEM_SETS : categorizes
+
+    ITEM_TYPES ||--o{ ITEMS : types
+    ITEM_TYPES ||--o{ ITEM_TYPE_FIELDS : defines_fields
+    MANUFACTURERS ||--o{ ITEMS : makes
+
+    SETTINGS {
+        int id PK "always 1"
+        string weight_unit "g, oz"
+        string distance_unit "km, mi"
+        string temperature_unit "c, f"
+        string volume_unit "ml, fl_oz"
+    }
+
+    PERSONS {
+        uuid id PK
+        string name "required"
+        string gender "optional"
+        date birthdate "optional"
+        decimal body_weight_grams "optional; always stored in grams"
+        string conditioning_level "optional; sedentary, average, athletic, military"
+    }
+
+    ITEMS {
+        uuid id PK
+        uuid manufacturer_id FK "required"
+        string type_id FK "required"
+        string name "required"
+        boolean is_active "required"
+        string description "optional"
+        string source_url "optional"
+        decimal price "optional"
+        decimal weight_grams "optional; always stored in grams"
+        decimal volume_ml "optional; always stored in ml"
+        int default_quantity
+        string default_carry_status "packed, worn"
+        boolean is_default "auto-add to new packs"
+        int dose_count "consumable only"
+        float calories "consumable only"
+        float calories_per_serving "consumable only"
+        boolean requires_water "consumable only"
+        string season "wearable only; summer, winter, year_round"
+        string layer "wearable only; base, mid, shell, accessory"
+        boolean waterproof "wearable only"
+        string size "wearable only"
+        string color "wearable only"
+        float capacity_people "shelter only"
+        string season_rating "shelter only; 3-season, 4-season"
+        boolean freestanding "shelter only"
+        boolean has_footprint "shelter only"
+        float comfort_temp_c "sleep only"
+        string fill_type "sleep only; down, synthetic, foam, air, other"
+        float r_value "sleep only"
+        int capacity_mah "electronics only"
+        string charge_port "electronics only; usb-c, micro-usb, lightning, dc"
+        boolean rechargeable "electronics only"
+        bytes image_blob "optional"
+        string image_mime_type "required when image_blob is set"
+        int image_size_bytes "required when image_blob is set"
+        int image_width_px "required when image_blob is set"
+        int image_height_px "required when image_blob is set"
+        json attributes_json "dynamic fields for custom item types"
+        datetime created_at
+        datetime updated_at
+    }
+
+    ITEM_TYPES {
+        string id PK "type key; supports system + user-defined types"
+        string name "display name"
+        string description "optional"
+        string base_profile "consumable, wearable, shelter, sleep, electronics"
+        boolean is_system "true for built-in types"
+        datetime created_at
+        datetime updated_at
+    }
+
+    ITEM_TYPE_FIELDS {
+        uuid id PK
+        string item_type_id FK
+        string field_key "machine key; unique within item type"
+        string field_label
+        string data_type "string, integer, number, boolean, enum"
+        boolean is_required
+        json enum_options_json "required when data_type is enum"
+        decimal min_value "optional"
+        decimal max_value "optional"
+        string unit "optional"
+        int sort_order
+        datetime created_at
+        datetime updated_at
+    }
+
+    MANUFACTURERS {
+        uuid id PK
+        string name UK
+        string website
+    }
+
+    ITEM_SETS {
+        uuid id PK
+        string name
+        string set_category FK "required; references item_types.id"
+        string description
+        boolean is_active
+        datetime created_at
+        datetime updated_at
+    }
+
+    SET_ITEMS {
+        uuid id PK
+        uuid set_id FK
+        uuid item_id FK "unique with set_id"
+        int quantity
+        string notes
+        int sort_order
+    }
+
+    PACKS {
+        uuid id PK
+        uuid person_id FK "optional; who carries this pack"
+        string name
+        string trip_type "day_hike, overnight, multi_day, thru_hike"
+        string notes
+        boolean is_template
+        datetime created_at
+        datetime updated_at
+    }
+
+    PACK_ITEMS {
+        uuid id PK
+        uuid pack_id FK
+        uuid item_id FK "unique with pack_id"
+        int quantity
+        string carry_status "packed, worn; default: packed"
+        string notes
+        datetime created_at
+        datetime updated_at
+    }
+
+    PACK_SETS {
+        uuid id PK
+        uuid pack_id FK
+        uuid set_id FK "unique with pack_id"
+        datetime applied_at
+        datetime created_at
+    }

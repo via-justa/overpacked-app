@@ -1,0 +1,2487 @@
+openapi: 3.0.3
+info:
+  title: Packing List API
+  version: 0.1.0
+  description: Backpacking gear management API
+servers:
+  - url: http://localhost:8000
+
+paths:
+  /health:
+    get:
+      tags:
+        - health
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/v1/auth/login:
+    post:
+      tags:
+        - auth
+      summary: Login with app credentials
+      operationId: authLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/refresh:
+    post:
+      tags:
+        - auth
+      summary: Refresh JWT tokens
+      operationId: authRefresh
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Tokens refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/logout:
+    post:
+      tags:
+        - auth
+      summary: Logout current session
+      operationId: authLogout
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Logged out successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/settings:
+    get:
+      tags:
+        - settings
+      summary: Get current settings
+      operationId: getSettings
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Settings retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    patch:
+      tags:
+        - settings
+      summary: Update settings
+      operationId: updateSettings
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettingsUpdate'
+      responses:
+        '200':
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Settings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/settings/start-fresh:
+    post:
+      tags:
+        - settings
+      summary: Permanently delete all app data and reset defaults
+      operationId: startFresh
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartFreshRequest'
+      responses:
+        '204':
+          description: Data reset completed
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/persons:
+    get:
+      tags:
+        - persons
+      summary: List all persons
+      operationId: listPersons
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of persons
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Person'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - persons
+      summary: Create a new person
+      operationId: createPerson
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonCreate'
+      responses:
+        '201':
+          description: Person created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Person'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/persons/{personId}:
+    get:
+      tags:
+        - persons
+      summary: Get person by ID
+      operationId: getPerson
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Person retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Person'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags:
+        - persons
+      summary: Update person
+      operationId: updatePerson
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PersonUpdate'
+      responses:
+        '200':
+          description: Person updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Person'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - persons
+      summary: Delete person
+      operationId: deletePerson
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Person deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/manufacturers:
+    get:
+      tags:
+        - manufacturers
+      summary: List all manufacturers
+      operationId: listManufacturers
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of manufacturers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Manufacturer'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - manufacturers
+      summary: Create a new manufacturer
+      operationId: createManufacturer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManufacturerCreate'
+      responses:
+        '201':
+          description: Manufacturer created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manufacturer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/manufacturers/{manufacturerId}:
+    get:
+      tags:
+        - manufacturers
+      summary: Get manufacturer by ID
+      operationId: getManufacturer
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: manufacturerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Manufacturer retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manufacturer'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags:
+        - manufacturers
+      summary: Update manufacturer
+      operationId: updateManufacturer
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: manufacturerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ManufacturerUpdate'
+      responses:
+        '200':
+          description: Manufacturer updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Manufacturer'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - manufacturers
+      summary: Delete manufacturer
+      operationId: deleteManufacturer
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: manufacturerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Manufacturer deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/items:
+    get:
+      tags:
+        - items
+      summary: List all items
+      operationId: listItems
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Item'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - items
+      summary: Create a new item
+      operationId: createItem
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemCreate'
+      responses:
+        '201':
+          description: Item created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/items/{itemId}:
+    get:
+      tags:
+        - items
+      summary: Get item by ID
+      operationId: getItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Item retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags:
+        - items
+      summary: Update item
+      operationId: updateItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemUpdate'
+      responses:
+        '200':
+          description: Item updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - items
+      summary: Delete item
+      operationId: deleteItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Item deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/item-types:
+    get:
+      tags:
+        - item-types
+      summary: List all item types
+      operationId: listItemTypes
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of item types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ItemType'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - item-types
+      summary: Create a new item type
+      operationId: createItemType
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemTypeCreate'
+      responses:
+        '201':
+          description: Item type created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemType'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/item-types/{typeId}:
+    get:
+      tags:
+        - item-types
+      summary: Get item type by ID
+      operationId: getItemType
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: typeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Item type retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemType'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags:
+        - item-types
+      summary: Update item type
+      operationId: updateItemType
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: typeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemTypeUpdate'
+      responses:
+        '200':
+          description: Item type updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemType'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - item-types
+      summary: Delete item type
+      operationId: deleteItemType
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: typeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Item type deleted
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Item type is currently in use and cannot be deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - error
+                properties:
+                  error:
+                    type: string
+
+  /api/v1/item-types/{typeId}/fields:
+    get:
+      tags:
+        - item-types
+      summary: List field definitions for an item type
+      operationId: listItemTypeFields
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: typeId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of item type field definitions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ItemTypeField'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - item-types
+      summary: Replace field definitions for an item type
+      operationId: replaceItemTypeFields
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: typeId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemTypeFieldsReplace'
+      responses:
+        '200':
+          description: Item type field definitions replaced
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ItemTypeField'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/sets:
+    get:
+      tags:
+        - sets
+      summary: List all item sets
+      operationId: listSets
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of item sets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ItemSet'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - sets
+      summary: Create a new item set
+      operationId: createSet
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemSetCreate'
+      responses:
+        '201':
+          description: Item set created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemSet'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/sets/{setId}:
+    get:
+      tags:
+        - sets
+      summary: Get item set by ID
+      operationId: getSet
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: setId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Item set retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemSet'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags:
+        - sets
+      summary: Update item set
+      operationId: updateSet
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: setId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemSetUpdate'
+      responses:
+        '200':
+          description: Item set updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemSet'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - sets
+      summary: Delete item set
+      operationId: deleteSet
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: setId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Item set deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/sets/{setId}/items:
+    get:
+      tags:
+        - set-items
+      summary: List items in a set
+      operationId: listSetItems
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: setId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of items in set
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SetItemWithDetails'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags:
+        - set-items
+      summary: Add item to set
+      operationId: addSetItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: setId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetItemCreate'
+      responses:
+        '201':
+          description: Item added to set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetItemWithDetails'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/sets/{setId}/items/{itemId}:
+    patch:
+      tags:
+        - set-items
+      summary: Update item in set
+      operationId: updateSetItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: setId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetItemUpdate'
+      responses:
+        '200':
+          description: Item in set updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SetItemWithDetails'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - set-items
+      summary: Remove item from set
+      operationId: removeSetItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: setId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Item removed from set
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/packs:
+    get:
+      tags:
+        - packs
+      summary: List all packs
+      operationId: listPacks
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of packs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pack'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - packs
+      summary: Create a new pack
+      operationId: createPack
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackCreate'
+      responses:
+        '201':
+          description: Pack created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pack'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/packs/{packId}:
+    get:
+      tags:
+        - packs
+      summary: Get pack by ID
+      operationId: getPack
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: packId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Pack retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pack'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags:
+        - packs
+      summary: Update pack
+      operationId: updatePack
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: packId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackUpdate'
+      responses:
+        '200':
+          description: Pack updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pack'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - packs
+      summary: Delete pack
+      operationId: deletePack
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: packId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Pack deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/packs/{packId}/items:
+    get:
+      tags:
+        - pack-items
+      summary: List items in a pack
+      operationId: listPackItems
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: packId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of items in pack
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PackItemWithDetails'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags:
+        - pack-items
+      summary: Add item to pack
+      operationId: addPackItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: packId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackItemCreate'
+      responses:
+        '201':
+          description: Item added to pack
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackItemWithDetails'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/packs/{packId}/items/{itemId}:
+    patch:
+      tags:
+        - pack-items
+      summary: Update item in pack
+      operationId: updatePackItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: packId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackItemUpdate'
+      responses:
+        '200':
+          description: Item in pack updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackItemWithDetails'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - pack-items
+      summary: Remove item from pack
+      operationId: removePackItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: packId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Item removed from pack
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/packs/{packId}/sets:
+    get:
+      tags:
+        - pack-sets
+      summary: List sets applied to pack
+      operationId: listPackSets
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: packId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of sets in pack
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ItemSet'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags:
+        - pack-sets
+      summary: Apply set to pack
+      operationId: addPackSet
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: packId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackSetCreate'
+      responses:
+        '201':
+          description: Set applied to pack
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ItemSet'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/packs/{packId}/sets/{setId}:
+    delete:
+      tags:
+        - pack-sets
+      summary: Remove set from pack
+      operationId: removePackSet
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: packId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: setId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Set removed from pack
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    RefreshRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+
+    TokenResponse:
+      type: object
+      required:
+        - access_token
+        - refresh_token
+        - token_type
+        - expires_in
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+        expires_in:
+          type: integer
+
+    Settings:
+      type: object
+      required:
+        - id
+        - weight_unit
+        - distance_unit
+        - temperature_unit
+        - volume_unit
+        - currency
+      properties:
+        id:
+          type: integer
+        weight_unit:
+          type: string
+          enum: [g, oz]
+        distance_unit:
+          type: string
+          enum: [km, mi]
+        temperature_unit:
+          type: string
+          enum: [c, f]
+        volume_unit:
+          type: string
+          enum: [ml, fl_oz]
+        currency:
+          type: string
+          enum: [usd, eur]
+
+    SettingsUpdate:
+      type: object
+      properties:
+        weight_unit:
+          type: string
+          enum: [g, oz]
+        distance_unit:
+          type: string
+          enum: [km, mi]
+        temperature_unit:
+          type: string
+          enum: [c, f]
+        volume_unit:
+          type: string
+          enum: [ml, fl_oz]
+        currency:
+          type: string
+          enum: [usd, eur]
+
+    StartFreshRequest:
+      type: object
+      required:
+        - password
+      properties:
+        password:
+          type: string
+
+    Person:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        gender:
+          type: string
+          enum: [male, female, other]
+          nullable: true
+        birthdate:
+          type: string
+          format: date
+          nullable: true
+        body_weight_grams:
+          type: number
+          format: float
+        conditioning_level:
+          type: string
+          enum: [sedentary, average, athletic, military]
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PersonCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        gender:
+          type: string
+          enum: [male, female, other]
+        birthdate:
+          type: string
+          format: date
+        body_weight_grams:
+          type: number
+          format: float
+        conditioning_level:
+          type: string
+          enum: [sedentary, average, athletic, military]
+
+    PersonUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        gender:
+          type: string
+          enum: [male, female, other]
+        birthdate:
+          type: string
+          format: date
+        body_weight_grams:
+          type: number
+          format: float
+        conditioning_level:
+          type: string
+          enum: [sedentary, average, athletic, military]
+
+    Manufacturer:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        website:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ManufacturerCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        website:
+          type: string
+
+    ManufacturerUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        website:
+          type: string
+
+    ItemType:
+      type: object
+      required:
+        - id
+        - name
+        - is_system
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          description: Machine key for the item type, e.g. consumable or my_power_kit
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        base_profile:
+          type: string
+          enum: [consumable, wearable, shelter, sleep, electronics]
+          nullable: true
+        is_system:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ItemTypeCreate:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        base_profile:
+          type: string
+          enum: [consumable, wearable, shelter, sleep, electronics]
+          nullable: true
+
+    ItemTypeUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        base_profile:
+          type: string
+          enum: [consumable, wearable, shelter, sleep, electronics]
+          nullable: true
+
+    ItemTypeField:
+      type: object
+      required:
+        - id
+        - item_type_id
+        - field_key
+        - field_label
+        - data_type
+        - is_required
+        - sort_order
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        item_type_id:
+          type: string
+        field_key:
+          type: string
+        field_label:
+          type: string
+        data_type:
+          type: string
+          enum: [string, integer, number, boolean, enum]
+        is_required:
+          type: boolean
+        enum_options:
+          type: array
+          items:
+            type: string
+          nullable: true
+        min_value:
+          type: number
+          format: float
+          nullable: true
+        max_value:
+          type: number
+          format: float
+          nullable: true
+        unit:
+          type: string
+          nullable: true
+        sort_order:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ItemTypeFieldInput:
+      type: object
+      required:
+        - field_key
+        - field_label
+        - data_type
+      properties:
+        field_key:
+          type: string
+        field_label:
+          type: string
+        data_type:
+          type: string
+          enum: [string, integer, number, boolean, enum]
+        is_required:
+          type: boolean
+          nullable: true
+        enum_options:
+          type: array
+          items:
+            type: string
+          nullable: true
+        min_value:
+          type: number
+          format: float
+          nullable: true
+        max_value:
+          type: number
+          format: float
+          nullable: true
+        unit:
+          type: string
+          nullable: true
+        sort_order:
+          type: integer
+          nullable: true
+
+    ItemTypeFieldsReplace:
+      type: object
+      required:
+        - fields
+      properties:
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemTypeFieldInput'
+
+    CustomItem:
+      allOf:
+        - $ref: '#/components/schemas/ItemBase'
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+
+    Item:
+      oneOf:
+        - $ref: '#/components/schemas/ConsumableItem'
+        - $ref: '#/components/schemas/WearableItem'
+        - $ref: '#/components/schemas/ShelterItem'
+        - $ref: '#/components/schemas/SleepItem'
+        - $ref: '#/components/schemas/ElectronicsItem'
+        - $ref: '#/components/schemas/CustomItem'
+      discriminator:
+        propertyName: type
+        mapping:
+          consumable: '#/components/schemas/ConsumableItem'
+          wearable: '#/components/schemas/WearableItem'
+          shelter: '#/components/schemas/ShelterItem'
+          sleep: '#/components/schemas/SleepItem'
+          electronics: '#/components/schemas/ElectronicsItem'
+
+    ItemBase:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - is_active
+        - manufacturer_id
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+        is_active:
+          type: boolean
+        manufacturer_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+          nullable: true
+        source_url:
+          type: string
+          nullable: true
+        value:
+          type: number
+          nullable: true
+        weight_grams:
+          type: number
+          format: float
+          nullable: true
+        volume_ml:
+          type: number
+          format: float
+          nullable: true
+        default_quantity:
+          type: integer
+          nullable: true
+        default_carry_status:
+          type: string
+          enum: [packed, worn]
+          nullable: true
+        is_default:
+          type: boolean
+          nullable: true
+        image_blob:
+          type: string
+          format: byte
+          nullable: true
+        image_mime_type:
+          type: string
+          nullable: true
+        image_size_bytes:
+          type: integer
+          nullable: true
+        image_width_px:
+          type: integer
+          nullable: true
+        image_height_px:
+          type: integer
+          nullable: true
+        attributes:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Dynamic per-item values keyed by item type field definitions
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ConsumableItem:
+      allOf:
+        - $ref: '#/components/schemas/ItemBase'
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum: [consumable]
+            dose_count:
+              type: integer
+              nullable: true
+            calories:
+              type: number
+              format: float
+              nullable: true
+            calories_per_serving:
+              type: number
+              format: float
+              nullable: true
+            requires_water:
+              type: boolean
+              nullable: true
+
+    WearableItem:
+      allOf:
+        - $ref: '#/components/schemas/ItemBase'
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum: [wearable]
+            season:
+              type: string
+              enum: [summer, winter, year_round]
+              nullable: true
+            layer:
+              type: string
+              enum: [base, mid, shell, accessory]
+              nullable: true
+            waterproof:
+              type: boolean
+              nullable: true
+            size:
+              type: string
+              nullable: true
+            color:
+              type: string
+              nullable: true
+
+    ShelterItem:
+      allOf:
+        - $ref: '#/components/schemas/ItemBase'
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum: [shelter]
+            capacity_people:
+              type: number
+              format: float
+              nullable: true
+            season_rating:
+              type: string
+              enum: [3-season, 4-season]
+              nullable: true
+            freestanding:
+              type: boolean
+              nullable: true
+            has_footprint:
+              type: boolean
+              nullable: true
+
+    SleepItem:
+      allOf:
+        - $ref: '#/components/schemas/ItemBase'
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum: [sleep]
+            comfort_temp_c:
+              type: number
+              nullable: true
+            fill_type:
+              type: string
+              enum: [down, synthetic, foam, air, other]
+              nullable: true
+            r_value:
+              type: number
+              nullable: true
+
+    ElectronicsItem:
+      allOf:
+        - $ref: '#/components/schemas/ItemBase'
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum: [electronics]
+            capacity_mah:
+              type: integer
+              nullable: true
+            charge_port:
+              type: string
+              enum: [usb-c, micro-usb, lightning, dc]
+              nullable: true
+            rechargeable:
+              type: boolean
+              nullable: true
+
+    ItemCreate:
+      type: object
+      required:
+        - name
+        - type
+        - is_active
+        - manufacturer_id
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        is_active:
+          type: boolean
+        manufacturer_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+          nullable: true
+        source_url:
+          type: string
+          nullable: true
+        value:
+          type: number
+          format: float
+          nullable: true
+        weight_grams:
+          type: number
+          format: float
+          nullable: true
+        volume_ml:
+          type: number
+          format: float
+          nullable: true
+        default_quantity:
+          type: integer
+          nullable: true
+        default_carry_status:
+          type: string
+          enum: [packed, worn]
+          nullable: true
+        is_default:
+          type: boolean
+          nullable: true
+        dose_count:
+          type: integer
+          nullable: true
+        calories:
+          type: number
+          format: float
+          nullable: true
+        calories_per_serving:
+          type: number
+          format: float
+          nullable: true
+        requires_water:
+          type: boolean
+          nullable: true
+        season:
+          type: string
+          enum: [summer, winter, year_round]
+          nullable: true
+        layer:
+          type: string
+          enum: [base, mid, shell, accessory]
+          nullable: true
+        waterproof:
+          type: boolean
+          nullable: true
+        size:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        capacity_people:
+          type: number
+          format: float
+          nullable: true
+        season_rating:
+          type: string
+          enum: [3-season, 4-season]
+          nullable: true
+        freestanding:
+          type: boolean
+          nullable: true
+        has_footprint:
+          type: boolean
+          nullable: true
+        comfort_temp_c:
+          type: number
+          format: float
+          nullable: true
+        fill_type:
+          type: string
+          enum: [down, synthetic, foam, air, other]
+          nullable: true
+        r_value:
+          type: number
+          format: float
+          nullable: true
+        capacity_mah:
+          type: integer
+          nullable: true
+        charge_port:
+          type: string
+          enum: [usb-c, micro-usb, lightning, dc]
+          nullable: true
+        rechargeable:
+          type: boolean
+          nullable: true
+        image_blob:
+          type: string
+          format: byte
+          nullable: true
+        image_mime_type:
+          type: string
+          nullable: true
+        image_size_bytes:
+          type: integer
+          nullable: true
+        image_width_px:
+          type: integer
+          nullable: true
+        image_height_px:
+          type: integer
+          nullable: true
+        attributes:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Dynamic per-item values keyed by item type field definitions
+
+    ItemUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        is_active:
+          type: boolean
+        manufacturer_id:
+          type: string
+          format: uuid
+        description:
+          type: string
+          nullable: true
+        source_url:
+          type: string
+          nullable: true
+        value:
+          type: number
+          format: float
+          nullable: true
+        weight_grams:
+          type: number
+          format: float
+          nullable: true
+        volume_ml:
+          type: number
+          format: float
+          nullable: true
+        default_quantity:
+          type: integer
+          nullable: true
+        default_carry_status:
+          type: string
+          enum: [packed, worn]
+          nullable: true
+        is_default:
+          type: boolean
+          nullable: true
+        dose_count:
+          type: integer
+          nullable: true
+        calories:
+          type: number
+          format: float
+          nullable: true
+        calories_per_serving:
+          type: number
+          format: float
+          nullable: true
+        requires_water:
+          type: boolean
+          nullable: true
+        season:
+          type: string
+          enum: [summer, winter, year_round]
+          nullable: true
+        layer:
+          type: string
+          enum: [base, mid, shell, accessory]
+          nullable: true
+        waterproof:
+          type: boolean
+          nullable: true
+        size:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        capacity_people:
+          type: number
+          format: float
+          nullable: true
+        season_rating:
+          type: string
+          enum: [3-season, 4-season]
+          nullable: true
+        freestanding:
+          type: boolean
+          nullable: true
+        has_footprint:
+          type: boolean
+          nullable: true
+        comfort_temp_c:
+          type: number
+          format: float
+          nullable: true
+        fill_type:
+          type: string
+          enum: [down, synthetic, foam, air, other]
+          nullable: true
+        r_value:
+          type: number
+          format: float
+          nullable: true
+        capacity_mah:
+          type: integer
+          nullable: true
+        charge_port:
+          type: string
+          enum: [usb-c, micro-usb, lightning, dc]
+          nullable: true
+        rechargeable:
+          type: boolean
+          nullable: true
+        image_blob:
+          type: string
+          format: byte
+          nullable: true
+        image_mime_type:
+          type: string
+          nullable: true
+        image_size_bytes:
+          type: integer
+          nullable: true
+        image_width_px:
+          type: integer
+          nullable: true
+        image_height_px:
+          type: integer
+          nullable: true
+        attributes:
+          type: object
+          additionalProperties: true
+          nullable: true
+          description: Dynamic per-item values keyed by item type field definitions
+
+    ItemSet:
+      type: object
+      required:
+        - id
+        - name
+        - set_category
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        set_category:
+          type: string
+          description: Item type id used to categorize this set
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ItemSetCreate:
+      type: object
+      required:
+        - name
+        - set_category
+      properties:
+        name:
+          type: string
+        set_category:
+          type: string
+          description: Item type id used to categorize this set
+
+    ItemSetUpdate:
+      type: object
+      required:
+        - set_category
+      properties:
+        name:
+          type: string
+        set_category:
+          type: string
+
+    SetItem:
+      type: object
+      required:
+        - item_id
+        - quantity
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: number
+          format: float
+        notes:
+          type: string
+          nullable: true
+        sort_order:
+          type: integer
+          nullable: true
+
+    SetItemCreate:
+      type: object
+      required:
+        - item_id
+        - quantity
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: number
+          format: float
+        notes:
+          type: string
+        sort_order:
+          type: integer
+
+    SetItemUpdate:
+      type: object
+      properties:
+        quantity:
+          type: number
+          format: float
+        notes:
+          type: string
+        sort_order:
+          type: integer
+
+    SetItemWithDetails:
+      type: object
+      required:
+        - item_id
+        - quantity
+        - item
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: number
+          format: float
+        notes:
+          type: string
+          nullable: true
+        sort_order:
+          type: integer
+          nullable: true
+        item:
+          $ref: '#/components/schemas/Item'
+
+    Pack:
+      type: object
+      required:
+        - id
+        - name
+        - trip_type
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        trip_type:
+          type: string
+          enum: [day_hike, overnight, multi_day, thru_hike]
+        person_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PackCreate:
+      type: object
+      required:
+        - name
+        - trip_type
+      properties:
+        name:
+          type: string
+        trip_type:
+          type: string
+          enum: [day_hike, overnight, multi_day, thru_hike]
+        person_id:
+          type: string
+          format: uuid
+
+    PackUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        trip_type:
+          type: string
+          enum: [day_hike, overnight, multi_day, thru_hike]
+        person_id:
+          type: string
+          format: uuid
+
+    PackItem:
+      type: object
+      required:
+        - item_id
+        - quantity
+        - carry_status
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: number
+          format: float
+        carry_status:
+          type: string
+          enum: [packed, worn]
+
+    PackItemCreate:
+      type: object
+      required:
+        - item_id
+        - quantity
+        - carry_status
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: number
+          format: float
+        carry_status:
+          type: string
+          enum: [packed, worn]
+
+    PackItemUpdate:
+      type: object
+      properties:
+        quantity:
+          type: number
+          format: float
+        carry_status:
+          type: string
+          enum: [packed, worn]
+
+    PackItemWithDetails:
+      type: object
+      required:
+        - item_id
+        - quantity
+        - carry_status
+        - item
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: number
+          format: float
+        carry_status:
+          type: string
+          enum: [packed, worn]
+        item:
+          $ref: '#/components/schemas/Item'
+
+    PackSetCreate:
+      type: object
+      required:
+        - set_id
+      properties:
+        set_id:
+          type: string
+          format: uuid
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                type: string
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                type: string
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                type: string
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
