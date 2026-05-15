@@ -98,7 +98,8 @@
   --checkbox-focus-width: 2px;
   --checkbox-focus-offset: 2px;
   --checkbox-transition-duration: 0.15s;
-  --checkbox-transition: border-color 0.15s ease, background-color 0.15sata:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5L3.5 7.5L8.5 2.5' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+  --checkbox-transition: border-color 0.15s ease;
+ --checkbox-icon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5L3.5 7.5L8.5 2.5' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
   --checkbox-icon-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M2 5H8' stroke='white' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
   --checkbox-icon-size: 70%;
 
@@ -122,7 +123,8 @@
   --toggle-label-shadow-selected: 0 1px 2px rgb(0 0 0 / 0.08);
   --toggle-transition-duration: 150ms;
   --toggle-transition-easing: ease;
-}: all 150ms
+}
+
 @utility app-shell-gradient {
   background-image: linear-gradient(to bottom right,
       var(--app-shell-gradient-start),
@@ -210,7 +212,9 @@
   outline: none;
   transition:
     border-color var(--field-transition-duration) var(--field-transition-easing),
-    box-shado var(--field-transition
+    box-shado var(--field-transition)
+}
+
 @utility input-shell-focus {
   border-color: var(--field-border-focus);
   box-shadow: var(--field-focus-shadow);
@@ -243,7 +247,9 @@
   box-shadow: none;
   transition:
     border-color var(--field-transition-duration) var(--field-transition-easing),
-    box-shado var(--field-transition
+    box-shado var(--field-transition)
+}
+
 .app-select-field.p-select:not(.p-disabled):hover {
   border-color: var(--field-border-hover);
 }
@@ -347,7 +353,8 @@ input[type='checkbox'] {
   background-color: var(--checkbox-background);
   transition:
     border-color var(--checkbox-transition-duration) var(--checkbox-transition-easing),
-    backgroun var(--checkbox-transition
+    backgroun var(--checkbox-transition)
+}
 
 input[type='checkbox']:checked {
   background-color: var(--checkbox-background-selected);
@@ -397,9 +404,9 @@ input[type='checkbox']:focus-visible {
   text-transform: uppercase;
   letter-spacing: var(--toggle-letter-spacing);
   color: var(--toggle-label-text);
-  transition: all var(--toggle-transition-duration) var(--toggle-transition-easing);
+  transition: all var(--toggle-transition-duration) var(--toggle-transition-easing) var(--toggle-transition);
 }
-var(--toggle-transition
+
 .toggle-option-label:hover {
   background: var(--toggle-label-background-hover);
 }
@@ -424,7 +431,9 @@ var(--toggle-transition
   padding: var(--field-padding-y) var(--field-padding-x);
   transition:
     border-color var(--field-transition-duration) var(--field-transition-easing),
-    box-shado var(--field-transition
+    box-shado var(--field-transition)
+}
+
 .app-date-picker .p-inputtext:focus {
   border-color: var(--field-border-focus);
   box-shadow: var(--field-focus-shadow);
