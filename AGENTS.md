@@ -103,6 +103,19 @@ Only these are mandatory for items:
 - Date display consistency: avoid locale-based date rendering for persons; keep fixed day-month-year formatting for list display and form input.
 - Body-weight unit behavior: backend remains canonical grams only; settings unit is display-only (`g` => KG input/display, `oz` => LB input/display).
 - Theme-token guardrail: keep raw Tailwind palette utilities out of app templates and feature CSS. Use semantic tokens from `frontend/src/style.css` instead, and run `npm run lint:theme` in `frontend/` before committing UI changes.
+- **CSS overflow and fixed positioning**: Elements with `overflow-x: auto`, `overflow-y: auto`, or similar overflow properties create a new containing block for `position: fixed` descendants, breaking viewport-relative positioning. Fixed elements inside overflow containers will position relative to that container, not the viewport.
+- **Vue Teleport for fixed elements**: Use `<Teleport to="body">` to render fixed-positioned UI (dropdown menus, tooltips, popovers) outside overflow containers. This ensures `position: fixed` works correctly relative to the viewport. The Teleport mechanism maintains all reactive state and event handlers while rendering the DOM at body level.
+- **Menu rendering optimization**: When using Teleport for menus with item-specific actions, use a computed property to find the active item (`computed(() => items.find(item => item.id === activeId))`) instead of iterating through all items with `v-for` and conditionals in the template.
+- **localStorage utilities pattern**: Use `frontend/src/lib/storage/localStorage.ts` utilities (`getStoredValue`, `setStoredValue`) for SSR-safe localStorage access with type guards. Sonar prefers `typeof window === 'undefined'` over `typeof globalThis.window === 'undefined'`, and regular function declarations over arrow functions for exports.
+- **Row actions composable**: For table/list row actions menus with positioning logic, use `frontend/src/composables/useRowActionsMenu.ts` composable instead of duplicating menu positioning, document click handling, and lifecycle cleanup across components.
+
+### Accessibility
+- **HTML title**: Use descriptive page title in `index.html` (e.g., "Overpacked - Backpacking Gear Manager" not "frontend")
+- **aria-current**: Add `aria-current="page"` to active navigation links for screen reader navigation context
+- **aria-live regions**: Use `aria-live="polite"` on Toast notifications and loading states to announce dynamic content to screen readers
+- **Form validation**: Link validation errors to form inputs with `aria-describedby` and `aria-invalid` attributes
+- **Table captions**: Add `<caption class="sr-only">` to data tables for screen reader context without visual display
+- **Loading states**: Add `role="status"` to loading indicators for proper screen reader announcement
 
 ## OpenAPI & Code Generation
 - **Generator**: oapi-codegen v2.7.0 (spec-first, not code-first)
