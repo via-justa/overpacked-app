@@ -20,6 +20,6 @@ const isBootstrapping = computed(() => authStore.isBootstrapping)
   <div v-else data-component="app-router-view">
     <RouterView />
   </div>
-  <Toast data-component="app-toast" position="bottom-center" />
+  <Toast data-component="app-toast" position="bottom-center" aria-live="polite" aria-atomic="true" />
   <VueQueryDevtools v-if="isDev" />
 </template>

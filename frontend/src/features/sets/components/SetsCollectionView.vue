@@ -164,6 +164,7 @@ const getExpandedFieldDisplays = (set: ItemSet): ExpandedFieldDisplay[] => {
 
     <div v-else class="overflow-x-auto overflow-y-visible">
       <table class="divide-line text-copy min-w-full table-fixed divide-y text-sm">
+        <caption class="sr-only">Sets collection with {{ visibleFields.length }} columns</caption>
         <thead class="bg-surface-muted text-copy-subtle text-left text-xs font-semibold uppercase tracking-[0.06em]">
           <tr>
             <th class="w-8 px-3 py-3">

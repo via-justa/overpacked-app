@@ -458,25 +458,29 @@ const onCancel = () => {
               </span>
             </label>
 
-            <label class="grid min-w-0 gap-1">
+            <label class="grid gap-1">
               <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Weight (<span
                   class="lowercase">{{ weightInputLabel }}</span>)</span>
               <input data-element="item-weight" class="w-full min-w-0 input-shell" :value="values.weight_value"
                 inputmode="decimal" type="text"
+                :aria-invalid="Boolean(validationErrors.weight_value)"
+                :aria-describedby="validationErrors.weight_value ? 'item-weight-error' : undefined"
                 @input="updateField('weight_value', ($event.target as HTMLInputElement).value)" />
-              <span class="block min-h-4 truncate text-xs font-medium"
+              <span id="item-weight-error" class="block min-h-4 truncate text-xs font-medium"
                 :class="validationErrors.weight_value ? 'text-danger-500' : 'invisible'">
                 {{ validationErrors.weight_value ?? ' ' }}
               </span>
             </label>
 
-            <label class="grid min-w-0 gap-1">
+            <label class="grid gap-1">
               <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Volume (<span
                   class="lowercase">{{ volumeInputLabel }}</span>)</span>
               <input data-element="item-volume" class="w-full min-w-0 input-shell" :value="values.volume_value"
                 inputmode="decimal" type="text"
+                :aria-invalid="Boolean(validationErrors.volume_value)"
+                :aria-describedby="validationErrors.volume_value ? 'item-volume-error' : undefined"
                 @input="updateField('volume_value', ($event.target as HTMLInputElement).value)" />
-              <span class="block min-h-4 truncate text-xs font-medium"
+              <span id="item-volume-error" class="block min-h-4 truncate text-xs font-medium"
                 :class="validationErrors.volume_value ? 'text-danger-500' : 'invisible'">
                 {{ validationErrors.volume_value ?? ' ' }}
               </span>

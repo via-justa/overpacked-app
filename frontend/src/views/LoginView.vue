@@ -108,15 +108,19 @@ const onSubmit = handleSubmit(async (values) => {
         <div>
           <label class="text-copy mb-1 block text-sm font-medium" for="username">Username</label>
           <input id="username" data-element="login-username" v-model="username" v-bind="usernameProps"
-            class="input-shell w-full" type="text" name="username" autocomplete="username" />
-          <p v-if="errors.username" class="text-danger-500 mt-1 text-xs font-medium">{{ errors.username }}</p>
+            class="input-shell w-full" type="text" name="username" autocomplete="username"
+            :aria-invalid="Boolean(errors.username)"
+            :aria-describedby="errors.username ? 'username-error' : undefined" />
+          <p v-if="errors.username" id="username-error" class="text-danger-500 mt-1 text-xs font-medium">{{ errors.username }}</p>
         </div>
 
         <div>
           <label class="text-copy mb-1 block text-sm font-medium" for="password">Password</label>
           <input id="password" data-element="login-password" v-model="password" v-bind="passwordProps"
-            class="input-shell w-full" type="password" name="password" autocomplete="current-password" />
-          <p v-if="errors.password" class="text-danger-500 mt-1 text-xs font-medium">{{ errors.password }}</p>
+            class="input-shell w-full" type="password" name="password" autocomplete="current-password"
+            :aria-invalid="Boolean(errors.password)"
+            :aria-describedby="errors.password ? 'password-error' : undefined" />
+          <p v-if="errors.password" id="password-error" class="text-danger-500 mt-1 text-xs font-medium">{{ errors.password }}</p>
         </div>
       </div>
 
