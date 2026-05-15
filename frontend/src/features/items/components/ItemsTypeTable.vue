@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed } from 'vue'
 import AppToggleGroup from '../../../components/AppToggleGroup.vue'
 import AppBooleanValue from '../../../components/AppBooleanValue.vue'
 import AppItemTableRowContent from '../../../components/AppItemTableRowContent.vue'
+import { useRowActionsMenu } from '../../../composables/useRowActionsMenu'
 import type { Item } from '../types'
 
 type TableField = {
@@ -50,62 +51,16 @@ const detailRowArrowImageSrc = 'https://assets.streamlinehq.com/image/private/w_
 
 const visibleFields = computed(() => props.baseFields)
 const allRowsSelected = computed(() => props.items.length > 0 && props.selectedItemIds.length === props.items.length)
-const openActionsForItemId = ref<string | null>(null)
-const rowActionsMenuPosition = ref<{ top: number; left: number }>({ top: 0, left: 0 })
 
-const closeRowActions = () => {
-  openActionsForItemId.value = null
-}
-
-const toggleRowActions = (itemId: string, event: MouseEvent) => {
-  if (openActionsForItemId.value === itemId) {
-    openActionsForItemId.value = null
-    return
-  }
-
-  const trigger = event.currentTarget
-  if (!(trigger instanceof HTMLElement)) {
-    openActionsForItemId.value = itemId
-    return
-  }
-
-  const rect = trigger.getBoundingClientRect()
-  const menuWidth = 176
-  const menuHeight = 188
-  const gap = 6
-
-  const left = Math.max(8, rect.right - menuWidth)
-  const openUpward = rect.bottom + gap + menuHeight > globalThis.window.innerHeight - 8
-  const top = openUpward ? Math.max(8, rect.top - gap - menuHeight) : rect.bottom + gap
-
-  rowActionsMenuPosition.value = { top, left }
-  openActionsForItemId.value = itemId
-}
-
-const onDocumentClick = (event: MouseEvent) => {
-  const target = event.target
-  if (!(target instanceof HTMLElement)) {
-    closeRowActions()
-    return
-  }
-
-  if (target.closest('[data-element="items-row-actions"]')) {
-    return
-  }
-
-  closeRowActions()
-}
-
-onMounted(() => {
-  if (globalThis.document) {
-    globalThis.document.addEventListener('click', onDocumentClick)
-  }
+const { openActionsForId: openActionsForItemId, menuPosition: rowActionsMenuPosition, closeActions: closeRowActions, toggleActions: toggleRowActions } = useRowActionsMenu({
+  menuWidth: 176,
+  menuHeight: 170,
+  dataElement: 'items-row-actions'
 })
 
-onBeforeUnmount(() => {
-  if (globalThis.document) {
-    globalThis.document.removeEventListener('click', onDocumentClick)
-  }
+const activeMenuItem = computed(() => {
+  if (!openActionsForItemId.value) return null
+  return props.items.find(item => item.id === openActionsForItemId.value) ?? null
 })
 
 type ExpandedFieldDisplay = {
@@ -254,39 +209,6 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
                     :aria-label="`Open actions for ${item.name}`" @click="(event) => toggleRowActions(item.id, event)">
                     <i class="pi pi-ellipsis-h text-xs" aria-hidden="true" />
                   </button>
-
-                  <div v-if="openActionsForItemId === item.id"
-                    class="border-line-subtle bg-surface-elevated fixed z-30 w-44 rounded-lg border py-1 shadow-sm"
-                    :style="{
-                      top: `${rowActionsMenuPosition.top}px`,
-                      left: `${rowActionsMenuPosition.left}px`,
-                    }">
-                    <button type="button"
-                      class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
-                      @click="emit('row:edit', item); closeRowActions()">
-                      Edit
-                    </button>
-                    <button type="button"
-                      class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
-                      @click="emit('row:duplicate', item); closeRowActions()">
-                      Duplicate
-                    </button>
-                    <button type="button"
-                      class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
-                      @click="emit('row:toggleActive', item); closeRowActions()">
-                      {{ item.is_active ? 'Deactivate' : 'Activate' }}
-                    </button>
-                    <button type="button"
-                      class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
-                      @click="emit('row:toggleDefault', item); closeRowActions()">
-                      {{ item.is_default ? 'Unset default' : 'Set default' }}
-                    </button>
-                    <button type="button"
-                      class="block w-full px-3 py-2 text-left text-xs font-medium text-red-700 hover:bg-red-50"
-                      @click="emit('row:delete', item); closeRowActions()">
-                      Delete
-                    </button>
-                  </div>
                 </div>
               </td>
             </tr>
@@ -320,4 +242,40 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
       </table>
     </div>
   </section>
+
+  <!-- Teleport menu to body to escape overflow container -->
+  <Teleport to="body">
+    <div v-if="activeMenuItem" data-element="items-row-actions-menu"
+      class="border-line-subtle bg-surface-elevated fixed z-30 w-44 rounded-lg border py-1 shadow-sm"
+      :style="{
+        top: `${rowActionsMenuPosition.top}px`,
+        left: `${rowActionsMenuPosition.left}px`,
+      }">
+      <button type="button"
+        class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
+        @click="emit('row:edit', activeMenuItem); closeRowActions()">
+        Edit
+      </button>
+      <button type="button"
+        class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
+        @click="emit('row:duplicate', activeMenuItem); closeRowActions()">
+        Duplicate
+      </button>
+      <button type="button"
+        class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
+        @click="emit('row:toggleActive', activeMenuItem); closeRowActions()">
+        {{ activeMenuItem.is_active ? 'Deactivate' : 'Activate' }}
+      </button>
+      <button type="button"
+        class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
+        @click="emit('row:toggleDefault', activeMenuItem); closeRowActions()">
+        {{ activeMenuItem.is_default ? 'Unset default' : 'Set default' }}
+      </button>
+      <button type="button"
+        class="block w-full px-3 py-2 text-left text-xs font-medium text-red-700 hover:bg-red-50"
+        @click="emit('row:delete', activeMenuItem); closeRowActions()">
+        Delete
+      </button>
+    </div>
+  </Teleport>
 </template>

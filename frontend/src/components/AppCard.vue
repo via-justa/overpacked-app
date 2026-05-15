@@ -8,7 +8,7 @@ import { normalizeTitleWords } from '../lib/text/normalize'
 interface Props {
   title: string
   imageSrc?: string
-  imageAlt?: string
+  imgAlt?: string
   showImagePlaceholder?: boolean
 }
 
@@ -21,7 +21,7 @@ withDefaults(defineProps<Props>(), {
   <article class="surface-panel p-4">
     <!-- Optional image slot -->
     <div v-if="imageSrc" class="bg-surface-soft -m-4 mb-4 aspect-4/3 overflow-hidden rounded-t-2xl">
-      <img :src="imageSrc" :alt="imageAlt ?? title" class="h-full w-full object-cover" />
+      <img :src="imageSrc" :alt="imgAlt ?? title" class="h-full w-full object-cover" />
     </div>
     <div v-else-if="showImagePlaceholder"
       class="text-copy-subtle -m-4 mb-4 flex aspect-4/3 items-center justify-center rounded-t-2xl bg-[linear-gradient(135deg,color-mix(in_srgb,var(--color-surface-soft)_92%,var(--color-surface-base)),color-mix(in_srgb,var(--color-line-subtle)_95%,var(--color-surface-base)))]">

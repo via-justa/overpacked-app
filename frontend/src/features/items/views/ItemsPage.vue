@@ -12,16 +12,17 @@ import AppCategoryFilter from '../../../components/AppCategoryFilter.vue'
 import AppSummaryCard from '../../../components/AppSummaryCard.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { queryClient } from '../../../lib/query/client'
+import { getStoredValue, setStoredValue } from '../../../lib/storage/localStorage'
 import { listItems, listItemTypeFields, listItemTypes, listManufacturers, removeItem, updateItem, createItem } from '../api/itemsApi'
 import { useMutationWithToast } from '../../../composables/useMutationWithToast'
 import { useInlineMutation } from '../../../composables/useInlineMutation'
 import { useSettings } from '../../../composables/useSettings'
 import {
-  gramsToInput as convertGramsToInput,
-  inputToGrams as convertInputToGrams,
-  mlToInput as convertMlToInput,
-  inputToMl as convertInputToMl,
-  toRoundedString as roundToString,
+  gramsToInput,
+  inputToGrams,
+  mlToInput,
+  inputToMl,
+  toRoundedString,
   formatDisplayWeight,
 } from '../../../lib/units/conversions'
 import {
@@ -88,6 +89,9 @@ type ItemTableSection = {
 const ITEMS_VIEW_MODE_STORAGE_KEY = 'items:view-mode'
 const ITEMS_TYPE_FILTER_STORAGE_KEY = 'items:type-filter'
 const ITEMS_TABLE_DETAIL_MODE_BY_TYPE_STORAGE_KEY = 'items:table-detail-mode-by-type'
+
+const isViewMode = (value: string): value is 'cards' | 'table' => value === 'cards' || value === 'table'
+
 const commonTableFieldOptions: TableFieldOption[] = [
   { key: 'type', label: 'Type' },
   { key: 'manufacturer', label: 'Manufacturer' },
@@ -134,13 +138,6 @@ const extraTableFieldOptionsByType: Record<KnownItemType, TableFieldOption[]> = 
   ],
 }
 
-const toRoundedString = (value: number): string => {
-  if (!Number.isFinite(value)) {
-    return ''
-  }
-  return roundToString(value)
-}
-
 const toIntegerString = (value?: number | null): string => {
   if (typeof value !== 'number') {
     return ''
@@ -148,38 +145,12 @@ const toIntegerString = (value?: number | null): string => {
   return String(Math.trunc(value))
 }
 
-const gramsToInput = (value: number, unit: WeightInputUnit): number => {
-  return convertGramsToInput(value, unit)
-}
-
-const inputToGrams = (value: number, unit: WeightInputUnit): number => {
-  return convertInputToGrams(value, unit)
-}
-
-const mlToInput = (value: number, unit: VolumeInputUnit): number => {
-  return convertMlToInput(value, unit)
-}
-
-const inputToMl = (value: number, unit: VolumeInputUnit): number => {
-  return convertInputToMl(value, unit)
-}
-
 const readStoredItemsViewMode = (): ItemsViewMode => {
-  if (globalThis.window === undefined) {
-    return 'table'
-  }
-
-  const stored = globalThis.localStorage.getItem(ITEMS_VIEW_MODE_STORAGE_KEY)
-  return stored === 'cards' || stored === 'table' ? stored : 'table'
+  return getStoredValue(ITEMS_VIEW_MODE_STORAGE_KEY, isViewMode, 'table')
 }
 
 const readStoredItemsTypeFilter = (): ItemTypeFilter => {
-  if (globalThis.window === undefined) {
-    return 'all'
-  }
-
-  const stored = globalThis.localStorage.getItem(ITEMS_TYPE_FILTER_STORAGE_KEY)
-  return stored && stored.trim().length > 0 ? stored : 'all'
+  return getStoredValue(ITEMS_TYPE_FILTER_STORAGE_KEY, (value): value is string => value.trim().length > 0, 'all')
 }
 
 const readStoredItemsTableDetailModeByType = (): Record<string, ItemsTableDetailMode> => {
@@ -1365,27 +1336,15 @@ watch(
 )
 
 watch(itemsViewMode, (value) => {
-  if (globalThis.window === undefined) {
-    return
-  }
-
-  globalThis.localStorage.setItem(ITEMS_VIEW_MODE_STORAGE_KEY, value)
+  setStoredValue(ITEMS_VIEW_MODE_STORAGE_KEY, value)
 })
 
 watch(itemTypeFilter, (value) => {
-  if (globalThis.window === undefined) {
-    return
-  }
-
-  globalThis.localStorage.setItem(ITEMS_TYPE_FILTER_STORAGE_KEY, value)
+  setStoredValue(ITEMS_TYPE_FILTER_STORAGE_KEY, value)
 })
 
 watch(itemsTableDetailModeByType, (value) => {
-  if (globalThis.window === undefined) {
-    return
-  }
-
-  globalThis.localStorage.setItem(ITEMS_TABLE_DETAIL_MODE_BY_TYPE_STORAGE_KEY, JSON.stringify(value))
+  setStoredValue(ITEMS_TABLE_DETAIL_MODE_BY_TYPE_STORAGE_KEY, JSON.stringify(value))
 }, { deep: true })
 
 watch(isFormDialogOpen, (value) => {
