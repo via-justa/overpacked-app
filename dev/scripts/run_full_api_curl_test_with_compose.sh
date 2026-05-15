@@ -24,8 +24,8 @@ if ! command -v jq >/dev/null 2>&1; then
   exit 1
 fi
 
-if [[ ! -x "${ROOT_DIR}/dev/scripts/full_api_curl_test.sh" ]]; then
-  echo "error: dev/scripts/full_api_curl_test.sh must exist and be executable" >&2
+if [[ ! -x "${ROOT_DIR}/scripts/full_api_curl_test.sh" ]]; then
+  echo "error: scripts/full_api_curl_test.sh must exist and be executable" >&2
   exit 1
 fi
 
@@ -84,7 +84,7 @@ echo "==> running full API curl test"
 APP_USERNAME="${APP_USERNAME:-admin}" \
 APP_PASSWORD="${APP_PASSWORD:-pw123}" \
 API_BASE_URL="${API_BASE_URL}" \
-"${ROOT_DIR}/dev/scripts/full_api_curl_test.sh"
+"${ROOT_DIR}/scripts/full_api_curl_test.sh"
 
 echo ""
 echo "compose-backed full API curl test completed successfully"

@@ -252,7 +252,7 @@ do_request "GET" "/api/v1/sets"
 assert_status "200" "list sets"
 
 log_step "set create"
-do_request "POST" "/api/v1/sets" '{"name":"API Test Set"}'
+do_request "POST" "/api/v1/sets" '{"name":"API Test Set","set_category":"consumable"}'
 assert_status "201" "create set"
 SET_ID="$(extract_json '.id')"
 
@@ -261,7 +261,7 @@ do_request "GET" "/api/v1/sets/${SET_ID}"
 assert_status "200" "get set"
 
 log_step "set update"
-do_request "PATCH" "/api/v1/sets/${SET_ID}" '{"name":"API Test Set Updated"}'
+do_request "PATCH" "/api/v1/sets/${SET_ID}" '{"name":"API Test Set Updated","set_category":"consumable"}'
 assert_status "200" "update set"
 
 log_step "set-items list"

@@ -28,25 +28,6 @@ type Item struct {
 	DefaultQuantity    int
 	DefaultCarryStatus CarryStatus
 	IsDefault          bool
-	DoseCount          *int
-	Calories           *float64
-	CaloriesPerServing *float64
-	RequiresWater      *bool
-	Season             *string
-	Layer              *string
-	Waterproof         *bool
-	Size               *string
-	Color              *string
-	CapacityPeople     *float64
-	SeasonRating       *string
-	Freestanding       *bool
-	HasFootprint       *bool
-	ComfortTempC       *float64
-	FillType           *string
-	RValue             *float64
-	CapacityMAH        *int
-	ChargePort         *string
-	Rechargeable       *bool
 	ImageBlob          []byte
 	ImageMimeType      *string
 	ImageSizeBytes     *int

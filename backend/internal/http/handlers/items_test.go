@@ -114,7 +114,7 @@ func TestItemsHandlerIntegrationCRUD(t *testing.T) {
 	mustGetItemNotFound(t, h, createdConsumable.Id)
 }
 
-func mustCreateConsumableItem(t *testing.T, h *ItemsHandler, manufacturerID types.UUID, weight, volume, value float32) api.ConsumableItem {
+func mustCreateConsumableItem(t *testing.T, h *ItemsHandler, manufacturerID types.UUID, weight, volume, value float32) api.Item {
 	t.Helper()
 
 	createBody, err := json.Marshal(api.ItemCreate{
@@ -142,26 +142,17 @@ func mustCreateConsumableItem(t *testing.T, h *ItemsHandler, manufacturerID type
 		t.Fatalf("decode create item response: %v", err)
 	}
 
-	createdValue, err := created.ValueByDiscriminator()
-	if err != nil {
-		t.Fatalf("decode created item union: %v", err)
+	if created.Name != "Fuel Canister" {
+		t.Fatalf("expected created item name Fuel Canister, got %q", created.Name)
+	}
+	if created.WeightGrams == nil || *created.WeightGrams != 500 {
+		t.Fatalf("expected created item weight 500, got %+v", created.WeightGrams)
+	}
+	if created.Value == nil || *created.Value != value {
+		t.Fatalf("expected created item value %v, got %+v", value, created.Value)
 	}
 
-	createdConsumable, ok := createdValue.(api.ConsumableItem)
-	if !ok {
-		t.Fatalf("expected consumable item, got %T", createdValue)
-	}
-	if createdConsumable.Name != "Fuel Canister" {
-		t.Fatalf("expected created item name Fuel Canister, got %q", createdConsumable.Name)
-	}
-	if createdConsumable.WeightGrams == nil || *createdConsumable.WeightGrams != 500 {
-		t.Fatalf("expected created item weight 500, got %+v", createdConsumable.WeightGrams)
-	}
-	if createdConsumable.Value == nil || *createdConsumable.Value != value {
-		t.Fatalf("expected created item value %v, got %+v", value, createdConsumable.Value)
-	}
-
-	return createdConsumable
+	return created
 }
 
 func mustGetItemOK(t *testing.T, h *ItemsHandler, id types.UUID) {
@@ -205,19 +196,11 @@ func mustListContainUpdatedItem(t *testing.T, h *ItemsHandler, expectedName stri
 		t.Fatalf("expected one updated item, got %+v", list)
 	}
 
-	listValue, err := list[0].ValueByDiscriminator()
-	if err != nil {
-		t.Fatalf("decode list item union: %v", err)
+	if list[0].Name != expectedName {
+		t.Fatalf("expected updated item name, got %q", list[0].Name)
 	}
-	listConsumable, ok := listValue.(api.ConsumableItem)
-	if !ok {
-		t.Fatalf("expected consumable item in list, got %T", listValue)
-	}
-	if listConsumable.Name != expectedName {
-		t.Fatalf("expected updated item name, got %q", listConsumable.Name)
-	}
-	if listConsumable.Value == nil || *listConsumable.Value != expectedValue {
-		t.Fatalf("expected updated item value %v, got %+v", expectedValue, listConsumable.Value)
+	if list[0].Value == nil || *list[0].Value != expectedValue {
+		t.Fatalf("expected updated item value %v, got %+v", expectedValue, list[0].Value)
 	}
 }
 
