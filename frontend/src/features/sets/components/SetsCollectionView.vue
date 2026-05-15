@@ -12,6 +12,7 @@ import type { ItemSet, SetItemWithDetails } from '../types'
 type SetStats = {
   itemCount: number
   totalWeightGrams: number
+  totalValue: number
 }
 
 type Props = {
@@ -43,7 +44,7 @@ const emit = defineEmits<{
 }>()
 
 type TableField = {
-  key: 'category' | 'items' | 'weight'
+  key: 'category' | 'items' | 'weight' | 'value'
   label: string
   render: (set: ItemSet) => string
 }
@@ -76,6 +77,14 @@ const visibleFields = computed<TableField[]>(() => [
     key: 'weight',
     label: 'Weight',
     render: (set) => props.formatDisplayWeight(props.setStatsById[set.id]?.totalWeightGrams ?? 0),
+  },
+  {
+    key: 'value',
+    label: 'Value',
+    render: (set) => {
+      const totalValue = props.setStatsById[set.id]?.totalValue ?? 0
+      return `$${totalValue.toFixed(2)}`
+    },
   },
 ])
 
@@ -116,13 +125,14 @@ const getExpandedFieldDisplays = (set: ItemSet): ExpandedFieldDisplay[] => {
         {{ setStatsById[set.id]?.itemCount ?? 0 }} items
         <span class="text-line mx-2">/</span>
         {{ formatDisplayWeight(setStatsById[set.id]?.totalWeightGrams ?? 0) }}
+        <span class="text-line mx-2">/</span>
+        ${{ (setStatsById[set.id]?.totalValue ?? 0).toFixed(2) }}
       </p>
       <p class="text-copy-subtle mt-1 text-xs">Updated {{ formatDate(set.updated_at) }}</p>
 
       <div class="mt-4 flex flex-wrap gap-2">
-        <Button size="small" label="Manage set gear" icon="pi pi-folder-open" outlined
+        <Button size="small" label="Edit" icon="pi pi-pencil" outlined
           @click="emit('openDetails', set)" />
-        <Button size="small" label="Edit" icon="pi pi-pencil" outlined @click="emit('startEdit', set)" />
         <Button size="small" label="Delete" icon="pi pi-trash" severity="danger" outlined
           @click="emit('requestDelete', set)" />
       </div>
@@ -271,11 +281,6 @@ const getExpandedFieldDisplays = (set: ItemSet): ExpandedFieldDisplay[] => {
       <button type="button"
         class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
         @click="emit('openDetails', activeMenuSet); closeRowActions()">
-        Manage set gear
-      </button>
-      <button type="button"
-        class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
-        @click="emit('startEdit', activeMenuSet); closeRowActions()">
         Edit
       </button>
       <button type="button"

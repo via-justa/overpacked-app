@@ -18,13 +18,13 @@ import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { queryClient } from '../../../lib/query/client'
 import { listItemTypes, listItems, listManufacturers } from '../../items/api/itemsApi'
 import { useSettings } from '../../../composables/useSettings'
-import { toRoundedString, formatDisplayWeight, mlToInput } from '../../../lib/units/conversions'
+import { toRoundedString, formatDisplayWeight } from '../../../lib/units/conversions'
 import {
-  formatNumber as formatNumberDisplay,
-  formatValue as formatValueDisplay,
-  formatCarryStatus as formatCarryStatusDisplay,
-  formatType as formatTypeDisplay,
-  formatText as formatTextDisplay,
+  formatNumber,
+  formatValue,
+  formatCarryStatus,
+  formatType,
+  formatText,
 } from '../../../lib/format/display'
 import {
   addSetItem,
@@ -45,7 +45,6 @@ const router = useRouter()
 
 type SetsViewMode = 'cards' | 'table'
 type TableDetailMode = 'simple' | 'expanded'
-type WeightInputUnit = 'g' | 'oz'
 type VolumeInputUnit = 'ml' | 'fl_oz'
 
 const SETS_VIEW_MODE_STORAGE_KEY = 'sets:view-mode'
@@ -83,11 +82,10 @@ const formatDate = (value: string): string => {
 }
 
 const { weightUnit, volumeUnit, currency } = useSettings()
-const weightInputUnit = computed<WeightInputUnit>(() => weightUnit.value)
 
 // Wrapper for formatDisplayWeight that uses current weightInputUnit
 const formatWeight = (valueGrams: number): string => {
-  return formatDisplayWeight(valueGrams, weightInputUnit.value)
+  return formatDisplayWeight(valueGrams, weightUnit.value)
 }
 
 const setsQuery = useQuery({
@@ -125,16 +123,17 @@ const setCategoryInput = ref('')
 const addItemId = ref('')
 const addItemQuantity = ref('1')
 const addItemNotes = ref('')
+const tempCreateSetItems = ref<Array<{ itemId: string; quantity: number; notes: string }>>([])
 
 const setItemsBySetId = ref<Record<string, SetItemWithDetails[]>>({})
 const setItemsLoadingBySetId = ref<Record<string, boolean>>({})
-const setStatsById = ref<Record<string, { itemCount: number; totalWeightGrams: number }>>({})
-const itemDraftsById = ref<Record<string, { quantity: string; notes: string }>>({})
+const setStatsById = ref<Record<string, { itemCount: number; totalWeightGrams: number; totalValue: number }>>({})
 
 const confirmDialogState = ref<
   | { kind: 'set-delete'; setId: string; setName: string }
   | { kind: 'set-bulk-delete'; setIds: string[] }
   | { kind: 'set-item-remove'; setId: string; itemId: string; itemName: string }
+  | { kind: 'category-change'; newCategory: string; mismatchedItems: Array<{ id: string; name: string }> }
   | null
 >(null)
 
@@ -171,36 +170,17 @@ const getItemTypeLabel = (categoryId: string): string => {
   return itemTypeNameById.value.get(categoryId) ?? categoryId
 }
 
-const formatType = (value: string) => {
-  return formatTypeDisplay(value)
-}
-
-const formatText = (value?: string | null) => {
-  return formatTextDisplay(value)
-}
-
-const formatNumber = (value?: number | null) => {
-  return formatNumberDisplay(value, toRoundedString)
-}
-
-const formatCarryStatus = (value?: string | null) => {
-  return formatCarryStatusDisplay(value)
-}
-
 const formatVolume = (value?: number | null) => {
   if (typeof value !== 'number') {
     return 'Not set'
   }
 
-  if (volumeInputUnit.value === 'fl_oz') {
-    return `${toRoundedString(mlToInput(value, 'fl_oz'))} fl oz`
+  if (volumeUnit.value === 'fl_oz') {
+    const flOz = value / 29.5735295625
+    return `${toRoundedString(flOz)} fl oz`
   }
 
   return `${toRoundedString(value)} ml`
-}
-
-const formatValue = (value?: number | null): string => {
-  return formatValueDisplay(value, currency.value, toRoundedString)
 }
 
 const getItemImageSrc = (item: Item) => {
@@ -224,14 +204,14 @@ const getItemDetailedEntries = (item: Item): DetailEntry[] => {
     { label: 'Manufacturer', value: manufacturersById.value.get(item.manufacturer_id) ?? item.manufacturer_id },
     { label: 'Active', value: '', booleanValue: item.is_active },
     { label: 'Default carry', value: formatCarryStatus(item.default_carry_status) },
-    { label: 'Default quantity', value: formatNumber(item.default_quantity) },
+    { label: 'Default quantity', value: formatNumber(item.default_quantity, toRoundedString) },
     { label: 'Is default', value: '', booleanValue: item.is_default },
     {
       label: 'Weight',
       value: typeof item.weight_grams === 'number' ? formatWeight(item.weight_grams) : 'Not set',
     },
     { label: 'Volume', value: formatVolume(item.volume_ml) },
-    { label: 'Value', value: formatValue(item.value) },
+    { label: 'Value', value: formatValue(item.value, currency.value, toRoundedString) },
     { label: 'Description', value: formatText(item.description) },
     { label: 'URL', value: item.source_url?.trim() ? 'URL' : 'Not set', href: item.source_url ?? undefined },
   ]
@@ -263,7 +243,7 @@ const itemTableFields = computed<AppItemTableField[]>(() => {
     {
       key: 'default_quantity',
       label: 'Qty',
-      render: (item: Item) => formatNumber(item.default_quantity),
+      render: (item: Item) => formatNumber(item.default_quantity, toRoundedString),
     },
     {
       key: 'is_default',
@@ -289,7 +269,7 @@ const itemTableFields = computed<AppItemTableField[]>(() => {
     {
       key: 'value',
       label: 'Value',
-      render: (item: Item) => formatValue(item.value),
+      render: (item: Item) => formatValue(item.value, currency.value, toRoundedString),
     },
     {
       key: 'description',
@@ -331,17 +311,44 @@ const activeSetItems = computed<SetItemWithDetails[]>(() => {
 
 const activeSetStats = computed(() => {
   if (!activeSetId.value) {
-    return { itemCount: 0, totalWeightGrams: 0 }
+    return { itemCount: 0, totalWeightGrams: 0, totalValue: 0 }
   }
 
-  return setStatsById.value[activeSetId.value] ?? { itemCount: 0, totalWeightGrams: 0 }
+  return setStatsById.value[activeSetId.value] ?? { itemCount: 0, totalWeightGrams: 0, totalValue: 0 }
 })
 
 const availableItemsForAdd = computed(() => {
-  const activeCategory = activeSet.value?.set_category?.trim()
+  // Use setCategoryInput when details dialog is open to get real-time updates
+  const activeCategory = isDetailsDialogOpen.value 
+    ? setCategoryInput.value?.trim() 
+    : activeSet.value?.set_category?.trim()
   const existing = new Set(activeSetItems.value.map((entry) => entry.item_id))
+  return filterAvailableItems(activeCategory, existing, addItemId.value)
+})
+
+const availableItemsForCreate = computed(() => {
+  const activeCategory = setCategoryInput.value?.trim()
+  const existing = new Set(tempCreateSetItems.value.map((item) => item.itemId))
+  return filterAvailableItems(activeCategory, existing, addItemId.value)
+})
+
+// Helper function to filter items by category, active status, and excluding existing items
+function filterAvailableItems(
+  activeCategory: string | undefined,
+  existing: Set<string>,
+  editingItemId: string
+): Item[] {
   return (itemsQuery.data.value ?? []).filter((item) => {
+    // Allow currently editing item to be in the list
+    if (item.id === editingItemId) {
+      return true
+    }
+
     if (existing.has(item.id)) {
+      return false
+    }
+
+    if (!item.is_active) {
       return false
     }
 
@@ -351,17 +358,31 @@ const availableItemsForAdd = computed(() => {
 
     return item.type === activeCategory
   })
+}
+
+const tempCreateSetItemsWithDetails = computed(() => {
+  const itemsMap = new Map((itemsQuery.data.value ?? []).map((item) => [item.id, item]))
+  
+  return tempCreateSetItems.value.map((tempItem) => {
+    const item = itemsMap.get(tempItem.itemId)
+    return {
+      tempItem,
+      item,
+    }
+  }).filter((entry) => entry.item !== undefined)
 })
 
 const setSummary = computed(() => {
   const sets = allSets.value
   const totalItems = sets.reduce((sum, entry) => sum + (setStatsById.value[entry.id]?.itemCount ?? 0), 0)
   const totalWeight = sets.reduce((sum, entry) => sum + (setStatsById.value[entry.id]?.totalWeightGrams ?? 0), 0)
+  const totalValue = sets.reduce((sum, entry) => sum + (setStatsById.value[entry.id]?.totalValue ?? 0), 0)
 
   return {
     totalSets: sets.length,
     totalItems,
     totalWeightLabel: formatWeight(totalWeight),
+    totalValueLabel: formatValue(totalValue),
   }
 })
 
@@ -378,7 +399,27 @@ const confirmDialogMessage = computed(() => {
     return `Remove ${confirmDialogState.value.itemName} from this set?`
   }
 
+  if (confirmDialogState.value?.kind === 'category-change') {
+    const count = confirmDialogState.value.mismatchedItems.length
+    const itemNames = confirmDialogState.value.mismatchedItems.map((item) => item.name).join(', ')
+    return `Changing the category will remove ${count} item${count === 1 ? '' : 's'} that don't match: ${itemNames}. Continue?`
+  }
+
   return ''
+})
+
+const confirmDialogTitle = computed(() => {
+  if (confirmDialogState.value?.kind === 'category-change') {
+    return 'Confirm category change'
+  }
+  return 'Confirm delete'
+})
+
+const confirmDialogLabel = computed(() => {
+  if (confirmDialogState.value?.kind === 'category-change') {
+    return 'Change & Remove'
+  }
+  return 'Delete'
 })
 
 const canShowEmptyState = computed(() => {
@@ -387,7 +428,6 @@ const canShowEmptyState = computed(() => {
 
 const isSubmittingSet = ref(false)
 const isAddingItem = ref(false)
-const savingItemIds = ref<Record<string, boolean>>({})
 
 const computeSetStats = (setItems: SetItemWithDetails[]) => {
   const itemCount = setItems.length
@@ -395,8 +435,12 @@ const computeSetStats = (setItems: SetItemWithDetails[]) => {
     const itemWeight = typeof entry.item.weight_grams === 'number' ? entry.item.weight_grams : 0
     return sum + (itemWeight * entry.quantity)
   }, 0)
+  const totalValue = setItems.reduce((sum, entry) => {
+    const itemValue = typeof entry.item.value === 'number' ? entry.item.value : 0
+    return sum + (itemValue * entry.quantity)
+  }, 0)
 
-  return { itemCount, totalWeightGrams }
+  return { itemCount, totalWeightGrams, totalValue }
 }
 
 const loadSetItems = async (setId: string) => {
@@ -430,7 +474,7 @@ const refreshAllSetStats = async () => {
     return
   }
 
-  const next: Record<string, { itemCount: number; totalWeightGrams: number }> = {}
+  const next: Record<string, { itemCount: number; totalWeightGrams: number; totalValue: number }> = {}
   await Promise.all(
     sets.map(async (set) => {
       try {
@@ -441,7 +485,7 @@ const refreshAllSetStats = async () => {
           [set.id]: data,
         }
       } catch {
-        next[set.id] = { itemCount: 0, totalWeightGrams: 0 }
+        next[set.id] = { itemCount: 0, totalWeightGrams: 0, totalValue: 0 }
       }
     }),
   )
@@ -480,36 +524,27 @@ watch(allSets, (sets) => {
   }
 })
 
-watch(activeSetItems, (items) => {
-  const drafts: Record<string, { quantity: string; notes: string }> = {}
-  for (const entry of items) {
-    drafts[entry.item_id] = {
-      quantity: String(entry.quantity),
-      notes: entry.notes ?? '',
-    }
-  }
-  itemDraftsById.value = drafts
-}, { immediate: true })
-
 const openCreateDialog = () => {
   editingSetId.value = null
   setNameInput.value = ''
   setCategoryInput.value = ''
+  addItemId.value = ''
+  addItemQuantity.value = '1'
+  addItemNotes.value = ''
+  tempCreateSetItems.value = []
   isFormDialogOpen.value = true
 }
 
-const onStartEdit = (set: ItemSet) => {
-  editingSetId.value = set.id
+const openSetDetailsDialog = async (set: ItemSet) => {
+  activeSetId.value = set.id
   setNameInput.value = set.name
   setCategoryInput.value = set.set_category
-  isFormDialogOpen.value = true
-}
-
-const onOpenDetails = async (set: ItemSet) => {
-  activeSetId.value = set.id
   isDetailsDialogOpen.value = true
   await loadSetItems(set.id)
 }
+
+const onStartEdit = openSetDetailsDialog
+const onOpenDetails = openSetDetailsDialog
 
 const onOpenItemDetails = (item: Item) => {
   selectedItemDetailId.value = item.id
@@ -522,6 +557,8 @@ const closeDetailsDialog = () => {
   addItemId.value = ''
   addItemQuantity.value = '1'
   addItemNotes.value = ''
+  setNameInput.value = ''
+  setCategoryInput.value = ''
 }
 
 const closeItemDetailsDialog = () => {
@@ -572,11 +609,29 @@ const onSubmitSet = async () => {
         life: 2500,
       })
     } else {
-      await createSet({ name, set_category: setCategory })
+      const newSet = await createSet({ name, set_category: setCategory })
+      
+      // Add temporary items to the newly created set
+      if (tempCreateSetItems.value.length > 0) {
+        await Promise.all(
+          tempCreateSetItems.value.map((item) =>
+            addSetItem(newSet.id, {
+              item_id: item.itemId,
+              quantity: item.quantity,
+              ...(item.notes ? { notes: item.notes } : {}),
+            })
+          )
+        )
+      }
+      
+      const itemCount = tempCreateSetItems.value.length
+      const itemWord = itemCount === 1 ? 'item' : 'items'
+      const itemsMessage = itemCount > 0 ? ` with ${itemCount} ${itemWord}` : ''
+      
       toast.add({
         severity: 'success',
         summary: 'Set created',
-        detail: 'New set has been created.',
+        detail: `New set has been created${itemsMessage}.`,
         life: 2500,
       })
     }
@@ -586,6 +641,7 @@ const onSubmitSet = async () => {
     setNameInput.value = ''
     setCategoryInput.value = ''
     editingSetId.value = null
+    tempCreateSetItems.value = []
   } catch (error) {
     toast.add({
       severity: 'error',
@@ -595,6 +651,65 @@ const onSubmitSet = async () => {
     })
   } finally {
     isSubmittingSet.value = false
+  }
+}
+
+const onSaveSetFromDetails = async () => {
+  const name = normalizeTitleWords(setNameInput.value.trim())
+  if (!name) {
+    return
+  }
+  const setCategory = setCategoryInput.value.trim()
+  if (!setCategory) {
+    return
+  }
+  
+  if (!activeSetId.value) {
+    return
+  }
+
+  isSubmittingSet.value = true
+  try {
+    await updateSet(activeSetId.value, { name, set_category: setCategory })
+    await queryClient.invalidateQueries({ queryKey: ['sets'] })
+    toast.add({
+      severity: 'success',
+      summary: 'Set updated',
+      detail: 'Set details were saved.',
+      life: 2500,
+    })
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Save failed',
+      detail: error instanceof Error ? error.message : 'Unable to save set.',
+      life: 3500,
+    })
+  } finally {
+    isSubmittingSet.value = false
+  }
+}
+
+const onRequestCategoryChange = (newCategory: string) => {
+  if (!activeSetId.value || !activeSet.value) {
+    return
+  }
+
+  // Check for mismatched items
+  const mismatchedItems = activeSetItems.value
+    .filter((entry) => entry.item.type !== newCategory)
+    .map((entry) => ({ id: entry.item_id, name: normalizeTitleWords(entry.item.name) }))
+
+  if (mismatchedItems.length > 0) {
+    // Show confirmation dialog
+    confirmDialogState.value = {
+      kind: 'category-change',
+      newCategory,
+      mismatchedItems,
+    }
+  } else {
+    // No conflicts, proceed with save
+    void onSaveSetFromDetails()
   }
 }
 
@@ -655,8 +770,40 @@ const requestRemoveSetItem = (itemId: string, itemName: string) => {
   }
 }
 
+const populateItemEditForm = (payload: { itemId: string; quantity: number; notes: string }) => {
+  addItemId.value = payload.itemId
+  addItemQuantity.value = String(payload.quantity)
+  addItemNotes.value = payload.notes
+}
+
+const onEditSetItem = populateItemEditForm
+
 const closeConfirmDialog = () => {
   confirmDialogState.value = null
+}
+
+const handleCategoryChangeConfirmation = async (mismatchedItems: Array<{ id: string; name: string }>) => {
+  if (!activeSetId.value) {
+    return
+  }
+
+  // Remove mismatched items
+  await Promise.all(
+    mismatchedItems.map((item) => removeSetItem(activeSetId.value!, item.id)),
+  )
+
+  // Reload set items
+  await loadSetItems(activeSetId.value)
+
+  // Now save the category change
+  await onSaveSetFromDetails()
+
+  toast.add({
+    severity: 'success',
+    summary: 'Category changed',
+    detail: `Removed ${mismatchedItems.length} item${mismatchedItems.length === 1 ? '' : 's'} and updated category.`,
+    life: 2500,
+  })
 }
 
 const onConfirmDelete = async () => {
@@ -699,6 +846,11 @@ const onConfirmDelete = async () => {
       return
     }
 
+    if (current.kind === 'category-change') {
+      await handleCategoryChangeConfirmation(current.mismatchedItems)
+      return
+    }
+
     await removeSetItem(current.setId, current.itemId)
     await loadSetItems(current.setId)
     toast.add({
@@ -717,6 +869,54 @@ const onConfirmDelete = async () => {
   }
 }
 
+const onCancelCategoryChange = () => {
+  // Revert category to original value if this is a category change
+  if (confirmDialogState.value?.kind === 'category-change' && activeSet.value) {
+    setCategoryInput.value = activeSet.value.set_category
+  }
+  closeConfirmDialog()
+}
+
+const onAddTempItem = () => {
+  if (!addItemId.value) {
+    return
+  }
+
+  const quantity = Number(addItemQuantity.value)
+  if (!Number.isFinite(quantity) || quantity <= 0) {
+    return
+  }
+
+  // Check if item already exists in temp list
+  const existingIndex = tempCreateSetItems.value.findIndex((item) => item.itemId === addItemId.value)
+  
+  if (existingIndex >= 0) {
+    // Update existing item
+    tempCreateSetItems.value[existingIndex] = {
+      itemId: addItemId.value,
+      quantity,
+      notes: addItemNotes.value.trim(),
+    }
+  } else {
+    // Add new item
+    tempCreateSetItems.value.push({
+      itemId: addItemId.value,
+      quantity,
+      notes: addItemNotes.value.trim(),
+    })
+  }
+
+  addItemId.value = ''
+  addItemQuantity.value = '1'
+  addItemNotes.value = ''
+}
+
+const onRemoveTempItem = (itemId: string) => {
+  tempCreateSetItems.value = tempCreateSetItems.value.filter((item) => item.itemId !== itemId)
+}
+
+const onEditTempItem = populateItemEditForm
+
 const onAddItem = async () => {
   if (!activeSetId.value || !addItemId.value) {
     return
@@ -727,106 +927,80 @@ const onAddItem = async () => {
     return
   }
 
+  // Check if item already exists in the set
+  const existingItem = activeSetItems.value.find((entry) => entry.item_id === addItemId.value)
+  const isUpdate = !!existingItem
+
   isAddingItem.value = true
   try {
-    await addSetItem(activeSetId.value, {
-      item_id: addItemId.value,
-      quantity,
-      ...(addItemNotes.value.trim() ? { notes: addItemNotes.value.trim() } : {}),
-    })
+    if (isUpdate) {
+      // Update existing item
+      await updateSetItem(activeSetId.value, addItemId.value, {
+        quantity,
+        notes: addItemNotes.value.trim() || '',
+      })
+      toast.add({
+        severity: 'success',
+        summary: 'Item updated',
+        detail: 'Item quantity and notes updated.',
+        life: 2200,
+      })
+    } else {
+      // Add new item
+      await addSetItem(activeSetId.value, {
+        item_id: addItemId.value,
+        quantity,
+        ...(addItemNotes.value.trim() ? { notes: addItemNotes.value.trim() } : {}),
+      })
+      toast.add({
+        severity: 'success',
+        summary: 'Item added',
+        detail: 'Item added to set.',
+        life: 2200,
+      })
+    }
 
     await loadSetItems(activeSetId.value)
     addItemId.value = ''
     addItemQuantity.value = '1'
     addItemNotes.value = ''
-    toast.add({
-      severity: 'success',
-      summary: 'Item added',
-      detail: 'Item added to set.',
-      life: 2200,
-    })
   } catch (error) {
+    const action = isUpdate ? 'update' : 'add'
+    const errorMessage = error instanceof Error ? error.message : `Unable to ${action} item.`
     toast.add({
       severity: 'error',
-      summary: 'Add failed',
-      detail: error instanceof Error ? error.message : 'Unable to add item.',
+      summary: isUpdate ? 'Update failed' : 'Add failed',
+      detail: errorMessage,
       life: 3500,
     })
   } finally {
     isAddingItem.value = false
   }
 }
-
-const onSaveSetItem = async (itemId: string) => {
-  if (!activeSetId.value) {
-    return
-  }
-
-  const draft = itemDraftsById.value[itemId]
-  if (!draft) {
-    return
-  }
-
-  const quantity = Number(draft.quantity)
-  if (!Number.isFinite(quantity) || quantity <= 0) {
-    return
-  }
-
-  savingItemIds.value = {
-    ...savingItemIds.value,
-    [itemId]: true,
-  }
-
-  try {
-    await updateSetItem(activeSetId.value, itemId, {
-      quantity,
-      notes: draft.notes.trim() ? draft.notes.trim() : '',
-    })
-    await loadSetItems(activeSetId.value)
-    toast.add({
-      severity: 'success',
-      summary: 'Item updated',
-      detail: 'Set item updated.',
-      life: 2000,
-    })
-  } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Update failed',
-      detail: error instanceof Error ? error.message : 'Unable to update set item.',
-      life: 3500,
-    })
-  } finally {
-    savingItemIds.value = {
-      ...savingItemIds.value,
-      [itemId]: false,
-    }
-  }
-}
-
-const onUpdateItemDraft = (payload: { itemId: string; field: 'quantity' | 'notes'; value: string }) => {
-  const current = itemDraftsById.value[payload.itemId] ?? { quantity: '1', notes: '' }
-  itemDraftsById.value = {
-    ...itemDraftsById.value,
-    [payload.itemId]: {
-      ...current,
-      [payload.field]: payload.value,
-    },
-  }
-}
 </script>
 
 <template>
   <section data-component="sets-page" class="flex w-full flex-col gap-4">
-    <AppConfirmDialog :open="confirmDialogState !== null" title="Confirm delete" :message="confirmDialogMessage"
-      confirm-label="Delete" confirm-tone="danger" @update:open="(value) => { if (!value) closeConfirmDialog() }"
-      @cancel="closeConfirmDialog" @confirm="onConfirmDelete" />
+    <AppConfirmDialog :open="confirmDialogState !== null" :title="confirmDialogTitle" :message="confirmDialogMessage"
+      :confirm-label="confirmDialogLabel" confirm-tone="danger" @update:open="(value) => { if (!value) onCancelCategoryChange() }"
+      @cancel="onCancelCategoryChange" @confirm="onConfirmDelete" />
 
     <SetFormDialog :model-value="isFormDialogOpen" :editing-set-id="editingSetId" :set-name-input="setNameInput"
       :set-category-input="setCategoryInput" :item-type-options="itemTypeOptions" :is-submitting-set="isSubmittingSet"
-      @update:model-value="(value) => { isFormDialogOpen = value; if (!value) { editingSetId = null; setNameInput = ''; setCategoryInput = '' } }"
+      :available-items-for-add="availableItemsForCreate" :add-item-id="addItemId" :add-item-quantity="addItemQuantity"
+      :add-item-notes="addItemNotes" :temp-items="tempCreateSetItemsWithDetails"
+      :manufacturers-by-id="manufacturersById" :format-display-weight="formatWeight"
+      :volume-input-unit="volumeInputUnit" :currency="currency"
+      @update:model-value="(value) => { isFormDialogOpen = value; if (!value) { editingSetId = null; setNameInput = ''; setCategoryInput = ''; tempCreateSetItems = [] } }"
       @update:set-name-input="(value) => { setNameInput = value }"
-      @update:set-category-input="(value) => { setCategoryInput = value }" @submit="onSubmitSet" />
+      @update:set-category-input="(value) => { setCategoryInput = value }"
+      @update:add-item-id="(value) => { addItemId = value }"
+      @update:add-item-quantity="(value) => { addItemQuantity = value }"
+      @update:add-item-notes="(value) => { addItemNotes = value }"
+      @add-item="onAddTempItem"
+      @remove-item="onRemoveTempItem"
+      @edit-item="onEditTempItem"
+      @submit="onSubmitSet" />
 
     <ItemDetailsDialog :open="isItemDetailsDialogOpen" :selected-item="selectedItemDetail"
       :get-image-src="getItemImageSrc" :get-detailed-entries="getItemDetailedEntries" :format-type="formatType"
@@ -838,13 +1012,20 @@ const onUpdateItemDraft = (payload: { itemId: string; field: 'quantity' | 'notes
       :active-set-stats="activeSetStats"
       :set-items-loading="activeSet ? (setItemsLoadingBySetId[activeSet.id] ?? false) : false"
       :available-items-for-add="availableItemsForAdd" :add-item-id="addItemId" :add-item-quantity="addItemQuantity"
-      :add-item-notes="addItemNotes" :is-adding-item="isAddingItem" :item-drafts-by-id="itemDraftsById"
-      :saving-item-ids="savingItemIds" :get-item-type-label="getItemTypeLabel"
-      :format-display-weight="formatWeight" @update:model-value="(value) => { if (!value) closeDetailsDialog() }"
+      :add-item-notes="addItemNotes" :is-adding-item="isAddingItem"
+      :get-item-type-label="getItemTypeLabel"
+      :format-display-weight="formatWeight" :set-name-input="setNameInput" :set-category-input="setCategoryInput"
+      :item-type-options="itemTypeOptions" :is-submitting-set="isSubmittingSet"
+      :manufacturers-by-id="manufacturersById" :volume-input-unit="volumeInputUnit" :currency="currency"
+      @update:model-value="(value) => { if (!value) closeDetailsDialog() }"
       @update:add-item-id="(value) => { addItemId = value }"
       @update:add-item-quantity="(value) => { addItemQuantity = value }"
-      @update:add-item-notes="(value) => { addItemNotes = value }" @update-item-draft="onUpdateItemDraft"
-      @add-item="onAddItem" @save-set-item="onSaveSetItem"
+      @update:add-item-notes="(value) => { addItemNotes = value }"
+      @update:set-name-input="(value) => { setNameInput = value }"
+      @update:set-category-input="(value) => { setCategoryInput = value }" @add-item="onAddItem"
+      @save-set="onSaveSetFromDetails"
+      @request-category-change="onRequestCategoryChange"
+      @edit-set-item="onEditSetItem"
       @request-remove-set-item="(payload) => { requestRemoveSetItem(payload.itemId, payload.itemName) }" />
 
     <AppQueryError :query="setsQuery" fallback-message="Unable to load sets." data-element="sets-error" />
@@ -861,10 +1042,11 @@ const onUpdateItemDraft = (payload: { itemId: string; field: 'quantity' | 'notes
       data-element="sets-empty-state" />
 
     <div v-else class="space-y-3">
-      <div class="grid gap-2 sm:grid-cols-3">
+      <div class="grid gap-2 sm:grid-cols-4">
         <AppSummaryCard label="Total sets" :value="setSummary.totalSets" />
         <AppSummaryCard label="Assigned items" :value="setSummary.totalItems" />
         <AppSummaryCard label="Total weight" :value="setSummary.totalWeightLabel" />
+        <AppSummaryCard label="Total value" :value="setSummary.totalValueLabel" />
       </div>
 
       <div class="flex flex-wrap items-center justify-between gap-3">
