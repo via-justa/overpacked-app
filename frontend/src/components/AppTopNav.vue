@@ -73,6 +73,7 @@ const primaryNavItems = props.navItems.filter((item) => item.to !== '/settings')
       <nav data-element="top-nav-primary" class="flex flex-wrap items-center gap-1">
         <RouterLink v-for="item in primaryNavItems" :key="item.to" :to="item.to"
           :data-element="`nav-link-${item.to.replace('/', '') || 'home'}`"
+          :aria-current="currentPath.startsWith(item.to) ? 'page' : undefined"
           class="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition" :class="currentPath.startsWith(item.to)
             ? 'bg-surface-inverse text-ink-inverse'
             : 'text-copy hover:bg-surface-soft hover:text-ink'">

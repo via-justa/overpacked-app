@@ -1,5 +1,5 @@
 import { apiClient } from '../../../lib/api/client'
-import type { Item, ItemCreate, ItemTypeCreate, ItemTypeEntity, ItemTypeField, ItemTypeFieldInput, ItemTypeUpdate, ItemUpdate, Manufacturer, ManufacturerCreate, ManufacturerUpdate } from '../types'
+import type { Item, ItemCreate, ItemTypeCreate, ItemTypeEntity, ItemTypeField, ItemTypeFieldInput, ItemTypeUpdate, ItemUpdate, Manufacturer, ManufacturerCreate, ManufacturerUpdate, Label, LabelCreate, ItemLabelAdd } from '../types'
 
 const readString = (value: unknown): string | null => {
   if (typeof value === 'string' && value.trim().length > 0) {
@@ -218,4 +218,67 @@ export const listItemTypeFields = async (typeId: string): Promise<ItemTypeField[
   }
 
   return data as ItemTypeField[]
+}
+
+export const listLabels = async (): Promise<Label[]> => {
+  const { data, error, response } = await apiClient.GET('/api/v1/labels')
+
+  if (!response.ok || !data) {
+    throw new Error(getErrorMessage(error, 'Unable to load labels'))
+  }
+
+  return data as Label[]
+}
+
+export const createLabel = async (payload: LabelCreate): Promise<Label> => {
+  const { data, error, response } = await apiClient.POST('/api/v1/labels', {
+    body: payload,
+  })
+
+  if (!response.ok || !data) {
+    throw new Error(getErrorMessage(error, 'Unable to create label'))
+  }
+
+  return data as Label
+}
+
+export const listItemLabels = async (itemId: string): Promise<Label[]> => {
+  const { data, error, response } = await apiClient.GET('/api/v1/items/{itemId}/labels', {
+    params: {
+      path: { itemId },
+    },
+  })
+
+  if (!response.ok || !data) {
+    throw new Error(getErrorMessage(error, 'Unable to load item labels'))
+  }
+
+  return data as Label[]
+}
+
+export const addItemLabel = async (itemId: string, payload: ItemLabelAdd): Promise<Label> => {
+  const { data, error, response } = await apiClient.POST('/api/v1/items/{itemId}/labels', {
+    params: {
+      path: { itemId },
+    },
+    body: payload,
+  })
+
+  if (!response.ok || !data) {
+    throw new Error(getErrorMessage(error, 'Unable to add label to item'))
+  }
+
+  return data as Label
+}
+
+export const removeItemLabel = async (itemId: string, labelId: string): Promise<void> => {
+  const { error, response } = await apiClient.DELETE('/api/v1/items/{itemId}/labels/{labelId}', {
+    params: {
+      path: { itemId, labelId },
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(getErrorMessage(error, 'Unable to remove label from item'))
+  }
 }

@@ -4,7 +4,7 @@ import AppToggleGroup from '../../../components/AppToggleGroup.vue'
 import AppBooleanValue from '../../../components/AppBooleanValue.vue'
 import AppItemTableRowContent from '../../../components/AppItemTableRowContent.vue'
 import { useRowActionsMenu } from '../../../composables/useRowActionsMenu'
-import type { Item } from '../types'
+import type { Item, Label } from '../types'
 
 type TableField = {
   key: string
@@ -24,6 +24,7 @@ const props = defineProps<{
   selectedItemIds: string[]
   totalWeightLabel: string
   totalValueLabel: string
+  itemLabelsMap?: Map<string, Label[]>
 }>()
 
 const emit = defineEmits<{
@@ -202,7 +203,7 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
                   }" />
               </td>
               <AppItemTableRowContent :item="item" :visible-fields="visibleFields"
-                @open-details="emit('openDetails', $event)" />
+                :item-labels="itemLabelsMap?.get(item.id) ?? []" @open-details="emit('openDetails', $event)" />
               <td class="w-px px-4 py-3 align-top">
                 <div data-element="items-row-actions" class="relative flex justify-end">
                   <button type="button"
@@ -247,8 +248,7 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
   <!-- Teleport menu to body to escape overflow container -->
   <Teleport to="body">
     <div v-if="activeMenuItem" data-element="items-row-actions-menu"
-      class="border-line-subtle bg-surface-elevated fixed z-30 w-44 rounded-lg border py-1 shadow-sm"
-      :style="{
+      class="border-line-subtle bg-surface-elevated fixed z-30 w-44 rounded-lg border py-1 shadow-sm" :style="{
         top: `${rowActionsMenuPosition.top}px`,
         left: `${rowActionsMenuPosition.left}px`,
       }">
@@ -272,8 +272,7 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
         @click="emit('row:toggleDefault', activeMenuItem); closeRowActions()">
         {{ activeMenuItem.is_default ? 'Unset default' : 'Set default' }}
       </button>
-      <button type="button"
-        class="block w-full px-3 py-2 text-left text-xs font-medium text-red-700 hover:bg-red-50"
+      <button type="button" class="block w-full px-3 py-2 text-left text-xs font-medium text-red-700 hover:bg-red-50"
         @click="emit('row:delete', activeMenuItem); closeRowActions()">
         Delete
       </button>

@@ -2,7 +2,7 @@
 import AppBooleanValue from './AppBooleanValue.vue'
 import AppNotSetValue from './AppNotSetValue.vue'
 import { normalizeTitleWords } from '../lib/text/normalize'
-import type { Item } from '../features/items/types'
+import type { Item, Label } from '../features/items/types'
 
 export type AppItemTableField = {
   key: string
@@ -16,13 +16,52 @@ const props = withDefaults(defineProps<{
   item: Item
   visibleFields: AppItemTableField[]
   showNameLink?: boolean
+  itemLabels?: Label[]
 }>(), {
   showNameLink: true,
+  itemLabels: () => [],
 })
 
 const emit = defineEmits<{
   openDetails: [item: Item]
 }>()
+
+const getContrastColor = (color?: string | null): 'light' | 'dark' => {
+  if (!color) {
+    return 'light'
+  }
+
+  // Handle HSL colors
+  if (color.startsWith('hsl')) {
+    const match = color.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/)
+    if (match) {
+      const lightness = Number.parseInt(match[3], 10)
+      return lightness > 55 ? 'dark' : 'light'
+    }
+  }
+
+  // Handle hex colors
+  const hex = color.replace('#', '')
+  const r = Number.parseInt(hex.substring(0, 2), 16)
+  const g = Number.parseInt(hex.substring(2, 4), 16)
+  const b = Number.parseInt(hex.substring(4, 6), 16)
+
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+
+  return luminance > 0.5 ? 'dark' : 'light'
+}
+
+const getLabelTextColor = (color?: string | null): string => {
+  const contrast = getContrastColor(color)
+  return contrast === 'light' ? '#ffffff' : '#111827'
+}
+
+const getLabelBorderColor = (color?: string | null): string => {
+  const contrast = getContrastColor(color)
+  return contrast === 'light'
+    ? 'rgba(255, 255, 255, 0.2)'
+    : 'rgba(0, 0, 0, 0.1)'
+}
 </script>
 
 <template>
@@ -37,7 +76,28 @@ const emit = defineEmits<{
     </span>
   </td>
   <td v-for="field in visibleFields" :key="`${item.id}-${field.key}`" class="whitespace-nowrap px-4 py-3 align-top">
-    <template v-if="field.key === 'description'">
+    <template v-if="field.key === 'labels'">
+      <span v-if="itemLabels.length > 0" class="group/labels relative inline-flex items-center gap-1.5"
+        :aria-label="`${itemLabels.length} label${itemLabels.length === 1 ? '' : 's'}`">
+        <i class="pi pi-tag text-copy-subtle hover:text-copy cursor-default text-sm" aria-hidden="true" />
+        <span class="text-copy-subtle hover:text-copy cursor-default text-xs font-medium">{{ itemLabels.length }}</span>
+        <div
+          class="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 w-max max-w-xs -translate-x-1/2 rounded-lg border border-line-subtle bg-surface-elevated px-3 py-2 opacity-0 shadow-panel transition-opacity group-hover/labels:opacity-100">
+          <div class="flex flex-wrap gap-1.5">
+            <span v-for="label in itemLabels" :key="label.id"
+              class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium" :style="{
+                backgroundColor: label.color ?? '#6b7280',
+                color: getLabelTextColor(label.color),
+                border: `1px solid ${getLabelBorderColor(label.color)}`
+              }">
+              {{ label.name }}
+            </span>
+          </div>
+        </div>
+      </span>
+      <AppNotSetValue v-else :label="field.label" />
+    </template>
+    <template v-else-if="field.key === 'description'">
       <span v-if="field.render(item) !== 'Not set'" class="group/note relative inline-flex"
         :aria-label="field.render(item)">
         <i class="pi pi-file-edit text-copy-subtle hover:text-copy cursor-default text-sm" aria-hidden="true" />

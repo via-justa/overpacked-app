@@ -214,6 +214,128 @@ type ApiPaths = {
       }
     }
   }
+  '/api/v1/labels': {
+    get: {
+      responses: {
+        200: {
+          content: {
+            'application/json': Array<Record<string, unknown>>
+          }
+        }
+      }
+    }
+    post: {
+      requestBody: {
+        content: {
+          'application/json': Record<string, unknown>
+        }
+      }
+      responses: {
+        201: {
+          content: {
+            'application/json': Record<string, unknown>
+          }
+        }
+      }
+    }
+  }
+  '/api/v1/labels/{labelId}': {
+    get: {
+      parameters: {
+        path: {
+          labelId: string
+        }
+      }
+      responses: {
+        200: {
+          content: {
+            'application/json': Record<string, unknown>
+          }
+        }
+      }
+    }
+    patch: {
+      parameters: {
+        path: {
+          labelId: string
+        }
+      }
+      requestBody: {
+        content: {
+          'application/json': Record<string, unknown>
+        }
+      }
+      responses: {
+        200: {
+          content: {
+            'application/json': Record<string, unknown>
+          }
+        }
+      }
+    }
+    delete: {
+      parameters: {
+        path: {
+          labelId: string
+        }
+      }
+      responses: {
+        204: {
+          content: never
+        }
+      }
+    }
+  }
+  '/api/v1/items/{itemId}/labels': {
+    get: {
+      parameters: {
+        path: {
+          itemId: string
+        }
+      }
+      responses: {
+        200: {
+          content: {
+            'application/json': Array<Record<string, unknown>>
+          }
+        }
+      }
+    }
+    post: {
+      parameters: {
+        path: {
+          itemId: string
+        }
+      }
+      requestBody: {
+        content: {
+          'application/json': Record<string, unknown>
+        }
+      }
+      responses: {
+        201: {
+          content: {
+            'application/json': Record<string, unknown>
+          }
+        }
+      }
+    }
+  }
+  '/api/v1/items/{itemId}/labels/{labelId}': {
+    delete: {
+      parameters: {
+        path: {
+          itemId: string
+          labelId: string
+        }
+      }
+      responses: {
+        204: {
+          content: never
+        }
+      }
+    }
+  }
   '/api/v1/item-types': {
     get: {
       responses: {

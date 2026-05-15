@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import Button from 'primevue/button'
 import AppSelect from '../../../components/AppSelect.vue'
 import AppToggleGroup from '../../../components/AppToggleGroup.vue'
+import ItemLabelsSelector from './ItemLabelsSelector.vue'
 import type {
   ChargePort,
   DefaultCarryStatus,
@@ -10,6 +11,7 @@ import type {
   ItemTypeField,
   ItemLayer,
   ItemSeason,
+  Label,
   Manufacturer,
   SeasonRating,
   SleepFillType,
@@ -30,6 +32,9 @@ const props = defineProps<{
   showCancel?: boolean
   showButtons?: boolean
   bare?: boolean
+  allLabels: Label[]
+  selectedLabels: Label[]
+  labelsLoading?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -37,6 +42,9 @@ const emit = defineEmits<{
   cancel: []
   'request:manufacturer-create': []
   'update:values': [values: ItemFormValues]
+  'label:add': [label: Label]
+  'label:remove': [labelId: string]
+  'label:create': [name: string]
 }>()
 
 const carryStatusOptions: Array<{ label: string; value: DefaultCarryStatus }> = [
@@ -419,6 +427,12 @@ const onCancel = () => {
             </AppSelect>
           </div>
 
+          <div class="md:col-span-2">
+            <ItemLabelsSelector :selected-labels="selectedLabels" :available-labels="allLabels" :loading="labelsLoading"
+              @add="emit('label:add', $event)" @remove="emit('label:remove', $event)"
+              @create="emit('label:create', $event)" />
+          </div>
+
           <label class="grid gap-1 md:col-span-2">
             <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">URL</span>
             <input data-element="item-source-url" class="input-shell" :value="values.source_url" type="url"
@@ -462,8 +476,7 @@ const onCancel = () => {
               <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Weight (<span
                   class="lowercase">{{ weightInputLabel }}</span>)</span>
               <input data-element="item-weight" class="w-full min-w-0 input-shell" :value="values.weight_value"
-                inputmode="decimal" type="text"
-                :aria-invalid="Boolean(validationErrors.weight_value)"
+                inputmode="decimal" type="text" :aria-invalid="Boolean(validationErrors.weight_value)"
                 :aria-describedby="validationErrors.weight_value ? 'item-weight-error' : undefined"
                 @input="updateField('weight_value', ($event.target as HTMLInputElement).value)" />
               <span id="item-weight-error" class="block min-h-4 truncate text-xs font-medium"
@@ -476,8 +489,7 @@ const onCancel = () => {
               <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Volume (<span
                   class="lowercase">{{ volumeInputLabel }}</span>)</span>
               <input data-element="item-volume" class="w-full min-w-0 input-shell" :value="values.volume_value"
-                inputmode="decimal" type="text"
-                :aria-invalid="Boolean(validationErrors.volume_value)"
+                inputmode="decimal" type="text" :aria-invalid="Boolean(validationErrors.volume_value)"
                 :aria-describedby="validationErrors.volume_value ? 'item-volume-error' : undefined"
                 @input="updateField('volume_value', ($event.target as HTMLInputElement).value)" />
               <span id="item-volume-error" class="block min-h-4 truncate text-xs font-medium"
@@ -719,7 +731,7 @@ const onCancel = () => {
                 <template v-for="field in dynamicFields" :key="field.field_key">
                   <div v-if="field.data_type === 'enum'" class="grid gap-1">
                     <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">{{ field.field_label
-                      }}</span>
+                    }}</span>
                     <AppSelect :data-element="`item-attribute-${field.field_key}`"
                       :model-value="getAttributeStringValue(field.field_key)"
                       :invalid="Boolean(getDynamicFieldError(field.field_key))"
@@ -734,7 +746,7 @@ const onCancel = () => {
 
                   <label v-else-if="field.data_type === 'string'" class="grid gap-1">
                     <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">{{ field.field_label
-                      }}</span>
+                    }}</span>
                     <input :data-element="`item-attribute-${field.field_key}`" class="input-shell"
                       :value="getAttributeStringValue(field.field_key)" type="text"
                       @input="updateAttributeValue(field.field_key, ($event.target as HTMLInputElement).value)" />
@@ -746,7 +758,7 @@ const onCancel = () => {
 
                   <label v-else-if="field.data_type === 'number'" class="grid gap-1">
                     <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">{{ field.field_label
-                      }}</span>
+                    }}</span>
                     <input :data-element="`item-attribute-${field.field_key}`" class="input-shell"
                       :value="getAttributeStringValue(field.field_key)" inputmode="decimal" type="text"
                       @input="updateAttributeValue(field.field_key, ($event.target as HTMLInputElement).value)" />
@@ -758,7 +770,7 @@ const onCancel = () => {
 
                   <label v-else-if="field.data_type === 'integer'" class="grid gap-1">
                     <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">{{ field.field_label
-                      }}</span>
+                    }}</span>
                     <input :data-element="`item-attribute-${field.field_key}`" class="input-shell"
                       :value="getAttributeStringValue(field.field_key)" inputmode="numeric" type="text"
                       @input="updateAttributeValue(field.field_key, ($event.target as HTMLInputElement).value)" />
@@ -770,7 +782,7 @@ const onCancel = () => {
 
                   <div v-else class="grid gap-1">
                     <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">{{ field.field_label
-                      }}</span>
+                    }}</span>
                     <AppToggleGroup :name="`item-attribute-${field.field_key}`"
                       :data-element="`item-attribute-${field.field_key}`"
                       :model-value="getAttributeBooleanValue(field.field_key) ? 'yes' : 'no'" :options="yesNoOptions"
@@ -790,7 +802,8 @@ const onCancel = () => {
       </div>
     </div>
 
-    <footer v-if="!bare && showButtons !== false" data-element="item-form-actions" class="mt-4 flex shrink-0 flex-wrap items-center gap-2">
+    <footer v-if="!bare && showButtons !== false" data-element="item-form-actions"
+      class="mt-4 flex shrink-0 flex-wrap items-center gap-2">
       <Button data-element="item-form-submit" :label="submitLabel" icon="pi pi-check"
         :disabled="!canSubmit || loading || Object.keys(validationErrors).length > 0" :loading="loading"
         @click="onSubmit" />

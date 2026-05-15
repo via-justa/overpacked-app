@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Item } from '../types'
+import type { Item, Label } from '../types'
 import ItemCard from './ItemCard.vue'
 import ItemsTypeTable from './ItemsTypeTable.vue'
 
@@ -22,6 +22,7 @@ interface ItemTableSection {
   selectedItemIds: string[]
   totalWeightLabel: string
   totalValueLabel: string
+  itemLabelsMap: Map<string, Label[]>
 }
 
 defineProps<{
@@ -29,6 +30,7 @@ defineProps<{
   items: Item[]
   tableSections: ItemTableSection[]
   getImageSrc: (item: Item) => string
+  itemLabelsMap: Map<string, Label[]>
 }>()
 
 defineEmits<{
@@ -54,7 +56,7 @@ defineEmits<{
       :base-fields="section.baseFields" :extra-fields="section.extraFields" :table-detail-mode="section.tableDetailMode"
       :selection-mode="section.selectionMode" :selected-item-ids="section.selectedItemIds"
       :total-weight-label="section.totalWeightLabel" :total-value-label="section.totalValueLabel"
-      @open-details="$emit('openDetails', $event)"
+      :item-labels-map="section.itemLabelsMap" @open-details="$emit('openDetails', $event)"
       @update:table-detail-mode="$emit('update:tableDetailMode', section.type, $event)"
       @update:selection-mode="$emit('update:tableSelectionMode', section.type, $event)"
       @toggle:item-selection="(itemId, checked) => $emit('toggle:tableItemSelection', section.type, itemId, checked)"
@@ -68,7 +70,7 @@ defineEmits<{
 
   <div v-else data-element="items-card-view" class="grid gap-4 sm:grid-cols-3 xl:grid-cols-4">
     <ItemCard v-for="item in items" :key="item.id" :item="item" :image-src="getImageSrc(item)"
-      @open-details="$emit('openDetails', $event)">
+      :item-labels="itemLabelsMap.get(item.id) ?? []" @open-details="$emit('openDetails', $event)">
       <template #additional-info>
         <slot name="card-additional-info" :item="item" />
       </template>

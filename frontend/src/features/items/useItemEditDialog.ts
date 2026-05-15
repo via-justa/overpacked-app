@@ -110,6 +110,7 @@ const emptyFormValues = (): ItemFormValues => ({
   image_mime_type: '',
   image_size_bytes: '',
   attributes: {},
+  label_ids: [],
 })
 
 const toFormAttributes = (attributes?: Record<string, unknown> | null): Record<string, string | boolean> => {
@@ -179,6 +180,7 @@ const toFormValues = (item: Item, weightInputUnit: WeightInputUnit, volumeInputU
   image_mime_type: item.image_mime_type ?? '',
   image_size_bytes: toIntegerString(item.image_size_bytes),
   attributes: toFormAttributes(item.attributes),
+  label_ids: [],
 })
 
 const applyCommonPayloadFields = (

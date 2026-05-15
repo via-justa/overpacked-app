@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import ItemLabel from './ItemLabel.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
-import type { Item } from '../types'
+import type { Item, Label } from '../types'
 
 defineProps<{
   item: Item
   imageSrc: string
+  itemLabels?: Label[]
 }>()
 
 defineEmits<{
@@ -20,8 +22,7 @@ const formatType = (value: string) => {
 </script>
 
 <template>
-  <article data-element="item-card" :data-item-id="item.id"
-    class="surface-panel overflow-hidden">
+  <article data-element="item-card" :data-item-id="item.id" class="surface-panel overflow-hidden">
     <div v-if="imageSrc" class="bg-surface-soft aspect-4/3 overflow-hidden">
       <img :src="imageSrc" :alt="normalizeTitleWords(item.name)" class="h-full w-full object-cover" />
     </div>
@@ -42,6 +43,10 @@ const formatType = (value: string) => {
         @click="$emit('openDetails', item)">
         {{ normalizeTitleWords(item.name) }}
       </button>
+
+      <div v-if="itemLabels && itemLabels.length > 0" class="mt-2 flex flex-wrap gap-1.5">
+        <ItemLabel v-for="label in itemLabels" :key="label.id" :label="label" size="sm" />
+      </div>
 
       <div class="text-copy-muted mt-3 space-y-1 text-sm">
         <p class="leading-6">

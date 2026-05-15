@@ -13,7 +13,7 @@ import AppSummaryCard from '../../../components/AppSummaryCard.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { queryClient } from '../../../lib/query/client'
 import { getStoredValue, setStoredValue } from '../../../lib/storage/localStorage'
-import { listItems, listItemTypeFields, listItemTypes, listManufacturers, removeItem, updateItem, createItem } from '../api/itemsApi'
+import { listItems, listItemTypeFields, listItemTypes, listManufacturers, removeItem, updateItem, createItem, listItemLabels, listLabels, createLabel, addItemLabel, removeItemLabel } from '../api/itemsApi'
 import { useMutationWithToast } from '../../../composables/useMutationWithToast'
 import { useInlineMutation } from '../../../composables/useInlineMutation'
 import { useSettings } from '../../../composables/useSettings'
@@ -39,7 +39,7 @@ import ItemsListView from '../components/ItemsListView.vue'
 import ItemsManufacturerDialog from '../components/ItemsManufacturerDialog.vue'
 import ItemsCategoryDialog from '../components/ItemsCategoryDialog.vue'
 import ItemsImportDialog from '../components/ItemsImportDialog.vue'
-import type { Item, ItemCreate, ItemFormValues, ItemTypeField, ItemUpdate, KnownItemType } from '../types'
+import type { Item, ItemCreate, ItemFormValues, ItemTypeField, ItemUpdate, KnownItemType, Label, LabelCreate } from '../types'
 import { KNOWN_ITEM_TYPES, isKnownItemType } from '../types'
 
 const toast = useToast()
@@ -53,7 +53,7 @@ type ItemsViewMode = 'cards' | 'table'
 type ItemsTableDetailMode = 'simple' | 'expanded'
 type ItemTypeFilter = 'all' | string
 type CreateTarget = 'item' | 'manufacturer' | 'category' | 'import'
-type TableFieldKey = 'type' | 'manufacturer' | 'active' | 'default_carry' | 'default_quantity' | 'is_default' | 'weight' | 'volume' | 'value' | 'description' | 'source_url' | 'dose_count' | 'calories' | 'calories_per_serving' | 'requires_water' | 'season' | 'layer' | 'waterproof' | 'size' | 'color' | 'capacity_people' | 'season_rating' | 'freestanding' | 'has_footprint' | 'comfort_temp_c' | 'fill_type' | 'r_value' | 'capacity_mah' | 'charge_port' | 'rechargeable'
+type TableFieldKey = 'type' | 'manufacturer' | 'active' | 'default_carry' | 'default_quantity' | 'is_default' | 'weight' | 'volume' | 'value' | 'labels' | 'description' | 'source_url' | 'dose_count' | 'calories' | 'calories_per_serving' | 'requires_water' | 'season' | 'layer' | 'waterproof' | 'size' | 'color' | 'capacity_people' | 'season_rating' | 'freestanding' | 'has_footprint' | 'comfort_temp_c' | 'fill_type' | 'r_value' | 'capacity_mah' | 'charge_port' | 'rechargeable'
 
 type TableFieldOption = {
   key: TableFieldKey
@@ -84,6 +84,7 @@ type ItemTableSection = {
   selectedItemIds: string[]
   totalWeightLabel: string
   totalValueLabel: string
+  itemLabelsMap: Map<string, Label[]>
 }
 
 const ITEMS_VIEW_MODE_STORAGE_KEY = 'items:view-mode'
@@ -102,6 +103,7 @@ const commonTableFieldOptions: TableFieldOption[] = [
   { key: 'weight', label: 'Weight' },
   { key: 'volume', label: 'Volume' },
   { key: 'value', label: 'Value' },
+  { key: 'labels', label: 'Labels' },
   { key: 'description', label: 'Notes' },
   { key: 'source_url', label: 'URL' },
 ]
@@ -247,6 +249,7 @@ const emptyFormValues = (): ItemFormValues => ({
   image_mime_type: '',
   image_size_bytes: '',
   attributes: {},
+  label_ids: [],
 })
 
 const toFormAttributes = (attributes?: Record<string, unknown> | null): Record<string, string | boolean> => {
@@ -316,6 +319,7 @@ const toFormValues = (item: Item): ItemFormValues => ({
   image_mime_type: item.image_mime_type ?? '',
   image_size_bytes: toIntegerString(item.image_size_bytes),
   attributes: toFormAttributes(item.attributes),
+  label_ids: [],
 })
 
 const applyCommonPayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
@@ -683,6 +687,33 @@ const manufacturersQuery = useQuery({
   queryFn: listManufacturers,
 })
 
+const itemLabelsQueries = useQuery({
+  queryKey: computed(() => ['items-labels', itemsQuery.data.value?.map(i => i.id).sort().join(',') ?? '']),
+  queryFn: async () => {
+    const items = itemsQuery.data.value ?? []
+    if (items.length === 0) return []
+
+    const labelsPromises = items.map(item =>
+      listItemLabels(item.id).catch(() => [] as Label[])
+    )
+    const labelsArrays = await Promise.all(labelsPromises)
+
+    return items.map((item, index) => ({
+      itemId: item.id,
+      labels: labelsArrays[index],
+    }))
+  },
+  enabled: computed(() => (itemsQuery.data.value?.length ?? 0) > 0),
+})
+
+const itemLabelsMap = computed(() => {
+  const map = new Map<string, Label[]>()
+  for (const entry of itemLabelsQueries.data.value ?? []) {
+    map.set(entry.itemId, entry.labels)
+  }
+  return map
+})
+
 const manufacturersById = computed(() => {
   const map = new Map<string, string>()
   for (const manufacturer of manufacturersQuery.data.value ?? []) {
@@ -711,6 +742,17 @@ const confirmDialogState = ref<
   | { kind: 'bulk-delete'; type: string; count: number }
   | null
 >(null)
+
+const allLabelsQuery = useQuery({
+  queryKey: ['labels'],
+  queryFn: listLabels,
+  enabled: computed(() => isFormDialogOpen.value),
+})
+
+const createSelectedLabels = ref<Label[]>([])
+const editSelectedLabels = ref<Label[]>([])
+
+const selectedLabels = computed(() => (isCreateMode.value ? createSelectedLabels.value : editSelectedLabels.value))
 
 const currentItemFormType = computed(() => (editingItemId.value === null ? createValues.value.type : editValues.value.type))
 
@@ -839,6 +881,11 @@ const createTableFieldDefinition = (field: TableFieldOption): TableFieldDefiniti
   }
 
   const render = (item: Item): string => {
+    if (key === 'labels') {
+      const count = itemLabelsMap.value.get(item.id)?.length ?? 0
+      return count > 0 ? String(count) : 'Not set'
+    }
+
     switch (key) {
       case 'type': return formatType(item.type)
       case 'manufacturer': return manufacturersById.value.get(item.manufacturer_id) ?? item.manufacturer_id
@@ -914,6 +961,7 @@ const itemTableSections = computed<ItemTableSection[]>(() => {
         selectedItemIds: selectedTableItemIdsByType.value[type] ?? [],
         totalWeightLabel: formatTotalWeight(getItemsTotalWeightGrams(groupedItems)),
         totalValueLabel: formatTotalValue(getItemsTotalValue(groupedItems)),
+        itemLabelsMap: itemLabelsMap.value,
       }
     })
     .filter((section) => section.items.length > 0)
@@ -988,7 +1036,10 @@ const getSelectedIdsForType = (type: string): string[] => {
 
 const withItemsRefresh = async (task: () => Promise<void>) => {
   await task()
-  await queryClient.invalidateQueries({ queryKey: ['items'] })
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['items'] }),
+    queryClient.invalidateQueries({ queryKey: ['items-labels'] }),
+  ])
 }
 
 const onRowToggleActive = async (item: Item) => {
@@ -1191,10 +1242,9 @@ const createMutation = useMutationWithToast<Item, Error, ItemCreate>({
     summary: 'Create failed',
     detail: 'Unable to create item.',
   },
-  invalidateQueries: [['items']],
+  invalidateQueries: [],
   onSuccess: () => {
-    createValues.value = emptyFormValues()
-    isFormDialogOpen.value = false
+    // Don't reset form or close dialog here - let onCreate handle it
   },
 })
 
@@ -1210,11 +1260,9 @@ const updateMutation = useMutationWithToast<Item, Error, { itemId: string; paylo
     summary: 'Update failed',
     detail: 'Unable to update item.',
   },
-  invalidateQueries: [['items']],
+  invalidateQueries: [],
   onSuccess: () => {
-    editingItemId.value = null
-    editValues.value = emptyFormValues()
-    isFormDialogOpen.value = false
+    // Don't reset form or close dialog here - let onSaveEdit handle it
   },
 })
 
@@ -1228,7 +1276,7 @@ const deleteMutation = useMutationWithToast<void, Error, string>({
     summary: 'Delete failed',
     detail: 'Unable to delete item.',
   },
-  invalidateQueries: [['items']],
+  invalidateQueries: [['items'], ['items-labels']],
 })
 
 const canShowEmptyState = computed(() => {
@@ -1307,6 +1355,7 @@ const openManufacturerDialog = () => {
 const openCreateDialog = () => {
   editingItemId.value = null
   createValues.value = emptyFormValues()
+  createSelectedLabels.value = []
   isManufacturerDialogOpen.value = false
   isCategoryDialogOpen.value = false
   closeCreateOptions()
@@ -1355,12 +1404,53 @@ watch(isFormDialogOpen, (value) => {
 
 const onCreate = async () => {
   const payload = toPayload(createValues.value, itemFormDynamicFields.value) as ItemCreate
-  await createMutation.mutateAsync(payload)
+  const createdItem = await createMutation.mutateAsync(payload)
+
+  // Save label associations
+  if (createSelectedLabels.value.length > 0) {
+    try {
+      await Promise.all(
+        createSelectedLabels.value.map(label => addItemLabel(createdItem.id, { label_id: label.id }))
+      )
+    } catch (err) {
+      // Log error but allow item creation to succeed
+      // eslint-disable-next-line no-console
+      console.error('Failed to add labels to item:', err)
+      toast.add({
+        severity: 'warn',
+        summary: 'Labels partially saved',
+        detail: 'Item created but some labels could not be added.',
+        life: 3500,
+      })
+    }
+  }
+
+  // Invalidate queries and reset form after everything is done
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['items'] }),
+    queryClient.invalidateQueries({ queryKey: ['items-labels'] }),
+  ])
+  createValues.value = emptyFormValues()
+  createSelectedLabels.value = []
+  isFormDialogOpen.value = false
 }
 
-const onStartEdit = (item: Item) => {
+const onStartEdit = async (item: Item) => {
   editingItemId.value = item.id
   editValues.value = toFormValues(item)
+
+  // Load item labels
+  try {
+    const labels = await listItemLabels(item.id)
+    editSelectedLabels.value = labels
+    editValues.value = { ...editValues.value, label_ids: labels.map(l => l.id) }
+  } catch (err) {
+    // If labels fail to load, continue with empty labels
+    // eslint-disable-next-line no-console
+    console.error('Failed to load item labels:', err)
+    editSelectedLabels.value = []
+  }
+
   selectedDetailItemId.value = null
   isManufacturerDialogOpen.value = false
   isCategoryDialogOpen.value = false
@@ -1373,11 +1463,13 @@ const onCancelEdit = () => {
 
   if (isCreateMode.value) {
     createValues.value = emptyFormValues()
+    createSelectedLabels.value = []
     return
   }
 
   editingItemId.value = null
   editValues.value = emptyFormValues()
+  editSelectedLabels.value = []
 }
 
 const onSaveEdit = async () => {
@@ -1387,29 +1479,125 @@ const onSaveEdit = async () => {
 
   const payload = toPayload(editValues.value, itemFormDynamicFields.value)
   await updateMutation.mutateAsync({ itemId: editingItemId.value, payload })
+
+  // Sync label associations
+  try {
+    const currentLabels = await listItemLabels(editingItemId.value)
+    const currentLabelIds = new Set(currentLabels.map(l => l.id))
+    const selectedLabelIds = new Set(editSelectedLabels.value.map(l => l.id))
+
+    // Remove labels that are no longer selected
+    const toRemove = currentLabels.filter(l => !selectedLabelIds.has(l.id))
+    await Promise.all(toRemove.map(l => removeItemLabel(editingItemId.value!, l.id)))
+
+    // Add labels that are newly selected
+    const toAdd = editSelectedLabels.value.filter(l => !currentLabelIds.has(l.id))
+    await Promise.all(toAdd.map(l => addItemLabel(editingItemId.value!, { label_id: l.id })))
+  } catch (err) {
+    // Log error but allow item update to succeed
+    // eslint-disable-next-line no-console
+    console.error('Failed to sync labels:', err)
+    toast.add({
+      severity: 'warn',
+      summary: 'Labels partially saved',
+      detail: 'Item updated but some labels could not be synced.',
+      life: 3500,
+    })
+  }
+
+  // Invalidate queries and reset form after everything is done
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['items'] }),
+    queryClient.invalidateQueries({ queryKey: ['items-labels'] }),
+  ])
+  editingItemId.value = null
+  editValues.value = emptyFormValues()
+  editSelectedLabels.value = []
+  isFormDialogOpen.value = false
 }
 
 const onDelete = async (itemId: string) => {
   await deleteMutation.mutateAsync(itemId)
 }
 
+const onDeleteFromForm = async () => {
+  if (!editingItemId.value) {
+    return
+  }
+
+  isFormDialogOpen.value = false
+  await onDelete(editingItemId.value)
+  editingItemId.value = null
+  editValues.value = emptyFormValues()
+  editSelectedLabels.value = []
+}
+
 const openDetails = (item: Item) => {
   selectedDetailItemId.value = item.id
 }
 
-const onEditFromDetails = () => {
+const onEditFromDetails = async () => {
   if (!selectedDetailItem.value) {
     return
   }
 
   const item = selectedDetailItem.value
   selectedDetailItemId.value = null
-  onStartEdit(item)
+  await onStartEdit(item)
 }
 
 const onDeleteFromDetails = async (itemId: string) => {
   selectedDetailItemId.value = null
   await onDelete(itemId)
+}
+
+const onAddLabel = (label: Label) => {
+  if (isCreateMode.value) {
+    if (!createSelectedLabels.value.some(l => l.id === label.id)) {
+      createSelectedLabels.value = [...createSelectedLabels.value, label]
+      createValues.value = { ...createValues.value, label_ids: createSelectedLabels.value.map(l => l.id) }
+    }
+    return
+  }
+
+  if (!editSelectedLabels.value.some(l => l.id === label.id)) {
+    editSelectedLabels.value = [...editSelectedLabels.value, label]
+    editValues.value = { ...editValues.value, label_ids: editSelectedLabels.value.map(l => l.id) }
+  }
+}
+
+const onRemoveLabel = (labelId: string) => {
+  if (isCreateMode.value) {
+    createSelectedLabels.value = createSelectedLabels.value.filter(l => l.id !== labelId)
+    createValues.value = { ...createValues.value, label_ids: createSelectedLabels.value.map(l => l.id) }
+    return
+  }
+
+  editSelectedLabels.value = editSelectedLabels.value.filter(l => l.id !== labelId)
+  editValues.value = { ...editValues.value, label_ids: editSelectedLabels.value.map(l => l.id) }
+}
+
+const generateRandomLabelColor = (): string => {
+  const hue = Math.floor(Math.random() * 360)
+  const saturation = 60 + Math.floor(Math.random() * 20) // 60-80%
+  const lightness = 45 + Math.floor(Math.random() * 20) // 45-65%
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+}
+
+const onCreateLabel = async (name: string) => {
+  try {
+    const payload: LabelCreate = { name, color: generateRandomLabelColor() }
+    const created = await createLabel(payload)
+    await queryClient.invalidateQueries({ queryKey: ['labels'] })
+    onAddLabel(created)
+  } catch (err) {
+    toast.add({
+      severity: 'error',
+      summary: 'Label creation failed',
+      detail: err instanceof Error ? err.message : 'Unable to create label.',
+      life: 3500,
+    })
+  }
 }
 
 const onSubmitForm = async () => {
@@ -1434,12 +1622,14 @@ const onSubmitForm = async () => {
       @edit="onEditFromDetails" @delete="onDeleteFromDetails" />
 
     <ItemFormDialog :open="isFormDialogOpen" :is-create-mode="isCreateMode" :title="formTitle"
-      :values="activeFormValues" :item-type-options="itemFormTypeOptions"
-      :dynamic-fields="itemFormDynamicFields" :dynamic-fields-loading="itemTypeFieldsQuery.isPending.value"
-      :manufacturers="manufacturersQuery.data.value ?? []" :weight-input-label="weightInputLabel"
-      :volume-input-label="volumeInputLabel" :is-loading="formLoading" @update:open="isFormDialogOpen = $event"
+      :values="activeFormValues" :item-type-options="itemFormTypeOptions" :dynamic-fields="itemFormDynamicFields"
+      :dynamic-fields-loading="itemTypeFieldsQuery.isPending.value" :manufacturers="manufacturersQuery.data.value ?? []"
+      :weight-input-label="weightInputLabel" :volume-input-label="volumeInputLabel" :is-loading="formLoading"
+      :all-labels="allLabelsQuery.data.value ?? []" :selected-labels="selectedLabels"
+      :labels-loading="allLabelsQuery.isPending.value" @update:open="isFormDialogOpen = $event"
       @update:values="(values) => { activeFormValues = values }" @request:manufacturer-create="openManufacturerDialog"
-      @submit="onSubmitForm" @cancel="onCancelEdit" />
+      @label:add="onAddLabel" @label:remove="onRemoveLabel" @label:create="onCreateLabel" @submit="onSubmitForm"
+      @cancel="onCancelEdit" @delete="onDeleteFromForm" />
 
     <ItemsManufacturerDialog v-model:open="isManufacturerDialogOpen"
       :manufacturers="manufacturersQuery.data.value ?? []" :items="itemsQuery.data.value ?? []"
@@ -1489,7 +1679,7 @@ const onSubmitForm = async () => {
       </div>
 
       <ItemsListView v-else :view-mode="itemsViewMode" :items="filteredItems" :table-sections="itemTableSections"
-        :get-image-src="getItemImageSrc" @open-details="openDetails"
+        :get-image-src="getItemImageSrc" :item-labels-map="itemLabelsMap" @open-details="openDetails"
         @update:table-detail-mode="(type, mode) => updateTableDetailMode(type, mode)"
         @update:table-selection-mode="(type, value) => updateTableSelectionMode(type, value)"
         @toggle:table-item-selection="(type, itemId, checked) => toggleTableItemSelection(type, itemId, checked)"

@@ -245,6 +245,28 @@ export const isKnownItemType = (value: string): value is KnownItemType => {
   return KNOWN_ITEM_TYPES.includes(value as KnownItemType)
 }
 
+export type Label = {
+  id: string
+  name: string
+  color?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type LabelCreate = {
+  name: string
+  color?: string | null
+}
+
+export type LabelUpdate = {
+  name?: string
+  color?: string | null
+}
+
+export type ItemLabelAdd = {
+  label_id: string
+}
+
 export type ItemFormValues = {
   name: string
   type: string
@@ -281,4 +303,5 @@ export type ItemFormValues = {
   image_mime_type: string
   image_size_bytes: string
   attributes: Record<string, string | boolean>
+  label_ids: string[]
 }
