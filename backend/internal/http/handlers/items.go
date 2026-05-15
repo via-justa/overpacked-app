@@ -336,14 +336,6 @@ func float64PtrFromFloat32(value *float32) *float64 {
 	return &converted
 }
 
-func enumStringPtr[T ~string](value *T) *string {
-	if value == nil {
-		return nil
-	}
-	converted := string(*value)
-	return &converted
-}
-
 func decodeImageDimensions(imageBlob []byte) (int, int, error) {
 	config, _, err := image.DecodeConfig(bytes.NewReader(imageBlob))
 	if err != nil {

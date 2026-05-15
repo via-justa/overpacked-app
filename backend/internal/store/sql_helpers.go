@@ -26,13 +26,6 @@ func toNullInt(v *int) sql.NullInt64 {
 	return sql.NullInt64{Int64: int64(*v), Valid: true}
 }
 
-func toNullBool(v *bool) sql.NullBool {
-	if v == nil {
-		return sql.NullBool{}
-	}
-	return sql.NullBool{Bool: *v, Valid: true}
-}
-
 func toNullBytes(v []byte) []byte {
 	if len(v) == 0 {
 		return nil
@@ -63,14 +56,6 @@ func intPtrFromNull(v sql.NullInt64) *int {
 	}
 	i := int(v.Int64)
 	return &i
-}
-
-func boolPtrFromNull(v sql.NullBool) *bool {
-	if !v.Valid {
-		return nil
-	}
-	b := v.Bool
-	return &b
 }
 
 func timePtr(v sql.NullTime) *time.Time {

@@ -11,6 +11,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    ports:
+      - "5432:5432"
     volumes:
       - packing_light_db_data:/var/lib/postgresql/data
 

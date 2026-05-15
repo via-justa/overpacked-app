@@ -312,22 +312,22 @@ func (e PackItemWithDetailsCarryStatus) Valid() bool {
 
 // Defines values for PackUpdateTripType.
 const (
-	DayHike   PackUpdateTripType = "day_hike"
-	MultiDay  PackUpdateTripType = "multi_day"
-	Overnight PackUpdateTripType = "overnight"
-	ThruHike  PackUpdateTripType = "thru_hike"
+	PackUpdateTripTypeDayHike   PackUpdateTripType = "day_hike"
+	PackUpdateTripTypeMultiDay  PackUpdateTripType = "multi_day"
+	PackUpdateTripTypeOvernight PackUpdateTripType = "overnight"
+	PackUpdateTripTypeThruHike  PackUpdateTripType = "thru_hike"
 )
 
 // Valid indicates whether the value is a known member of the PackUpdateTripType enum.
 func (e PackUpdateTripType) Valid() bool {
 	switch e {
-	case DayHike:
+	case PackUpdateTripTypeDayHike:
 		return true
-	case MultiDay:
+	case PackUpdateTripTypeMultiDay:
 		return true
-	case Overnight:
+	case PackUpdateTripTypeOvernight:
 		return true
-	case ThruHike:
+	case PackUpdateTripTypeThruHike:
 		return true
 	default:
 		return false
@@ -649,6 +649,132 @@ func (e SettingsUpdateWeightUnit) Valid() bool {
 	}
 }
 
+// Defines values for TripTripType.
+const (
+	TripTripTypeDayHike   TripTripType = "day_hike"
+	TripTripTypeMultiDay  TripTripType = "multi_day"
+	TripTripTypeOvernight TripTripType = "overnight"
+	TripTripTypeThruHike  TripTripType = "thru_hike"
+)
+
+// Valid indicates whether the value is a known member of the TripTripType enum.
+func (e TripTripType) Valid() bool {
+	switch e {
+	case TripTripTypeDayHike:
+		return true
+	case TripTripTypeMultiDay:
+		return true
+	case TripTripTypeOvernight:
+		return true
+	case TripTripTypeThruHike:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TripCreateTripType.
+const (
+	TripCreateTripTypeDayHike   TripCreateTripType = "day_hike"
+	TripCreateTripTypeMultiDay  TripCreateTripType = "multi_day"
+	TripCreateTripTypeOvernight TripCreateTripType = "overnight"
+	TripCreateTripTypeThruHike  TripCreateTripType = "thru_hike"
+)
+
+// Valid indicates whether the value is a known member of the TripCreateTripType enum.
+func (e TripCreateTripType) Valid() bool {
+	switch e {
+	case TripCreateTripTypeDayHike:
+		return true
+	case TripCreateTripTypeMultiDay:
+		return true
+	case TripCreateTripTypeOvernight:
+		return true
+	case TripCreateTripTypeThruHike:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TripItemCreateCarryStatus.
+const (
+	TripItemCreateCarryStatusPacked TripItemCreateCarryStatus = "packed"
+	TripItemCreateCarryStatusWorn   TripItemCreateCarryStatus = "worn"
+)
+
+// Valid indicates whether the value is a known member of the TripItemCreateCarryStatus enum.
+func (e TripItemCreateCarryStatus) Valid() bool {
+	switch e {
+	case TripItemCreateCarryStatusPacked:
+		return true
+	case TripItemCreateCarryStatusWorn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TripItemUpdateCarryStatus.
+const (
+	TripItemUpdateCarryStatusPacked TripItemUpdateCarryStatus = "packed"
+	TripItemUpdateCarryStatusWorn   TripItemUpdateCarryStatus = "worn"
+)
+
+// Valid indicates whether the value is a known member of the TripItemUpdateCarryStatus enum.
+func (e TripItemUpdateCarryStatus) Valid() bool {
+	switch e {
+	case TripItemUpdateCarryStatusPacked:
+		return true
+	case TripItemUpdateCarryStatusWorn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TripItemWithDetailsCarryStatus.
+const (
+	Packed TripItemWithDetailsCarryStatus = "packed"
+	Worn   TripItemWithDetailsCarryStatus = "worn"
+)
+
+// Valid indicates whether the value is a known member of the TripItemWithDetailsCarryStatus enum.
+func (e TripItemWithDetailsCarryStatus) Valid() bool {
+	switch e {
+	case Packed:
+		return true
+	case Worn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TripUpdateTripType.
+const (
+	TripUpdateTripTypeDayHike   TripUpdateTripType = "day_hike"
+	TripUpdateTripTypeMultiDay  TripUpdateTripType = "multi_day"
+	TripUpdateTripTypeOvernight TripUpdateTripType = "overnight"
+	TripUpdateTripTypeThruHike  TripUpdateTripType = "thru_hike"
+)
+
+// Valid indicates whether the value is a known member of the TripUpdateTripType enum.
+func (e TripUpdateTripType) Valid() bool {
+	switch e {
+	case TripUpdateTripTypeDayHike:
+		return true
+	case TripUpdateTripTypeMultiDay:
+		return true
+	case TripUpdateTripTypeOvernight:
+		return true
+	case TripUpdateTripTypeThruHike:
+		return true
+	default:
+		return false
+	}
+}
+
 // Item defines model for Item.
 type Item = ItemBase
 
@@ -706,6 +832,11 @@ type ItemCreate struct {
 
 // ItemCreateDefaultCarryStatus defines model for ItemCreate.DefaultCarryStatus.
 type ItemCreateDefaultCarryStatus string
+
+// ItemLabelAdd defines model for ItemLabelAdd.
+type ItemLabelAdd struct {
+	LabelId openapi_types.UUID `json:"label_id"`
+}
 
 // ItemSet defines model for ItemSet.
 type ItemSet struct {
@@ -836,6 +967,30 @@ type ItemUpdate struct {
 // ItemUpdateDefaultCarryStatus defines model for ItemUpdate.DefaultCarryStatus.
 type ItemUpdateDefaultCarryStatus string
 
+// Label defines model for Label.
+type Label struct {
+	// Color Hex color code for UI display (e.g.,
+	Color     *string            `json:"color,omitempty"`
+	CreatedAt time.Time          `json:"created_at"`
+	Id        openapi_types.UUID `json:"id"`
+	Name      string             `json:"name"`
+	UpdatedAt time.Time          `json:"updated_at"`
+}
+
+// LabelCreate defines model for LabelCreate.
+type LabelCreate struct {
+	// Color Hex color code for UI display (e.g.,
+	Color *string `json:"color,omitempty"`
+	Name  string  `json:"name"`
+}
+
+// LabelUpdate defines model for LabelUpdate.
+type LabelUpdate struct {
+	// Color Hex color code for UI display (e.g.,
+	Color *string `json:"color,omitempty"`
+	Name  *string `json:"name,omitempty"`
+}
+
 // LoginRequest defines model for LoginRequest.
 type LoginRequest struct {
 	Password string `json:"password"`
@@ -916,11 +1071,6 @@ type PackItemWithDetails struct {
 // PackItemWithDetailsCarryStatus defines model for PackItemWithDetails.CarryStatus.
 type PackItemWithDetailsCarryStatus string
 
-// PackSetCreate defines model for PackSetCreate.
-type PackSetCreate struct {
-	SetId openapi_types.UUID `json:"set_id"`
-}
-
 // PackUpdate defines model for PackUpdate.
 type PackUpdate struct {
 	Name     *string             `json:"name,omitempty"`
@@ -930,6 +1080,32 @@ type PackUpdate struct {
 
 // PackUpdateTripType defines model for PackUpdate.TripType.
 type PackUpdateTripType string
+
+// PackingList defines model for PackingList.
+type PackingList struct {
+	CreatedAt   time.Time          `json:"created_at"`
+	Description *string            `json:"description,omitempty"`
+	Id          openapi_types.UUID `json:"id"`
+	Name        string             `json:"name"`
+	UpdatedAt   time.Time          `json:"updated_at"`
+}
+
+// PackingListCreate defines model for PackingListCreate.
+type PackingListCreate struct {
+	Description *string `json:"description,omitempty"`
+	Name        string  `json:"name"`
+}
+
+// PackingListLabelAdd defines model for PackingListLabelAdd.
+type PackingListLabelAdd struct {
+	LabelId openapi_types.UUID `json:"label_id"`
+}
+
+// PackingListUpdate defines model for PackingListUpdate.
+type PackingListUpdate struct {
+	Description *string `json:"description,omitempty"`
+	Name        *string `json:"name,omitempty"`
+}
 
 // Person defines model for Person.
 type Person struct {
@@ -1070,6 +1246,120 @@ type TokenResponse struct {
 	TokenType    string `json:"token_type"`
 }
 
+// Trip defines model for Trip.
+type Trip struct {
+	CreatedAt       time.Time          `json:"created_at"`
+	Duration        *string            `json:"duration,omitempty"`
+	Id              openapi_types.UUID `json:"id"`
+	Name            string             `json:"name"`
+	Notes           *string            `json:"notes,omitempty"`
+	TotalDistanceKm *float32           `json:"total_distance_km,omitempty"`
+	TripKomootUrl   *string            `json:"trip_komoot_url,omitempty"`
+	TripStravaUrl   *string            `json:"trip_strava_url,omitempty"`
+	TripType        TripTripType       `json:"trip_type"`
+	TripWandererUrl *string            `json:"trip_wanderer_url,omitempty"`
+	UpdatedAt       time.Time          `json:"updated_at"`
+}
+
+// TripTripType defines model for Trip.TripType.
+type TripTripType string
+
+// TripCreate defines model for TripCreate.
+type TripCreate struct {
+	Duration        *string            `json:"duration,omitempty"`
+	Name            string             `json:"name"`
+	Notes           *string            `json:"notes,omitempty"`
+	TotalDistanceKm *float32           `json:"total_distance_km,omitempty"`
+	TripKomootUrl   *string            `json:"trip_komoot_url,omitempty"`
+	TripStravaUrl   *string            `json:"trip_strava_url,omitempty"`
+	TripType        TripCreateTripType `json:"trip_type"`
+	TripWandererUrl *string            `json:"trip_wanderer_url,omitempty"`
+}
+
+// TripCreateTripType defines model for TripCreate.TripType.
+type TripCreateTripType string
+
+// TripItemCreate defines model for TripItemCreate.
+type TripItemCreate struct {
+	CarryStatus TripItemCreateCarryStatus `json:"carry_status"`
+	ItemId      openapi_types.UUID        `json:"item_id"`
+	Notes       *string                   `json:"notes,omitempty"`
+	Quantity    float32                   `json:"quantity"`
+}
+
+// TripItemCreateCarryStatus defines model for TripItemCreate.CarryStatus.
+type TripItemCreateCarryStatus string
+
+// TripItemUpdate defines model for TripItemUpdate.
+type TripItemUpdate struct {
+	CarryStatus *TripItemUpdateCarryStatus `json:"carry_status,omitempty"`
+	Notes       *string                    `json:"notes,omitempty"`
+	Quantity    *float32                   `json:"quantity,omitempty"`
+}
+
+// TripItemUpdateCarryStatus defines model for TripItemUpdate.CarryStatus.
+type TripItemUpdateCarryStatus string
+
+// TripItemWithDetails defines model for TripItemWithDetails.
+type TripItemWithDetails struct {
+	CarryStatus TripItemWithDetailsCarryStatus `json:"carry_status"`
+	Item        Item                           `json:"item"`
+	ItemId      openapi_types.UUID             `json:"item_id"`
+	Notes       *string                        `json:"notes,omitempty"`
+	Quantity    float32                        `json:"quantity"`
+}
+
+// TripItemWithDetailsCarryStatus defines model for TripItemWithDetails.CarryStatus.
+type TripItemWithDetailsCarryStatus string
+
+// TripPackCreate defines model for TripPackCreate.
+type TripPackCreate struct {
+	PackId openapi_types.UUID `json:"pack_id"`
+}
+
+// TripPackWithDetails defines model for TripPackWithDetails.
+type TripPackWithDetails struct {
+	Pack   Pack               `json:"pack"`
+	PackId openapi_types.UUID `json:"pack_id"`
+}
+
+// TripPersonCreate defines model for TripPersonCreate.
+type TripPersonCreate struct {
+	PersonId openapi_types.UUID `json:"person_id"`
+}
+
+// TripPersonWithDetails defines model for TripPersonWithDetails.
+type TripPersonWithDetails struct {
+	Person   Person             `json:"person"`
+	PersonId openapi_types.UUID `json:"person_id"`
+}
+
+// TripSetCreate defines model for TripSetCreate.
+type TripSetCreate struct {
+	SetId openapi_types.UUID `json:"set_id"`
+}
+
+// TripSetWithDetails defines model for TripSetWithDetails.
+type TripSetWithDetails struct {
+	Set   ItemSet            `json:"set"`
+	SetId openapi_types.UUID `json:"set_id"`
+}
+
+// TripUpdate defines model for TripUpdate.
+type TripUpdate struct {
+	Duration        *string             `json:"duration,omitempty"`
+	Name            *string             `json:"name,omitempty"`
+	Notes           *string             `json:"notes,omitempty"`
+	TotalDistanceKm *float32            `json:"total_distance_km,omitempty"`
+	TripKomootUrl   *string             `json:"trip_komoot_url,omitempty"`
+	TripStravaUrl   *string             `json:"trip_strava_url,omitempty"`
+	TripType        *TripUpdateTripType `json:"trip_type,omitempty"`
+	TripWandererUrl *string             `json:"trip_wanderer_url,omitempty"`
+}
+
+// TripUpdateTripType defines model for TripUpdate.TripType.
+type TripUpdateTripType string
+
 // BadRequest defines model for BadRequest.
 type BadRequest struct {
 	Error string `json:"error"`
@@ -1109,11 +1399,29 @@ type CreateItemJSONRequestBody = ItemCreate
 // UpdateItemJSONRequestBody defines body for UpdateItem for application/json ContentType.
 type UpdateItemJSONRequestBody = ItemUpdate
 
+// AddItemLabelJSONRequestBody defines body for AddItemLabel for application/json ContentType.
+type AddItemLabelJSONRequestBody = ItemLabelAdd
+
+// CreateLabelJSONRequestBody defines body for CreateLabel for application/json ContentType.
+type CreateLabelJSONRequestBody = LabelCreate
+
+// UpdateLabelJSONRequestBody defines body for UpdateLabel for application/json ContentType.
+type UpdateLabelJSONRequestBody = LabelUpdate
+
 // CreateManufacturerJSONRequestBody defines body for CreateManufacturer for application/json ContentType.
 type CreateManufacturerJSONRequestBody = ManufacturerCreate
 
 // UpdateManufacturerJSONRequestBody defines body for UpdateManufacturer for application/json ContentType.
 type UpdateManufacturerJSONRequestBody = ManufacturerUpdate
+
+// CreatePackingListJSONRequestBody defines body for CreatePackingList for application/json ContentType.
+type CreatePackingListJSONRequestBody = PackingListCreate
+
+// UpdatePackingListJSONRequestBody defines body for UpdatePackingList for application/json ContentType.
+type UpdatePackingListJSONRequestBody = PackingListUpdate
+
+// AddPackingListLabelJSONRequestBody defines body for AddPackingListLabel for application/json ContentType.
+type AddPackingListLabelJSONRequestBody = PackingListLabelAdd
 
 // CreatePackJSONRequestBody defines body for CreatePack for application/json ContentType.
 type CreatePackJSONRequestBody = PackCreate
@@ -1126,9 +1434,6 @@ type AddPackItemJSONRequestBody = PackItemCreate
 
 // UpdatePackItemJSONRequestBody defines body for UpdatePackItem for application/json ContentType.
 type UpdatePackItemJSONRequestBody = PackItemUpdate
-
-// AddPackSetJSONRequestBody defines body for AddPackSet for application/json ContentType.
-type AddPackSetJSONRequestBody = PackSetCreate
 
 // CreatePersonJSONRequestBody defines body for CreatePerson for application/json ContentType.
 type CreatePersonJSONRequestBody = PersonCreate
@@ -1153,6 +1458,27 @@ type UpdateSettingsJSONRequestBody = SettingsUpdate
 
 // StartFreshJSONRequestBody defines body for StartFresh for application/json ContentType.
 type StartFreshJSONRequestBody = StartFreshRequest
+
+// CreateTripJSONRequestBody defines body for CreateTrip for application/json ContentType.
+type CreateTripJSONRequestBody = TripCreate
+
+// UpdateTripJSONRequestBody defines body for UpdateTrip for application/json ContentType.
+type UpdateTripJSONRequestBody = TripUpdate
+
+// AddTripItemJSONRequestBody defines body for AddTripItem for application/json ContentType.
+type AddTripItemJSONRequestBody = TripItemCreate
+
+// UpdateTripItemJSONRequestBody defines body for UpdateTripItem for application/json ContentType.
+type UpdateTripItemJSONRequestBody = TripItemUpdate
+
+// AddTripPackJSONRequestBody defines body for AddTripPack for application/json ContentType.
+type AddTripPackJSONRequestBody = TripPackCreate
+
+// AddTripPersonJSONRequestBody defines body for AddTripPerson for application/json ContentType.
+type AddTripPersonJSONRequestBody = TripPersonCreate
+
+// AddTripSetJSONRequestBody defines body for AddTripSet for application/json ContentType.
+type AddTripSetJSONRequestBody = TripSetCreate
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -1201,6 +1527,30 @@ type ServerInterface interface {
 	// Update item
 	// (PATCH /api/v1/items/{itemId})
 	UpdateItem(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID)
+	// List labels for an item
+	// (GET /api/v1/items/{itemId}/labels)
+	ListItemLabels(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID)
+	// Add label to item
+	// (POST /api/v1/items/{itemId}/labels)
+	AddItemLabel(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID)
+	// Remove label from item
+	// (DELETE /api/v1/items/{itemId}/labels/{labelId})
+	RemoveItemLabel(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID, labelId openapi_types.UUID)
+	// List all labels
+	// (GET /api/v1/labels)
+	ListLabels(w http.ResponseWriter, r *http.Request)
+	// Create a new label
+	// (POST /api/v1/labels)
+	CreateLabel(w http.ResponseWriter, r *http.Request)
+	// Delete label
+	// (DELETE /api/v1/labels/{labelId})
+	DeleteLabel(w http.ResponseWriter, r *http.Request, labelId openapi_types.UUID)
+	// Get label by ID
+	// (GET /api/v1/labels/{labelId})
+	GetLabel(w http.ResponseWriter, r *http.Request, labelId openapi_types.UUID)
+	// Update label
+	// (PATCH /api/v1/labels/{labelId})
+	UpdateLabel(w http.ResponseWriter, r *http.Request, labelId openapi_types.UUID)
 	// List all manufacturers
 	// (GET /api/v1/manufacturers)
 	ListManufacturers(w http.ResponseWriter, r *http.Request)
@@ -1216,6 +1566,30 @@ type ServerInterface interface {
 	// Update manufacturer
 	// (PATCH /api/v1/manufacturers/{manufacturerId})
 	UpdateManufacturer(w http.ResponseWriter, r *http.Request, manufacturerId openapi_types.UUID)
+	// List all packing lists
+	// (GET /api/v1/packing-lists)
+	ListPackingLists(w http.ResponseWriter, r *http.Request)
+	// Create a new packing list
+	// (POST /api/v1/packing-lists)
+	CreatePackingList(w http.ResponseWriter, r *http.Request)
+	// Delete packing list
+	// (DELETE /api/v1/packing-lists/{listId})
+	DeletePackingList(w http.ResponseWriter, r *http.Request, listId openapi_types.UUID)
+	// Get packing list by ID
+	// (GET /api/v1/packing-lists/{listId})
+	GetPackingListById(w http.ResponseWriter, r *http.Request, listId openapi_types.UUID)
+	// Update packing list
+	// (PATCH /api/v1/packing-lists/{listId})
+	UpdatePackingList(w http.ResponseWriter, r *http.Request, listId openapi_types.UUID)
+	// List labels for a packing list
+	// (GET /api/v1/packing-lists/{listId}/labels)
+	ListPackingListLabels(w http.ResponseWriter, r *http.Request, listId openapi_types.UUID)
+	// Add label to packing list
+	// (POST /api/v1/packing-lists/{listId}/labels)
+	AddPackingListLabel(w http.ResponseWriter, r *http.Request, listId openapi_types.UUID)
+	// Remove label from packing list
+	// (DELETE /api/v1/packing-lists/{listId}/labels/{labelId})
+	RemovePackingListLabel(w http.ResponseWriter, r *http.Request, listId openapi_types.UUID, labelId openapi_types.UUID)
 	// List all packs
 	// (GET /api/v1/packs)
 	ListPacks(w http.ResponseWriter, r *http.Request)
@@ -1243,15 +1617,6 @@ type ServerInterface interface {
 	// Update item in pack
 	// (PATCH /api/v1/packs/{packId}/items/{itemId})
 	UpdatePackItem(w http.ResponseWriter, r *http.Request, packId openapi_types.UUID, itemId openapi_types.UUID)
-	// List sets applied to pack
-	// (GET /api/v1/packs/{packId}/sets)
-	ListPackSets(w http.ResponseWriter, r *http.Request, packId openapi_types.UUID)
-	// Apply set to pack
-	// (POST /api/v1/packs/{packId}/sets)
-	AddPackSet(w http.ResponseWriter, r *http.Request, packId openapi_types.UUID)
-	// Remove set from pack
-	// (DELETE /api/v1/packs/{packId}/sets/{setId})
-	RemovePackSet(w http.ResponseWriter, r *http.Request, packId openapi_types.UUID, setId openapi_types.UUID)
 	// List all persons
 	// (GET /api/v1/persons)
 	ListPersons(w http.ResponseWriter, r *http.Request)
@@ -1303,6 +1668,60 @@ type ServerInterface interface {
 	// Permanently delete all app data and reset defaults
 	// (POST /api/v1/settings/start-fresh)
 	StartFresh(w http.ResponseWriter, r *http.Request)
+	// List all trips
+	// (GET /api/v1/trips)
+	ListTrips(w http.ResponseWriter, r *http.Request)
+	// Create a new trip
+	// (POST /api/v1/trips)
+	CreateTrip(w http.ResponseWriter, r *http.Request)
+	// Delete trip
+	// (DELETE /api/v1/trips/{tripId})
+	DeleteTrip(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID)
+	// Get trip by ID
+	// (GET /api/v1/trips/{tripId})
+	GetTripById(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID)
+	// Update trip
+	// (PATCH /api/v1/trips/{tripId})
+	UpdateTrip(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID)
+	// List items in a trip
+	// (GET /api/v1/trips/{tripId}/items)
+	ListTripItems(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID)
+	// Add item to trip
+	// (POST /api/v1/trips/{tripId}/items)
+	AddTripItem(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID)
+	// Remove item from trip
+	// (DELETE /api/v1/trips/{tripId}/items/{itemId})
+	RemoveTripItem(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID, itemId openapi_types.UUID)
+	// Update item in trip
+	// (PATCH /api/v1/trips/{tripId}/items/{itemId})
+	UpdateTripItem(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID, itemId openapi_types.UUID)
+	// List packs in a trip
+	// (GET /api/v1/trips/{tripId}/packs)
+	ListTripPacks(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID)
+	// Add pack to trip
+	// (POST /api/v1/trips/{tripId}/packs)
+	AddTripPack(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID)
+	// Remove pack from trip
+	// (DELETE /api/v1/trips/{tripId}/packs/{packId})
+	RemoveTripPack(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID, packId openapi_types.UUID)
+	// List persons in a trip
+	// (GET /api/v1/trips/{tripId}/persons)
+	ListTripPersons(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID)
+	// Add person to trip
+	// (POST /api/v1/trips/{tripId}/persons)
+	AddTripPerson(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID)
+	// Remove person from trip
+	// (DELETE /api/v1/trips/{tripId}/persons/{personId})
+	RemoveTripPerson(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID, personId openapi_types.UUID)
+	// List sets in a trip
+	// (GET /api/v1/trips/{tripId}/sets)
+	ListTripSets(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID)
+	// Add set to trip
+	// (POST /api/v1/trips/{tripId}/sets)
+	AddTripSet(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID)
+	// Remove set from trip
+	// (DELETE /api/v1/trips/{tripId}/sets/{setId})
+	RemoveTripSet(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID, setId openapi_types.UUID)
 	// Health check
 	// (GET /health)
 	HealthCheck(w http.ResponseWriter, r *http.Request)
@@ -1701,6 +2120,247 @@ func (siw *ServerInterfaceWrapper) UpdateItem(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// ListItemLabels operation middleware
+func (siw *ServerInterfaceWrapper) ListItemLabels(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListItemLabels(w, r, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddItemLabel operation middleware
+func (siw *ServerInterfaceWrapper) AddItemLabel(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddItemLabel(w, r, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveItemLabel operation middleware
+func (siw *ServerInterfaceWrapper) RemoveItemLabel(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "labelId" -------------
+	var labelId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "labelId", r.PathValue("labelId"), &labelId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "labelId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveItemLabel(w, r, itemId, labelId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListLabels operation middleware
+func (siw *ServerInterfaceWrapper) ListLabels(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListLabels(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateLabel operation middleware
+func (siw *ServerInterfaceWrapper) CreateLabel(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateLabel(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteLabel operation middleware
+func (siw *ServerInterfaceWrapper) DeleteLabel(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "labelId" -------------
+	var labelId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "labelId", r.PathValue("labelId"), &labelId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "labelId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteLabel(w, r, labelId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetLabel operation middleware
+func (siw *ServerInterfaceWrapper) GetLabel(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "labelId" -------------
+	var labelId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "labelId", r.PathValue("labelId"), &labelId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "labelId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetLabel(w, r, labelId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateLabel operation middleware
+func (siw *ServerInterfaceWrapper) UpdateLabel(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "labelId" -------------
+	var labelId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "labelId", r.PathValue("labelId"), &labelId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "labelId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateLabel(w, r, labelId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListManufacturers operation middleware
 func (siw *ServerInterfaceWrapper) ListManufacturers(w http.ResponseWriter, r *http.Request) {
 
@@ -1828,6 +2488,247 @@ func (siw *ServerInterfaceWrapper) UpdateManufacturer(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateManufacturer(w, r, manufacturerId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPackingLists operation middleware
+func (siw *ServerInterfaceWrapper) ListPackingLists(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPackingLists(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreatePackingList operation middleware
+func (siw *ServerInterfaceWrapper) CreatePackingList(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreatePackingList(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeletePackingList operation middleware
+func (siw *ServerInterfaceWrapper) DeletePackingList(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "listId" -------------
+	var listId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "listId", r.PathValue("listId"), &listId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "listId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeletePackingList(w, r, listId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPackingListById operation middleware
+func (siw *ServerInterfaceWrapper) GetPackingListById(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "listId" -------------
+	var listId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "listId", r.PathValue("listId"), &listId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "listId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPackingListById(w, r, listId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdatePackingList operation middleware
+func (siw *ServerInterfaceWrapper) UpdatePackingList(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "listId" -------------
+	var listId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "listId", r.PathValue("listId"), &listId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "listId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdatePackingList(w, r, listId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPackingListLabels operation middleware
+func (siw *ServerInterfaceWrapper) ListPackingListLabels(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "listId" -------------
+	var listId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "listId", r.PathValue("listId"), &listId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "listId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPackingListLabels(w, r, listId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddPackingListLabel operation middleware
+func (siw *ServerInterfaceWrapper) AddPackingListLabel(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "listId" -------------
+	var listId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "listId", r.PathValue("listId"), &listId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "listId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddPackingListLabel(w, r, listId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemovePackingListLabel operation middleware
+func (siw *ServerInterfaceWrapper) RemovePackingListLabel(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "listId" -------------
+	var listId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "listId", r.PathValue("listId"), &listId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "listId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "labelId" -------------
+	var labelId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "labelId", r.PathValue("labelId"), &labelId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "labelId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemovePackingListLabel(w, r, listId, labelId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2110,111 +3011,6 @@ func (siw *ServerInterfaceWrapper) UpdatePackItem(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdatePackItem(w, r, packId, itemId)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// ListPackSets operation middleware
-func (siw *ServerInterfaceWrapper) ListPackSets(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-	_ = err
-
-	// ------------- Path parameter "packId" -------------
-	var packId openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "packId", r.PathValue("packId"), &packId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "packId", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ListPackSets(w, r, packId)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// AddPackSet operation middleware
-func (siw *ServerInterfaceWrapper) AddPackSet(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-	_ = err
-
-	// ------------- Path parameter "packId" -------------
-	var packId openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "packId", r.PathValue("packId"), &packId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "packId", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.AddPackSet(w, r, packId)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// RemovePackSet operation middleware
-func (siw *ServerInterfaceWrapper) RemovePackSet(w http.ResponseWriter, r *http.Request) {
-
-	var err error
-	_ = err
-
-	// ------------- Path parameter "packId" -------------
-	var packId openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "packId", r.PathValue("packId"), &packId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "packId", Err: err})
-		return
-	}
-
-	// ------------- Path parameter "setId" -------------
-	var setId openapi_types.UUID
-
-	err = runtime.BindStyledParameterWithOptions("simple", "setId", r.PathValue("setId"), &setId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
-	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "setId", Err: err})
-		return
-	}
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.RemovePackSet(w, r, packId, setId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -2702,6 +3498,603 @@ func (siw *ServerInterfaceWrapper) StartFresh(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// ListTrips operation middleware
+func (siw *ServerInterfaceWrapper) ListTrips(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTrips(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTrip operation middleware
+func (siw *ServerInterfaceWrapper) CreateTrip(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTrip(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteTrip operation middleware
+func (siw *ServerInterfaceWrapper) DeleteTrip(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "tripId" -------------
+	var tripId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tripId", r.PathValue("tripId"), &tripId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tripId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteTrip(w, r, tripId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTripById operation middleware
+func (siw *ServerInterfaceWrapper) GetTripById(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "tripId" -------------
+	var tripId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tripId", r.PathValue("tripId"), &tripId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tripId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTripById(w, r, tripId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateTrip operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTrip(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "tripId" -------------
+	var tripId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tripId", r.PathValue("tripId"), &tripId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tripId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateTrip(w, r, tripId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTripItems operation middleware
+func (siw *ServerInterfaceWrapper) ListTripItems(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "tripId" -------------
+	var tripId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tripId", r.PathValue("tripId"), &tripId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tripId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTripItems(w, r, tripId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddTripItem operation middleware
+func (siw *ServerInterfaceWrapper) AddTripItem(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "tripId" -------------
+	var tripId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tripId", r.PathValue("tripId"), &tripId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tripId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddTripItem(w, r, tripId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveTripItem operation middleware
+func (siw *ServerInterfaceWrapper) RemoveTripItem(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "tripId" -------------
+	var tripId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tripId", r.PathValue("tripId"), &tripId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tripId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveTripItem(w, r, tripId, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateTripItem operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTripItem(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "tripId" -------------
+	var tripId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tripId", r.PathValue("tripId"), &tripId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tripId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateTripItem(w, r, tripId, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTripPacks operation middleware
+func (siw *ServerInterfaceWrapper) ListTripPacks(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "tripId" -------------
+	var tripId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tripId", r.PathValue("tripId"), &tripId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tripId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTripPacks(w, r, tripId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddTripPack operation middleware
+func (siw *ServerInterfaceWrapper) AddTripPack(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "tripId" -------------
+	var tripId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tripId", r.PathValue("tripId"), &tripId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tripId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddTripPack(w, r, tripId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveTripPack operation middleware
+func (siw *ServerInterfaceWrapper) RemoveTripPack(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "tripId" -------------
+	var tripId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tripId", r.PathValue("tripId"), &tripId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tripId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "packId" -------------
+	var packId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "packId", r.PathValue("packId"), &packId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "packId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveTripPack(w, r, tripId, packId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTripPersons operation middleware
+func (siw *ServerInterfaceWrapper) ListTripPersons(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "tripId" -------------
+	var tripId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tripId", r.PathValue("tripId"), &tripId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tripId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTripPersons(w, r, tripId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddTripPerson operation middleware
+func (siw *ServerInterfaceWrapper) AddTripPerson(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "tripId" -------------
+	var tripId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tripId", r.PathValue("tripId"), &tripId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tripId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddTripPerson(w, r, tripId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveTripPerson operation middleware
+func (siw *ServerInterfaceWrapper) RemoveTripPerson(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "tripId" -------------
+	var tripId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tripId", r.PathValue("tripId"), &tripId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tripId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "personId" -------------
+	var personId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "personId", r.PathValue("personId"), &personId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "personId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveTripPerson(w, r, tripId, personId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTripSets operation middleware
+func (siw *ServerInterfaceWrapper) ListTripSets(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "tripId" -------------
+	var tripId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tripId", r.PathValue("tripId"), &tripId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tripId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTripSets(w, r, tripId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddTripSet operation middleware
+func (siw *ServerInterfaceWrapper) AddTripSet(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "tripId" -------------
+	var tripId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tripId", r.PathValue("tripId"), &tripId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tripId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddTripSet(w, r, tripId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveTripSet operation middleware
+func (siw *ServerInterfaceWrapper) RemoveTripSet(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "tripId" -------------
+	var tripId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tripId", r.PathValue("tripId"), &tripId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tripId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "setId" -------------
+	var setId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "setId", r.PathValue("setId"), &setId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "setId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveTripSet(w, r, tripId, setId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // HealthCheck operation middleware
 func (siw *ServerInterfaceWrapper) HealthCheck(w http.ResponseWriter, r *http.Request) {
 
@@ -2851,11 +4244,27 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/items/{itemId}", wrapper.DeleteItem)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/items/{itemId}", wrapper.GetItem)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/items/{itemId}", wrapper.UpdateItem)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/items/{itemId}/labels", wrapper.ListItemLabels)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/items/{itemId}/labels", wrapper.AddItemLabel)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/items/{itemId}/labels/{labelId}", wrapper.RemoveItemLabel)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/labels", wrapper.ListLabels)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/labels", wrapper.CreateLabel)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/labels/{labelId}", wrapper.DeleteLabel)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/labels/{labelId}", wrapper.GetLabel)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/labels/{labelId}", wrapper.UpdateLabel)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/manufacturers", wrapper.ListManufacturers)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/manufacturers", wrapper.CreateManufacturer)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/manufacturers/{manufacturerId}", wrapper.DeleteManufacturer)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/manufacturers/{manufacturerId}", wrapper.GetManufacturer)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/manufacturers/{manufacturerId}", wrapper.UpdateManufacturer)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/packing-lists", wrapper.ListPackingLists)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/packing-lists", wrapper.CreatePackingList)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/packing-lists/{listId}", wrapper.DeletePackingList)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/packing-lists/{listId}", wrapper.GetPackingListById)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/packing-lists/{listId}", wrapper.UpdatePackingList)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/packing-lists/{listId}/labels", wrapper.ListPackingListLabels)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/packing-lists/{listId}/labels", wrapper.AddPackingListLabel)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/packing-lists/{listId}/labels/{labelId}", wrapper.RemovePackingListLabel)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/packs", wrapper.ListPacks)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/packs", wrapper.CreatePack)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/packs/{packId}", wrapper.DeletePack)
@@ -2865,9 +4274,6 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/packs/{packId}/items", wrapper.AddPackItem)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/packs/{packId}/items/{itemId}", wrapper.RemovePackItem)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/packs/{packId}/items/{itemId}", wrapper.UpdatePackItem)
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/packs/{packId}/sets", wrapper.ListPackSets)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/packs/{packId}/sets", wrapper.AddPackSet)
-	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/packs/{packId}/sets/{setId}", wrapper.RemovePackSet)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/persons", wrapper.ListPersons)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/persons", wrapper.CreatePerson)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/persons/{personId}", wrapper.DeletePerson)
@@ -2885,6 +4291,24 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/settings", wrapper.GetSettings)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/settings", wrapper.UpdateSettings)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/settings/start-fresh", wrapper.StartFresh)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/trips", wrapper.ListTrips)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/trips", wrapper.CreateTrip)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/trips/{tripId}", wrapper.DeleteTrip)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/trips/{tripId}", wrapper.GetTripById)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/trips/{tripId}", wrapper.UpdateTrip)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/trips/{tripId}/items", wrapper.ListTripItems)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/trips/{tripId}/items", wrapper.AddTripItem)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/trips/{tripId}/items/{itemId}", wrapper.RemoveTripItem)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/trips/{tripId}/items/{itemId}", wrapper.UpdateTripItem)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/trips/{tripId}/packs", wrapper.ListTripPacks)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/trips/{tripId}/packs", wrapper.AddTripPack)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/trips/{tripId}/packs/{packId}", wrapper.RemoveTripPack)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/trips/{tripId}/persons", wrapper.ListTripPersons)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/trips/{tripId}/persons", wrapper.AddTripPerson)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/trips/{tripId}/persons/{personId}", wrapper.RemoveTripPerson)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/trips/{tripId}/sets", wrapper.ListTripSets)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/trips/{tripId}/sets", wrapper.AddTripSet)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/trips/{tripId}/sets/{setId}", wrapper.RemoveTripSet)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/health", wrapper.HealthCheck)
 
 	return m

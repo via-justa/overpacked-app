@@ -107,12 +107,20 @@ func (s *SettingsStore) StartFresh(ctx context.Context) error {
 	// Remove all user data while preserving system item types and schema rows.
 	if _, err = tx.ExecContext(ctx, `
 		TRUNCATE TABLE
-			pack_sets,
+			trip_persons,
+			trip_sets,
+			trip_items,
+			trip_packs,
+			trips,
 			pack_items,
 			packs,
 			set_items,
 			item_sets,
+			item_labels,
 			items,
+			packing_list_labels,
+			packing_lists,
+			labels,
 			manufacturers,
 			persons
 		RESTART IDENTITY CASCADE

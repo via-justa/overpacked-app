@@ -310,7 +310,6 @@ func TestRoutesPacksInvalidUUID(t *testing.T) {
 	}{
 		{name: "get pack", path: "/api/v1/packs/not-a-uuid"},
 		{name: "get pack items", path: "/api/v1/packs/not-a-uuid/items"},
-		{name: "get pack sets", path: "/api/v1/packs/not-a-uuid/sets"},
 	}
 
 	for _, tt := range tests {

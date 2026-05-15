@@ -110,25 +110,6 @@ CREATE TABLE items (
     default_quantity INT NOT NULL DEFAULT 1 CHECK (default_quantity > 0),
     default_carry_status TEXT NOT NULL DEFAULT 'packed' CHECK (default_carry_status IN ('packed', 'worn')),
     is_default BOOLEAN NOT NULL DEFAULT FALSE,
-    dose_count INT,
-    calories NUMERIC,
-    calories_per_serving NUMERIC,
-    requires_water BOOLEAN,
-    season TEXT CHECK (season IN ('summer', 'winter', 'year_round')),
-    layer TEXT CHECK (layer IN ('base', 'mid', 'shell', 'accessory')),
-    waterproof BOOLEAN,
-    size TEXT,
-    color TEXT,
-    capacity_people NUMERIC,
-    season_rating TEXT CHECK (season_rating IN ('3-season', '4-season')),
-    freestanding BOOLEAN,
-    has_footprint BOOLEAN,
-    comfort_temp_c NUMERIC,
-    fill_type TEXT CHECK (fill_type IN ('down', 'synthetic', 'foam', 'air', 'other')),
-    r_value NUMERIC,
-    capacity_mah INT,
-    charge_port TEXT CHECK (charge_port IN ('usb-c', 'micro-usb', 'lightning', 'dc')),
-    rechargeable BOOLEAN,
     image_blob BYTEA,
     image_mime_type TEXT,
     image_size_bytes INT,
@@ -190,32 +171,150 @@ CREATE TABLE pack_items (
     UNIQUE (pack_id, item_id)
 );
 
-CREATE TABLE pack_sets (
+-- Create trips table
+CREATE TABLE trips (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    pack_id UUID NOT NULL REFERENCES packs(id) ON DELETE CASCADE,
-    set_id UUID NOT NULL REFERENCES item_sets(id) ON DELETE RESTRICT,
-    applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    name TEXT NOT NULL,
+    trip_type TEXT CHECK (trip_type IN ('day_hike', 'overnight', 'multi_day', 'thru_hike')) NOT NULL,
+    duration INTERVAL,
+    notes TEXT,
+    trip_komoot_url TEXT,
+    trip_strava_url TEXT,
+    trip_wanderer_url TEXT,
+    total_distance_km NUMERIC,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (pack_id, set_id)
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Create trip_packs junction table (trips can have multiple packs, but each pack belongs to one trip)
+CREATE TABLE trip_packs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    pack_id UUID NOT NULL REFERENCES packs(id) ON DELETE CASCADE,
+    UNIQUE(trip_id, pack_id)
+);
+
+-- Create trip_items junction table (trips can have multiple items, items can be used in multiple trips)
+CREATE TABLE trip_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    item_id UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    quantity INT NOT NULL DEFAULT 1,
+    carry_status TEXT CHECK (carry_status IN ('packed', 'worn')) DEFAULT 'packed',
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(trip_id, item_id)
+);
+
+-- Create trip_sets junction table (trips can have multiple sets, sets can be used in multiple trips)
+CREATE TABLE trip_sets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    set_id UUID NOT NULL REFERENCES item_sets(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(trip_id, set_id)
+);
+
+-- Create trip_persons junction table (trips can have multiple persons, persons can go on multiple trips)
+CREATE TABLE trip_persons (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    person_id UUID NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
+    UNIQUE(trip_id, person_id)
+);
+
+-- Create labels table for item categorization
+CREATE TABLE labels (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL UNIQUE,
+    color TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Create item_labels junction table for many-to-many relationship
+CREATE TABLE item_labels (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    item_id UUID NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+    label_id UUID NOT NULL REFERENCES labels(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(item_id, label_id)
+);
+
+-- Create global packing_lists table
+CREATE TABLE packing_lists (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    description TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Create packing_list_labels junction table
+CREATE TABLE packing_list_labels (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    packing_list_id UUID NOT NULL REFERENCES packing_lists(id) ON DELETE CASCADE,
+    label_id UUID NOT NULL REFERENCES labels(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(packing_list_id, label_id)
+);
+
+-- Create indexes for better query performance
 CREATE INDEX idx_items_type_active ON items (type_id, is_active);
 CREATE INDEX idx_set_items_set_id ON set_items (set_id);
 CREATE INDEX idx_pack_items_pack_id ON pack_items (pack_id);
-CREATE INDEX idx_pack_sets_pack_id ON pack_sets (pack_id);
 CREATE INDEX idx_item_sets_set_category ON item_sets(set_category);
+CREATE INDEX idx_trips_trip_type ON trips(trip_type);
+CREATE INDEX idx_trip_packs_trip_id ON trip_packs(trip_id);
+CREATE INDEX idx_trip_packs_pack_id ON trip_packs(pack_id);
+CREATE INDEX idx_trip_items_trip_id ON trip_items(trip_id);
+CREATE INDEX idx_trip_items_item_id ON trip_items(item_id);
+CREATE INDEX idx_trip_sets_trip_id ON trip_sets(trip_id);
+CREATE INDEX idx_trip_sets_set_id ON trip_sets(set_id);
+CREATE INDEX idx_trip_persons_trip_id ON trip_persons(trip_id);
+CREATE INDEX idx_trip_persons_person_id ON trip_persons(person_id);
+CREATE INDEX idx_item_labels_item_id ON item_labels(item_id);
+CREATE INDEX idx_item_labels_label_id ON item_labels(label_id);
+CREATE INDEX idx_labels_name ON labels(name);
+CREATE INDEX idx_packing_list_labels_packing_list_id ON packing_list_labels(packing_list_id);
+CREATE INDEX idx_packing_list_labels_label_id ON packing_list_labels(label_id);
+CREATE INDEX idx_packing_lists_name ON packing_lists(name);
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
+DROP INDEX IF EXISTS idx_packing_lists_name;
+DROP INDEX IF EXISTS idx_packing_list_labels_label_id;
+DROP INDEX IF EXISTS idx_packing_list_labels_packing_list_id;
+DROP INDEX IF EXISTS idx_labels_name;
+DROP INDEX IF EXISTS idx_item_labels_label_id;
+DROP INDEX IF EXISTS idx_item_labels_item_id;
+DROP INDEX IF EXISTS idx_trip_persons_person_id;
+DROP INDEX IF EXISTS idx_trip_persons_trip_id;
+DROP INDEX IF EXISTS idx_trip_sets_set_id;
+DROP INDEX IF EXISTS idx_trip_sets_trip_id;
+DROP INDEX IF EXISTS idx_trip_items_item_id;
+DROP INDEX IF EXISTS idx_trip_items_trip_id;
+DROP INDEX IF EXISTS idx_trip_packs_pack_id;
+DROP INDEX IF EXISTS idx_trip_packs_trip_id;
+DROP INDEX IF EXISTS idx_trips_trip_type;
 DROP INDEX IF EXISTS idx_item_sets_set_category;
-DROP INDEX IF EXISTS idx_pack_sets_pack_id;
 DROP INDEX IF EXISTS idx_pack_items_pack_id;
 DROP INDEX IF EXISTS idx_set_items_set_id;
 DROP INDEX IF EXISTS idx_items_type_active;
 DROP INDEX IF EXISTS idx_item_type_fields_item_type_id;
 
-DROP TABLE IF EXISTS pack_sets;
+DROP TABLE IF EXISTS packing_list_labels;
+DROP TABLE IF EXISTS packing_lists;
+DROP TABLE IF EXISTS item_labels;
+DROP TABLE IF EXISTS labels;
+DROP TABLE IF EXISTS trip_persons;
+DROP TABLE IF EXISTS trip_sets;
+DROP TABLE IF EXISTS trip_items;
+DROP TABLE IF EXISTS trip_packs;
+DROP TABLE IF EXISTS trips;
 DROP TABLE IF EXISTS pack_items;
 DROP TABLE IF EXISTS packs;
 DROP TABLE IF EXISTS set_items;

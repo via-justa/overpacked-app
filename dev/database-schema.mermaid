@@ -1,12 +1,13 @@
 
 erDiagram
     PACKS ||--o{ PACK_ITEMS : contains
-    PACKS ||--o{ PACK_SETS : set_contributions
-    ITEM_SETS ||--o{ PACK_SETS : contributes_to
     PERSONS ||--o{ PACKS : carries
 
     ITEMS ||--o{ PACK_ITEMS : included_in
     ITEMS ||--o{ SET_ITEMS : grouped_in_sets
+    ITEMS ||--o{ ITEM_LABELS : tagged_with
+
+    LABELS ||--o{ ITEM_LABELS : applied_to
 
     ITEM_SETS ||--o{ SET_ITEMS : groups
     ITEM_TYPES ||--o{ ITEM_SETS : categorizes
@@ -14,6 +15,21 @@ erDiagram
     ITEM_TYPES ||--o{ ITEMS : types
     ITEM_TYPES ||--o{ ITEM_TYPE_FIELDS : defines_fields
     MANUFACTURERS ||--o{ ITEMS : makes
+
+    TRIP ||--o{ TRIP_PACKS : includes
+    PACKS ||--o{ TRIP_PACKS : assigned_to_trips
+
+    TRIP ||--o{ TRIP_ITEMS : contains_items
+    ITEMS ||--o{ TRIP_ITEMS : used_in_trips
+
+    TRIP ||--o{ TRIP_SETS : includes_sets
+    ITEM_SETS ||--o{ TRIP_SETS : used_in_trips
+
+    TRIP ||--o{ TRIP_PERSONS : includes_persons
+    PERSONS ||--o{ TRIP_PERSONS : participates_in_trips
+
+    PACKING_LISTS ||--o{ PACKING_LIST_LABELS : has_labels
+    LABELS ||--o{ PACKING_LIST_LABELS : applied_to_lists
 
     SETTINGS {
         int id PK "always 1"
@@ -46,25 +62,6 @@ erDiagram
         int default_quantity
         string default_carry_status "packed, worn"
         boolean is_default "auto-add to new packs"
-        int dose_count "consumable only"
-        float calories "consumable only"
-        float calories_per_serving "consumable only"
-        boolean requires_water "consumable only"
-        string season "wearable only; summer, winter, year_round"
-        string layer "wearable only; base, mid, shell, accessory"
-        boolean waterproof "wearable only"
-        string size "wearable only"
-        string color "wearable only"
-        float capacity_people "shelter only"
-        string season_rating "shelter only; 3-season, 4-season"
-        boolean freestanding "shelter only"
-        boolean has_footprint "shelter only"
-        float comfort_temp_c "sleep only"
-        string fill_type "sleep only; down, synthetic, foam, air, other"
-        float r_value "sleep only"
-        int capacity_mah "electronics only"
-        string charge_port "electronics only; usb-c, micro-usb, lightning, dc"
-        boolean rechargeable "electronics only"
         bytes image_blob "optional"
         string image_mime_type "required when image_blob is set"
         int image_size_bytes "required when image_blob is set"
@@ -99,6 +96,21 @@ erDiagram
         int sort_order
         datetime created_at
         datetime updated_at
+    }
+
+    LABELS {
+        uuid id PK
+        string name UK "unique label name"
+        string color "optional; hex color for UI display"
+        datetime created_at
+        datetime updated_at
+    }
+
+    ITEM_LABELS {
+        uuid id PK
+        uuid item_id FK
+        uuid label_id FK "unique with item_id"
+        datetime created_at
     }
 
     MANUFACTURERS {
@@ -148,10 +160,62 @@ erDiagram
         datetime updated_at
     }
 
-    PACK_SETS {
+    TRIP {
         uuid id PK
-        uuid pack_id FK
-        uuid set_id FK "unique with pack_id"
-        datetime applied_at
+        string name
+        string trip_type "day_hike, overnight, multi_day, thru_hike"
+        duration duration
+        string notes
+        string trip_komoot_url
+        string trip_strava_url
+        string trip_wanderer_url
+        number total_distance_km
+        datetime created_at
+        datetime updated_at
+    }
+
+    TRIP_PACKS {
+        uuid id PK
+        uuid trip_id FK
+        uuid pack_id FK "unique with trip_id"
+    }
+
+    TRIP_ITEMS {
+        uuid id PK
+        uuid trip_id FK
+        uuid item_id FK "unique with trip_id"
+        int quantity
+        string carry_status "packed, worn; default: packed"
+        string notes
+        datetime created_at
+        datetime updated_at
+    }
+
+    TRIP_SETS {
+        uuid id PK
+        uuid trip_id FK
+        uuid set_id FK "unique with trip_id"
+        datetime created_at
+        datetime updated_at
+    }
+
+    TRIP_PERSONS {
+        uuid id PK
+        uuid trip_id FK
+        uuid person_id FK "unique with trip_id"
+    }
+
+    PACKING_LISTS {
+        uuid id PK
+        string name
+        string description
+        datetime created_at
+        datetime updated_at
+    }
+
+    PACKING_LIST_LABELS {
+        uuid id PK
+        uuid packing_list_id FK
+        uuid label_id FK "unique with packing_list_id"
         datetime created_at
     }

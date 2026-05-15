@@ -184,7 +184,56 @@ do_request "GET" "/api/v1/items"
 assert_status "200" "list items after update"
 assert_json_expr 'any(.[]; .id == "'"${ITEM_ID}"'" and .type == "consumable" and .name == "API Test Item Updated")' "list items after update"
 
-# 8) Item Types + Custom Item Attributes
+# 8) Labels + Item Labels
+log_step "labels list"
+do_request "GET" "/api/v1/labels"
+assert_status "200" "list labels"
+assert_json_expr '. | length == 0' "list labels"
+
+log_step "label create"
+do_request "POST" "/api/v1/labels" '{"name":"Ultralight","color":"#FF5733"}'
+assert_status "201" "create label"
+LABEL_ID=$(extract_json '.id')
+assert_json_expr '.name == "Ultralight"' "create label"
+assert_json_expr '.color == "#FF5733"' "create label"
+
+log_step "label get"
+do_request "GET" "/api/v1/labels/${LABEL_ID}"
+assert_status "200" "get label"
+assert_json_expr '.id == "'"${LABEL_ID}"'"' "get label"
+
+log_step "label update"
+do_request "PATCH" "/api/v1/labels/${LABEL_ID}" '{"name":"Ultra-Lightweight","color":"#00FF00"}'
+assert_status "200" "update label"
+assert_json_expr '.name == "Ultra-Lightweight"' "update label"
+assert_json_expr '.color == "#00FF00"' "update label"
+
+log_step "item-labels list"
+do_request "GET" "/api/v1/items/${ITEM_ID}/labels"
+assert_status "200" "list item labels"
+assert_json_expr '. | length == 0' "list item labels"
+
+log_step "item-label add"
+do_request "POST" "/api/v1/items/${ITEM_ID}/labels" '{"label_id":"'"${LABEL_ID}"'"}'
+assert_status "201" "add item label"
+assert_json_expr '.id == "'"${LABEL_ID}"'"' "add item label"
+
+log_step "item-labels list after add"
+do_request "GET" "/api/v1/items/${ITEM_ID}/labels"
+assert_status "200" "list item labels after add"
+assert_json_expr '. | length == 1' "list item labels after add"
+assert_json_expr '.[0].name == "Ultra-Lightweight"' "list item labels after add"
+
+log_step "item-label remove"
+do_request "DELETE" "/api/v1/items/${ITEM_ID}/labels/${LABEL_ID}"
+assert_status "204" "remove item label"
+
+log_step "item-labels list after remove"
+do_request "GET" "/api/v1/items/${ITEM_ID}/labels"
+assert_status "200" "list item labels after remove"
+assert_json_expr '. | length == 0' "list item labels after remove"
+
+# 9) Item Types + Custom Item Attributes
 log_step "item-types list"
 do_request "GET" "/api/v1/item-types"
 assert_status "200" "list item types"
@@ -246,7 +295,7 @@ do_request "GET" "/api/v1/items"
 assert_status "200" "list items with custom item"
 assert_json_expr 'any(.[]; .id == "'"${CUSTOM_ITEM_ID}"'" and .type == "'"${CUSTOM_TYPE_ID}"'" and .attributes.output_watts == 45)' "list items with custom item"
 
-# 9) Sets
+# 10) Sets
 log_step "sets list"
 do_request "GET" "/api/v1/sets"
 assert_status "200" "list sets"
@@ -276,7 +325,7 @@ log_step "set-item update"
 do_request "PATCH" "/api/v1/sets/${SET_ID}/items/${ITEM_ID}" '{"quantity":3,"notes":"updated note"}'
 assert_status "200" "update set item"
 
-# 10) Packs
+# 11) Packs
 log_step "packs list"
 do_request "GET" "/api/v1/packs"
 assert_status "200" "list packs"
@@ -306,23 +355,129 @@ log_step "pack-item update"
 do_request "PATCH" "/api/v1/packs/${PACK_ID}/items/${ITEM_ID}" '{"quantity":2,"carry_status":"worn"}'
 assert_status "200" "update pack item"
 
-log_step "pack-sets list"
-do_request "GET" "/api/v1/packs/${PACK_ID}/sets"
-assert_status "200" "list pack sets"
-
-log_step "pack-set add"
-do_request "POST" "/api/v1/packs/${PACK_ID}/sets" "{\"set_id\":\"${SET_ID}\"}"
-assert_status "201" "add pack set"
-
-log_step "pack-set remove"
-do_request "DELETE" "/api/v1/packs/${PACK_ID}/sets/${SET_ID}"
-assert_status "204" "remove pack set"
-
 log_step "pack-item remove"
 do_request "DELETE" "/api/v1/packs/${PACK_ID}/items/${ITEM_ID}"
 assert_status "204" "remove pack item"
 
-# 11) Start Fresh (danger zone)
+# 12) Trips
+log_step "trips list"
+do_request "GET" "/api/v1/trips"
+assert_status "200" "list trips"
+
+log_step "trip create"
+do_request "POST" "/api/v1/trips" '{"name":"API Test Trip","trip_type":"overnight","notes":"Test trip notes","total_distance_km":15.5}'
+assert_status "201" "create trip"
+TRIP_ID="$(extract_json '.id')"
+
+log_step "trip get"
+do_request "GET" "/api/v1/trips/${TRIP_ID}"
+assert_status "200" "get trip"
+
+log_step "trip update"
+do_request "PATCH" "/api/v1/trips/${TRIP_ID}" '{"name":"Updated Trip Name","total_distance_km":20.0}'
+assert_status "200" "update trip"
+
+log_step "trip-packs list"
+do_request "GET" "/api/v1/trips/${TRIP_ID}/packs"
+assert_status "200" "list trip packs"
+
+log_step "trip-pack add"
+do_request "POST" "/api/v1/trips/${TRIP_ID}/packs" "{\"pack_id\":\"${PACK_ID}\"}"
+assert_status "201" "add pack to trip"
+
+log_step "trip-items list"
+do_request "GET" "/api/v1/trips/${TRIP_ID}/items"
+assert_status "200" "list trip items"
+
+log_step "trip-item add"
+do_request "POST" "/api/v1/trips/${TRIP_ID}/items" "{\"item_id\":\"${ITEM_ID}\",\"quantity\":3,\"carry_status\":\"packed\",\"notes\":\"Test item notes\"}"
+assert_status "201" "add item to trip"
+
+log_step "trip-item update"
+do_request "PATCH" "/api/v1/trips/${TRIP_ID}/items/${ITEM_ID}" '{"quantity":4,"carry_status":"worn"}'
+assert_status "200" "update trip item"
+
+log_step "trip-sets list"
+do_request "GET" "/api/v1/trips/${TRIP_ID}/sets"
+assert_status "200" "list trip sets"
+
+log_step "trip-set add"
+do_request "POST" "/api/v1/trips/${TRIP_ID}/sets" "{\"set_id\":\"${SET_ID}\"}"
+assert_status "201" "add set to trip"
+
+log_step "trip-persons list"
+do_request "GET" "/api/v1/trips/${TRIP_ID}/persons"
+assert_status "200" "list trip persons"
+
+log_step "trip-person add"
+do_request "POST" "/api/v1/trips/${TRIP_ID}/persons" "{\"person_id\":\"${PERSON_ID}\"}"
+assert_status "201" "add person to trip"
+
+log_step "trip-packing-lists list"
+do_request "GET" "/api/v1/packing-lists"
+assert_status "200" "list trip packing lists"
+
+log_step "trip-packing-list create"
+do_request "POST" "/api/v1/packing-lists" '{"name":"Summer Packing List","description":"Essential items for summer trips"}'
+assert_status "201" "create trip packing list"
+PACKING_LIST_ID="$(extract_json '.id')"
+
+log_step "trip-packing-list get"
+do_request "GET" "/api/v1/packing-lists/${PACKING_LIST_ID}"
+assert_status "200" "get trip packing list"
+
+log_step "trip-packing-list update"
+do_request "PATCH" "/api/v1/packing-lists/${PACKING_LIST_ID}" '{"name":"Updated Packing List","description":"Updated description"}'
+assert_status "200" "update trip packing list"
+
+log_step "trip-packing-list-labels list"
+do_request "GET" "/api/v1/packing-lists/${PACKING_LIST_ID}/labels"
+assert_status "200" "list packing list labels"
+assert_json_expr '. | length == 0' "list packing list labels"
+
+log_step "trip-packing-list-label add"
+do_request "POST" "/api/v1/packing-lists/${PACKING_LIST_ID}/labels" '{"label_id":"'"${LABEL_ID}"'"}'
+assert_status "201" "add packing list label"
+
+log_step "trip-packing-list-labels list after add"
+do_request "GET" "/api/v1/packing-lists/${PACKING_LIST_ID}/labels"
+assert_status "200" "list packing list labels after add"
+assert_json_expr '. | length == 1' "list packing list labels after add"
+assert_json_expr '.[0].name == "Ultra-Lightweight"' "list packing list labels after add"
+
+log_step "trip-packing-list-label remove"
+do_request "DELETE" "/api/v1/packing-lists/${PACKING_LIST_ID}/labels/${LABEL_ID}"
+assert_status "204" "remove packing list label"
+
+log_step "trip-packing-list delete"
+do_request "DELETE" "/api/v1/packing-lists/${PACKING_LIST_ID}"
+assert_status "204" "delete trip packing list"
+
+log_step "label delete"
+do_request "DELETE" "/api/v1/labels/${LABEL_ID}"
+assert_status "204" "delete label"
+
+log_step "trip-person remove"
+do_request "DELETE" "/api/v1/trips/${TRIP_ID}/persons/${PERSON_ID}"
+assert_status "204" "remove person from trip"
+
+log_step "trip-set remove"
+do_request "DELETE" "/api/v1/trips/${TRIP_ID}/sets/${SET_ID}"
+assert_status "204" "remove set from trip"
+
+log_step "trip-item remove"
+do_request "DELETE" "/api/v1/trips/${TRIP_ID}/items/${ITEM_ID}"
+assert_status "204" "remove item from trip"
+
+log_step "trip-pack remove"
+do_request "DELETE" "/api/v1/trips/${TRIP_ID}/packs/${PACK_ID}"
+assert_status "204" "remove pack from trip"
+
+log_step "trip delete"
+do_request "DELETE" "/api/v1/trips/${TRIP_ID}"
+assert_status "204" "delete trip"
+
+# 13) Start Fresh (danger zone)
 log_step "start fresh wrong password"
 do_request "POST" "/api/v1/settings/start-fresh" '{"password":"wrong-password"}'
 assert_status "401" "start fresh wrong password"
@@ -356,6 +511,11 @@ do_request "GET" "/api/v1/packs"
 assert_status "200" "list packs after start fresh"
 assert_json_expr 'length == 0' "list packs after start fresh"
 
+log_step "verify trips reset"
+do_request "GET" "/api/v1/trips"
+assert_status "200" "list trips after start fresh"
+assert_json_expr 'length == 0' "list trips after start fresh"
+
 log_step "verify custom item type removed"
 do_request "GET" "/api/v1/item-types/${CUSTOM_TYPE_ID}"
 assert_status "404" "get custom item type after start fresh"
@@ -369,7 +529,7 @@ assert_json_expr '.temperature_unit == "c"' "settings defaults"
 assert_json_expr '.volume_unit == "ml"' "settings defaults"
 assert_json_expr '.currency == "eur"' "settings defaults"
 
-# 12) Auth logout
+# 14) Auth logout
 log_step "auth logout"
 do_request "POST" "/api/v1/auth/logout" "" "false"
 assert_status "204" "auth logout"

@@ -65,17 +65,3 @@ func TestPacksHandlerUpdatePackItemInvalidBody(t *testing.T) {
 		t.Fatalf("expected 400 for invalid request body, got %d", w.Code)
 	}
 }
-
-func TestPacksHandlerAddPackSetInvalidBody(t *testing.T) {
-	t.Parallel()
-
-	h := NewPacksHandler(nil)
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/packs/"+uuid.NewString()+"/sets", bytes.NewReader([]byte(`{"set_id":`)))
-	w := httptest.NewRecorder()
-
-	h.AddPackSet(w, req, types.UUID(uuid.New()))
-
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400 for invalid request body, got %d", w.Code)
-	}
-}

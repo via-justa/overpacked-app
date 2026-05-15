@@ -24,8 +24,11 @@ type apiServer struct {
 	manufacturers *handlers.ManufacturersHandler
 	items         *handlers.ItemsHandler
 	itemTypes     *handlers.ItemTypesHandler
+	labels        *handlers.LabelsHandler
 	sets          *handlers.SetsHandler
 	packs         *handlers.PacksHandler
+	packingLists  *handlers.PackingListsHandler
+	trips         *handlers.TripsHandler
 }
 
 func (s *apiServer) AuthLogin(w http.ResponseWriter, r *http.Request)   { s.auth.Login(w, r) }
@@ -93,6 +96,30 @@ func (s *apiServer) ReplaceItemTypeFields(w http.ResponseWriter, r *http.Request
 	s.itemTypes.ReplaceItemTypeFields(w, r, typeId)
 }
 
+func (s *apiServer) ListLabels(w http.ResponseWriter, r *http.Request) { s.labels.ListLabels(w, r) }
+func (s *apiServer) CreateLabel(w http.ResponseWriter, r *http.Request) {
+	s.labels.CreateLabel(w, r)
+}
+func (s *apiServer) GetLabel(w http.ResponseWriter, r *http.Request, labelId openapi_types.UUID) {
+	s.labels.GetLabel(w, r, labelId)
+}
+func (s *apiServer) UpdateLabel(w http.ResponseWriter, r *http.Request, labelId openapi_types.UUID) {
+	s.labels.UpdateLabel(w, r, labelId)
+}
+func (s *apiServer) DeleteLabel(w http.ResponseWriter, r *http.Request, labelId openapi_types.UUID) {
+	s.labels.DeleteLabel(w, r, labelId)
+}
+
+func (s *apiServer) ListItemLabels(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID) {
+	s.labels.ListItemLabels(w, r, itemId)
+}
+func (s *apiServer) AddItemLabel(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID) {
+	s.labels.AddItemLabel(w, r, itemId)
+}
+func (s *apiServer) RemoveItemLabel(w http.ResponseWriter, r *http.Request, itemId, labelId openapi_types.UUID) {
+	s.labels.RemoveItemLabel(w, r, itemId, labelId)
+}
+
 func (s *apiServer) ListManufacturers(w http.ResponseWriter, r *http.Request) {
 	s.manufacturers.ListManufacturers(w, r)
 }
@@ -134,15 +161,6 @@ func (s *apiServer) RemovePackItem(w http.ResponseWriter, r *http.Request, packI
 func (s *apiServer) UpdatePackItem(w http.ResponseWriter, r *http.Request, packId, itemId openapi_types.UUID) {
 	s.packs.UpdatePackItem(w, r, packId, itemId)
 }
-func (s *apiServer) ListPackSets(w http.ResponseWriter, r *http.Request, packId openapi_types.UUID) {
-	s.packs.ListPackSets(w, r, packId)
-}
-func (s *apiServer) AddPackSet(w http.ResponseWriter, r *http.Request, packId openapi_types.UUID) {
-	s.packs.AddPackSet(w, r, packId)
-}
-func (s *apiServer) RemovePackSet(w http.ResponseWriter, r *http.Request, packId, setId openapi_types.UUID) {
-	s.packs.RemovePackSet(w, r, packId, setId)
-}
 
 func (s *apiServer) ListSets(w http.ResponseWriter, r *http.Request) { s.sets.ListSets(w, r) }
 func (s *apiServer) CreateSet(w http.ResponseWriter, r *http.Request) {
@@ -170,6 +188,94 @@ func (s *apiServer) UpdateSetItem(w http.ResponseWriter, r *http.Request, setId,
 	s.sets.UpdateSetItem(w, r, setId, itemId)
 }
 
+// Trip handlers
+func (s *apiServer) ListTrips(w http.ResponseWriter, r *http.Request) { s.trips.ListTrips(w, r) }
+func (s *apiServer) CreateTrip(w http.ResponseWriter, r *http.Request) {
+	s.trips.CreateTrip(w, r)
+}
+func (s *apiServer) GetTripById(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
+	s.trips.GetTripById(w, r, tripId)
+}
+func (s *apiServer) UpdateTrip(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
+	s.trips.UpdateTrip(w, r, tripId)
+}
+func (s *apiServer) DeleteTrip(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
+	s.trips.DeleteTrip(w, r, tripId)
+}
+
+// Trip packs handlers
+func (s *apiServer) ListTripPacks(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
+	s.trips.ListTripPacks(w, r, tripId)
+}
+func (s *apiServer) AddTripPack(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
+	s.trips.AddTripPack(w, r, tripId)
+}
+func (s *apiServer) RemoveTripPack(w http.ResponseWriter, r *http.Request, tripId, packId openapi_types.UUID) {
+	s.trips.RemoveTripPack(w, r, tripId, packId)
+}
+
+// Trip items handlers
+func (s *apiServer) ListTripItems(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
+	s.trips.ListTripItems(w, r, tripId)
+}
+func (s *apiServer) AddTripItem(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
+	s.trips.AddTripItem(w, r, tripId)
+}
+func (s *apiServer) UpdateTripItem(w http.ResponseWriter, r *http.Request, tripId, itemId openapi_types.UUID) {
+	s.trips.UpdateTripItem(w, r, tripId, itemId)
+}
+func (s *apiServer) RemoveTripItem(w http.ResponseWriter, r *http.Request, tripId, itemId openapi_types.UUID) {
+	s.trips.RemoveTripItem(w, r, tripId, itemId)
+}
+
+// Trip sets handlers
+func (s *apiServer) ListTripSets(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
+	s.trips.ListTripSets(w, r, tripId)
+}
+func (s *apiServer) AddTripSet(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
+	s.trips.AddTripSet(w, r, tripId)
+}
+func (s *apiServer) RemoveTripSet(w http.ResponseWriter, r *http.Request, tripId, setId openapi_types.UUID) {
+	s.trips.RemoveTripSet(w, r, tripId, setId)
+}
+
+// Trip persons handlers
+func (s *apiServer) ListTripPersons(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
+	s.trips.ListTripPersons(w, r, tripId)
+}
+func (s *apiServer) AddTripPerson(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
+	s.trips.AddTripPerson(w, r, tripId)
+}
+func (s *apiServer) RemoveTripPerson(w http.ResponseWriter, r *http.Request, tripId, personId openapi_types.UUID) {
+	s.trips.RemoveTripPerson(w, r, tripId, personId)
+}
+
+// PackingLists handlers
+func (s *apiServer) ListPackingLists(w http.ResponseWriter, r *http.Request) {
+	s.packingLists.ListPackingLists(w, r)
+}
+func (s *apiServer) CreatePackingList(w http.ResponseWriter, r *http.Request) {
+	s.packingLists.CreatePackingList(w, r)
+}
+func (s *apiServer) GetPackingListById(w http.ResponseWriter, r *http.Request, listId openapi_types.UUID) {
+	s.packingLists.GetPackingListById(w, r, listId)
+}
+func (s *apiServer) UpdatePackingList(w http.ResponseWriter, r *http.Request, listId openapi_types.UUID) {
+	s.packingLists.UpdatePackingList(w, r, listId)
+}
+func (s *apiServer) DeletePackingList(w http.ResponseWriter, r *http.Request, listId openapi_types.UUID) {
+	s.packingLists.DeletePackingList(w, r, listId)
+}
+func (s *apiServer) ListPackingListLabels(w http.ResponseWriter, r *http.Request, listId openapi_types.UUID) {
+	s.packingLists.ListPackingListLabels(w, r, listId)
+}
+func (s *apiServer) AddPackingListLabel(w http.ResponseWriter, r *http.Request, listId openapi_types.UUID) {
+	s.packingLists.AddPackingListLabel(w, r, listId)
+}
+func (s *apiServer) RemovePackingListLabel(w http.ResponseWriter, r *http.Request, listId, labelId openapi_types.UUID) {
+	s.packingLists.RemovePackingListLabel(w, r, listId, labelId)
+}
+
 func (s *apiServer) GetSettings(w http.ResponseWriter, r *http.Request) { s.settings.GetSettings(w, r) }
 func (s *apiServer) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	s.settings.UpdateSettings(w, r)
@@ -188,8 +294,11 @@ func NewRouter(authHandler *handlers.AuthHandler, st *store.Store, appPassword s
 		manufacturers: handlers.NewManufacturersHandler(st),
 		items:         handlers.NewItemsHandler(st),
 		itemTypes:     handlers.NewItemTypesHandler(st),
+		labels:        handlers.NewLabelsHandler(st),
 		sets:          handlers.NewSetsHandler(st),
 		packs:         handlers.NewPacksHandler(st),
+		packingLists:  handlers.NewPackingListsHandler(st.PackingLists, st.Labels),
+		trips:         handlers.NewTripsHandler(st),
 	}, api.StdHTTPServerOptions{
 		ErrorHandlerFunc: handleOpenAPIError,
 	})
