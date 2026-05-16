@@ -589,7 +589,7 @@ const getCardSummaryEntries = (item: Item) => {
     { label: 'Manufacturer', value: manufacturersById.value.get(item.manufacturer_id) ?? '' },
     { label: 'Weight', value: typeof item.weight_grams === 'number' ? formatWeight(item.weight_grams) : '' },
     { label: 'Volume', value: typeof item.volume_ml === 'number' ? formatVolume(item.volume_ml) : '' },
-    { label: 'Value', value: typeof item.value === 'number' ? formatNumber(item.value) : '' },
+    { label: 'Value', value: typeof item.value === 'number' ? formatValue(item.value) : '' },
   ]
 
   return entries.filter((entry) => entry.value)

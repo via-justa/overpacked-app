@@ -15,7 +15,7 @@ import SetFormDialog from '../components/SetFormDialog.vue'
 import SetsCollectionView from '../components/SetsCollectionView.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { queryClient } from '../../../lib/query/client'
-import { listItemTypes, listItems, listManufacturers } from '../../items/api/itemsApi'
+import { listItemTypes, listItems, listManufacturers, listItemLabels } from '../../items/api/itemsApi'
 import { useSettings } from '../../../composables/useSettings'
 import { toRoundedString, formatDisplayWeight } from '../../../lib/units/conversions'
 import {
@@ -36,7 +36,7 @@ import {
   updateSetItem,
 } from '../api/setsApi'
 import type { ItemSet, SetItemWithDetails } from '../types'
-import type { Item, ItemTypeEntity } from '../../items/types'
+import type { Item, ItemTypeEntity, Label } from '../../items/types'
 
 const toast = useToast()
 const route = useRoute()
@@ -87,6 +87,24 @@ const formatWeight = (valueGrams: number): string => {
   return formatDisplayWeight(valueGrams, weightUnit.value)
 }
 
+const formatSetValue = (value: number): string => {
+  return formatValue(value, currency.value, toRoundedString)
+}
+
+const getSetLabels = (setId: string): Label[] => {
+  const setItems = setItemsBySetId.value[setId] ?? []
+  const labelsMap = new Map<string, Label>()
+
+  for (const setItem of setItems) {
+    const itemLabels = itemLabelsMap.value.get(setItem.item_id) ?? []
+    for (const label of itemLabels) {
+      labelsMap.set(label.id, label)
+    }
+  }
+
+  return Array.from(labelsMap.values())
+}
+
 const setsQuery = useQuery({
   queryKey: ['sets'],
   queryFn: listSets,
@@ -105,6 +123,33 @@ const manufacturersQuery = useQuery({
 const itemTypesQuery = useQuery({
   queryKey: ['item-types'],
   queryFn: listItemTypes,
+})
+
+const itemLabelsQueries = useQuery({
+  queryKey: computed(() => ['items-labels', itemsQuery.data.value?.map(i => i.id).sort().join(',') ?? '']),
+  queryFn: async () => {
+    const items = itemsQuery.data.value ?? []
+    if (items.length === 0) return []
+
+    const labelsPromises = items.map(item =>
+      listItemLabels(item.id).catch(() => [] as Label[])
+    )
+    const labelsArrays = await Promise.all(labelsPromises)
+
+    return items.map((item, index) => ({
+      itemId: item.id,
+      labels: labelsArrays[index],
+    }))
+  },
+  enabled: computed(() => (itemsQuery.data.value?.length ?? 0) > 0),
+})
+
+const itemLabelsMap = computed(() => {
+  const map = new Map<string, Label[]>()
+  for (const entry of itemLabelsQueries.data.value ?? []) {
+    map.set(entry.itemId, entry.labels)
+  }
+  return map
 })
 
 const setsViewMode = ref<SetsViewMode>(readStoredSetsViewMode())
@@ -975,8 +1020,8 @@ const onAddItem = async () => {
       :set-category-input="setCategoryInput" :item-type-options="itemTypeOptions" :is-submitting-set="isSubmittingSet"
       :available-items-for-add="availableItemsForCreate" :add-item-id="addItemId" :add-item-quantity="addItemQuantity"
       :add-item-notes="addItemNotes" :temp-items="tempCreateSetItemsWithDetails"
-      :manufacturers-by-id="manufacturersById" :format-display-weight="formatWeight"
-      :volume-input-unit="volumeInputUnit" :currency="currency"
+      :manufacturers-by-id="manufacturersById" :format-display-weight="formatWeight" :format-value="formatSetValue"
+      :volume-input-unit="volumeInputUnit"
       @update:model-value="(value) => { isFormDialogOpen = value; if (!value) { editingSetId = null; setNameInput = ''; setCategoryInput = ''; tempCreateSetItems = [] } }"
       @update:set-name-input="(value) => { setNameInput = value }"
       @update:set-category-input="(value) => { setCategoryInput = value }"
@@ -996,9 +1041,9 @@ const onAddItem = async () => {
       :set-items-loading="activeSet ? (setItemsLoadingBySetId[activeSet.id] ?? false) : false"
       :available-items-for-add="availableItemsForAdd" :add-item-id="addItemId" :add-item-quantity="addItemQuantity"
       :add-item-notes="addItemNotes" :is-adding-item="isAddingItem" :get-item-type-label="getItemTypeLabel"
-      :format-display-weight="formatWeight" :set-name-input="setNameInput" :set-category-input="setCategoryInput"
-      :item-type-options="itemTypeOptions" :is-submitting-set="isSubmittingSet" :manufacturers-by-id="manufacturersById"
-      :volume-input-unit="volumeInputUnit" :currency="currency"
+      :format-display-weight="formatWeight" :format-value="formatSetValue" :set-name-input="setNameInput"
+      :set-category-input="setCategoryInput" :item-type-options="itemTypeOptions" :is-submitting-set="isSubmittingSet"
+      :manufacturers-by-id="manufacturersById" :volume-input-unit="volumeInputUnit"
       @update:model-value="(value) => { if (!value) closeDetailsDialog() }"
       @update:add-item-id="(value) => { addItemId = value }"
       @update:add-item-quantity="(value) => { addItemQuantity = value }"
@@ -1031,9 +1076,10 @@ const onAddItem = async () => {
       <SetsCollectionView :sets="allSets" :sets-view-mode="setsViewMode" :table-detail-mode="tableDetailMode"
         :selection-mode="tableSelectionMode" :selected-set-ids="selectedSetIds" :set-stats-by-id="setStatsById"
         :set-items-by-set-id="setItemsBySetId" :item-table-fields="itemTableFields"
-        :get-item-type-label="getItemTypeLabel" :format-display-weight="formatWeight" :format-date="formatDate"
-        @open-details="onOpenDetails" @open-item-details="onOpenItemDetails" @start-edit="onStartEdit"
-        @request-delete="requestDeleteSet" @update:table-detail-mode="(mode) => { tableDetailMode = mode }"
+        :get-item-type-label="getItemTypeLabel" :format-display-weight="formatWeight" :format-value="formatSetValue"
+        :format-date="formatDate" :get-set-labels="getSetLabels" @open-details="onOpenDetails"
+        @open-item-details="onOpenItemDetails" @start-edit="onStartEdit" @request-delete="requestDeleteSet"
+        @update:table-detail-mode="(mode) => { tableDetailMode = mode }"
         @update:selection-mode="onUpdateTableSelectionMode" @toggle:set-selection="onToggleSetSelection"
         @toggle:select-all="onToggleSelectAllSets" @bulk:delete="onRequestBulkDelete" />
     </div>

@@ -32,8 +32,8 @@ type Props = {
   tempItems: TempItemWithDetails[]
   manufacturersById: Map<string, string>
   formatDisplayWeight: (grams: number) => string
+  formatValue: (value: number) => string
   volumeInputUnit: 'ml' | 'fl_oz'
-  currency: 'usd' | 'eur'
 }
 
 const props = defineProps<Props>()
@@ -126,8 +126,7 @@ const getItemValue = (item: Item): string => {
   if (typeof item.value !== 'number') {
     return 'Not set'
   }
-  const currencySymbol = props.currency === 'usd' ? '$' : '€'
-  return `${item.value.toFixed(2)} ${currencySymbol}`
+  return props.formatValue(item.value)
 }
 
 // Auto-populate quantity with item's default_quantity when item is selected
@@ -201,11 +200,11 @@ watch(() => props.addItemId, (newItemId) => {
           <tr v-for="entry in tempItems" :key="entry.tempItem.itemId">
             <td class="px-3 py-2">
               <span class="text-copy font-medium">{{ entry.item ? normalizeTitleWords(entry.item.name) : 'Unknown'
-                }}</span>
+              }}</span>
             </td>
             <td class="px-3 py-2">
               <span class="text-copy-subtle text-xs">{{ entry.item ? getManufacturerName(entry.item) : 'Unknown'
-                }}</span>
+              }}</span>
             </td>
             <td class="px-3 py-2">
               <span class="text-copy-subtle text-xs">{{ entry.item ? getItemWeight(entry.item) : 'Not set' }}</span>

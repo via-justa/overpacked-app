@@ -6,7 +6,7 @@ import AppToggleGroup from '../../../components/AppToggleGroup.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { useRowActionsMenu } from '../../../composables/useRowActionsMenu'
 import type { AppItemTableField } from '../../../components/AppItemTableRowContent.vue'
-import type { Item } from '../../items/types'
+import type { Item, Label } from '../../items/types'
 import type { ItemSet, SetItemWithDetails } from '../types'
 
 type SetStats = {
@@ -27,6 +27,8 @@ type Props = {
   getItemTypeLabel: (categoryId: string) => string
   formatDisplayWeight: (grams: number) => string
   formatDate: (value: string) => string
+  formatValue: (value: number) => string
+  getSetLabels: (setId: string) => Label[]
 }
 
 const props = defineProps<Props>()
@@ -44,7 +46,7 @@ const emit = defineEmits<{
 }>()
 
 type TableField = {
-  key: 'category' | 'items' | 'weight' | 'value'
+  key: 'category' | 'items' | 'weight' | 'value' | 'labels'
   label: string
   render: (set: ItemSet) => string
 }
@@ -83,7 +85,15 @@ const visibleFields = computed<TableField[]>(() => [
     label: 'Value',
     render: (set) => {
       const totalValue = props.setStatsById[set.id]?.totalValue ?? 0
-      return `$${totalValue.toFixed(2)}`
+      return props.formatValue(totalValue)
+    },
+  },
+  {
+    key: 'labels',
+    label: 'Labels',
+    render: (set) => {
+      const labels = props.getSetLabels(set.id)
+      return String(labels.length)
     },
   },
 ])
@@ -91,6 +101,43 @@ const visibleFields = computed<TableField[]>(() => [
 const allRowsSelected = computed(
   () => props.sets.length > 0 && props.selectedSetIds.length === props.sets.length,
 )
+
+const getContrastColor = (color?: string | null): 'light' | 'dark' => {
+  if (!color) {
+    return 'light'
+  }
+
+  // Handle HSL colors
+  if (color.startsWith('hsl')) {
+    const match = color.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/)
+    if (match) {
+      const lightness = Number.parseInt(match[3], 10)
+      return lightness > 55 ? 'dark' : 'light'
+    }
+  }
+
+  // Handle hex colors
+  const hex = color.replace('#', '')
+  const r = Number.parseInt(hex.substring(0, 2), 16)
+  const g = Number.parseInt(hex.substring(2, 4), 16)
+  const b = Number.parseInt(hex.substring(4, 6), 16)
+
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+
+  return luminance > 0.5 ? 'dark' : 'light'
+}
+
+const getLabelTextColor = (color?: string | null): string => {
+  const contrast = getContrastColor(color)
+  return contrast === 'light' ? '#ffffff' : '#111827'
+}
+
+const getLabelBorderColor = (color?: string | null): string => {
+  const contrast = getContrastColor(color)
+  return contrast === 'light'
+    ? 'rgba(255, 255, 255, 0.2)'
+    : 'rgba(0, 0, 0, 0.1)'
+}
 
 const { openActionsForId: openActionsForSetId, menuPosition: rowActionsMenuPosition, closeActions: closeRowActions, toggleActions: toggleRowActions } = useRowActionsMenu({
   menuWidth: 176,
@@ -125,8 +172,20 @@ const getExpandedFieldDisplays = (set: ItemSet): ExpandedFieldDisplay[] => {
         <span class="text-line mx-2">/</span>
         {{ formatDisplayWeight(setStatsById[set.id]?.totalWeightGrams ?? 0) }}
         <span class="text-line mx-2">/</span>
-        ${{ (setStatsById[set.id]?.totalValue ?? 0).toFixed(2) }}
+        {{ formatValue(setStatsById[set.id]?.totalValue ?? 0) }}
       </p>
+
+      <div v-if="getSetLabels(set.id).length > 0" class="mt-2 flex flex-wrap gap-1">
+        <span v-for="label in getSetLabels(set.id)" :key="label.id"
+          class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium" :style="{
+            backgroundColor: label.color ?? '#6b7280',
+            color: getLabelTextColor(label.color),
+            border: `1px solid ${getLabelBorderColor(label.color)}`
+          }">
+          {{ label.name }}
+        </span>
+      </div>
+
       <p class="text-copy-subtle mt-1 text-xs">Updated {{ formatDate(set.updated_at) }}</p>
 
       <div class="mt-4 flex flex-wrap gap-2">
@@ -142,9 +201,11 @@ const getExpandedFieldDisplays = (set: ItemSet): ExpandedFieldDisplay[] => {
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-3">
           <h3 class="text-copy text-sm font-semibold uppercase tracking-[0.08em]">Sets</h3>
-          <AppToggleGroup name="sets-table-detail-mode" data-element="sets-table-detail-mode"
-            :model-value="tableDetailMode" :options="detailModeOptions" fit-content
-            @update:model-value="(value) => emit('update:tableDetailMode', value as 'simple' | 'expanded')" />
+          <div class="hidden md:block">
+            <AppToggleGroup name="sets-table-detail-mode" data-element="sets-table-detail-mode"
+              :model-value="tableDetailMode" :options="detailModeOptions" fit-content
+              @update:model-value="(value) => emit('update:tableDetailMode', value as 'simple' | 'expanded')" />
+          </div>
           <template v-if="selectionMode">
             <span class="text-copy-subtle text-xs font-medium">{{ selectedSetIds.length }} selected</span>
             <button type="button"
@@ -210,7 +271,30 @@ const getExpandedFieldDisplays = (set: ItemSet): ExpandedFieldDisplay[] => {
               </td>
               <td v-for="field in visibleFields" :key="`${set.id}-${field.key}`"
                 class="whitespace-nowrap px-4 py-3 align-top">
-                {{ field.render(set) }}
+                <template v-if="field.key === 'labels'">
+                  <span class="group/labels relative inline-flex items-center gap-1.5"
+                    :aria-label="`${getSetLabels(set.id).length} label${getSetLabels(set.id).length === 1 ? '' : 's'}`">
+                    <i class="pi pi-tag text-copy-subtle hover:text-copy cursor-default text-sm" aria-hidden="true" />
+                    <span class="text-copy-subtle hover:text-copy cursor-default text-xs font-medium">{{
+                      getSetLabels(set.id).length }}</span>
+                    <div v-if="getSetLabels(set.id).length > 0"
+                      class="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 w-max max-w-xs -translate-x-1/2 rounded-lg border border-line-subtle bg-surface-elevated px-3 py-2 opacity-0 shadow-panel transition-opacity group-hover/labels:opacity-100">
+                      <div class="flex flex-wrap gap-1.5">
+                        <span v-for="label in getSetLabels(set.id)" :key="label.id"
+                          class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium" :style="{
+                            backgroundColor: label.color ?? '#6b7280',
+                            color: getLabelTextColor(label.color),
+                            border: `1px solid ${getLabelBorderColor(label.color)}`
+                          }">
+                          {{ label.name }}
+                        </span>
+                      </div>
+                    </div>
+                  </span>
+                </template>
+                <template v-else>
+                  {{ field.render(set) }}
+                </template>
               </td>
               <td class="w-px px-4 py-3 align-top">
                 <div data-element="sets-row-actions" class="relative flex justify-end">
@@ -223,7 +307,7 @@ const getExpandedFieldDisplays = (set: ItemSet): ExpandedFieldDisplay[] => {
               </td>
             </tr>
 
-            <tr v-if="tableDetailMode === 'expanded'" class="bg-surface-muted/40">
+            <tr v-if="tableDetailMode === 'expanded'" class="bg-surface-muted/40 hidden md:table-row">
               <td :colspan="visibleFields.length + 3" class="border-line-subtle border-t px-4 py-2 align-top">
                 <div class="relative ml-8 pl-3">
                   <img :src="detailRowArrowImageSrc" alt="" aria-hidden="true"

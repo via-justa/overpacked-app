@@ -120,10 +120,12 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-3">
           <h3 class="heading-section">{{ title }}</h3>
-          <AppToggleGroup :name="`items-table-detail-mode-${title.toLowerCase().replace(/\s+/g, '-')}`"
-            data-element="items-table-detail-mode" :model-value="tableDetailMode" :options="detailModeOptions"
-            fit-content
-            @update:model-value="(value) => emit('update:tableDetailMode', value as 'simple' | 'expanded')" />
+          <div class="hidden md:block">
+            <AppToggleGroup :name="`items-table-detail-mode-${title.toLowerCase().replace(/\s+/g, '-')}`"
+              data-element="items-table-detail-mode" :model-value="tableDetailMode" :options="detailModeOptions"
+              fit-content
+              @update:model-value="(value) => emit('update:tableDetailMode', value as 'simple' | 'expanded')" />
+          </div>
           <template v-if="selectionMode">
             <span class="text-copy-subtle text-xs font-medium">{{ selectedItemIds.length }} selected</span>
             <button type="button"
@@ -215,7 +217,7 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
               </td>
             </tr>
 
-            <tr v-if="tableDetailMode === 'expanded'" class="bg-surface-muted/40">
+            <tr v-if="tableDetailMode === 'expanded'" class="bg-surface-muted/40 hidden md:table-row">
               <td :colspan="visibleFields.length + 3" class="border-line-subtle border-t px-4 py-2 align-top">
                 <div class="relative ml-8 pl-3">
                   <img :src="detailRowArrowImageSrc" alt="" aria-hidden="true"

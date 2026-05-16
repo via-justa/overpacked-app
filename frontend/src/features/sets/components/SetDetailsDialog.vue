@@ -27,13 +27,13 @@ type Props = {
   isAddingItem: boolean
   getItemTypeLabel: (categoryId: string) => string
   formatDisplayWeight: (grams: number) => string
+  formatValue: (value: number) => string
   setNameInput: string
   setCategoryInput: string
   itemTypeOptions: ItemTypeEntity[]
   isSubmittingSet: boolean
   manufacturersById: Map<string, string>
   volumeInputUnit: 'ml' | 'fl_oz'
-  currency: 'usd' | 'eur'
 }
 
 const props = defineProps<Props>()
@@ -142,7 +142,7 @@ watch(() => props.modelValue, (isOpen) => {
     isInitialized.value = false
     initialCategory.value = ''
   }
-})  
+})
 
 const getManufacturerName = (item: Item): string => {
   return props.manufacturersById.get(item.manufacturer_id) ?? 'Unknown'
@@ -167,8 +167,7 @@ const getItemValue = (item: Item): string => {
   if (typeof item.value !== 'number') {
     return 'Not set'
   }
-  const currencySymbol = props.currency === 'usd' ? '$' : '€'
-  return `${item.value.toFixed(2)} ${currencySymbol}`
+  return props.formatValue(item.value)
 }
 
 const isEditingExistingItem = computed(() => {
@@ -207,7 +206,7 @@ watch(() => props.addItemId, (newItemId) => {
             <span class="text-line mx-2">/</span>
             {{ formatDisplayWeight(activeSetStats.totalWeightGrams) }}
             <span class="text-line mx-2">/</span>
-            {{ currency === 'usd' ? '$' : '€' }}{{ activeSetStats.totalValue.toFixed(2) }}
+            {{ formatValue(activeSetStats.totalValue) }}
           </p>
         </div>
 
@@ -244,9 +243,9 @@ watch(() => props.addItemId, (newItemId) => {
           <input v-model="addItemQuantityModel" class="input-shell" type="number" min="0.1" step="0.1"
             placeholder="Qty" />
           <input v-model="addItemNotesModel" class="input-shell" type="text" placeholder="Notes (optional)" />
-          <Button :label="isEditingExistingItem ? 'Update' : 'Add'" :icon="isEditingExistingItem ? 'pi pi-check' : 'pi pi-plus'" 
-            :loading="isAddingItem" :disabled="!addItemIdModel"
-            @click="emit('addItem')" />
+          <Button :label="isEditingExistingItem ? 'Update' : 'Add'"
+            :icon="isEditingExistingItem ? 'pi pi-check' : 'pi pi-plus'" :loading="isAddingItem"
+            :disabled="!addItemIdModel" @click="emit('addItem')" />
         </div>
       </section>
 
@@ -292,7 +291,8 @@ watch(() => props.addItemId, (newItemId) => {
               </td>
               <td class="px-3 py-2">
                 <div class="group/note relative inline-flex" v-if="entry.notes">
-                  <i class="pi pi-file-edit text-copy-subtle hover:text-copy cursor-default text-sm" aria-hidden="true" />
+                  <i class="pi pi-file-edit text-copy-subtle hover:text-copy cursor-default text-sm"
+                    aria-hidden="true" />
                   <span
                     class="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 w-max max-w-xs -translate-x-1/2 rounded-lg border border-line-subtle bg-surface-elevated px-3 py-2 text-xs text-copy opacity-0 shadow-panel transition-opacity group-hover/note:opacity-100">
                     {{ entry.notes }}
