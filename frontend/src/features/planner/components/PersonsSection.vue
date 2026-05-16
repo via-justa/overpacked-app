@@ -5,6 +5,21 @@ import { useQuery } from '@tanstack/vue-query'
 import Message from 'primevue/message'
 import { listPersons } from '../../persons/api/personsApi'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
+import { useSettings } from '../../../composables/useSettings'
+import { getPersonRecommendedMaxWeightGrams } from '../../persons/utils'
+import { GRAMS_PER_KILOGRAM, LB_PER_KG } from '../../../lib/units/conversions'
+import type { Person } from '../../persons/types'
+
+type BodyWeightInputUnit = 'kg' | 'lb'
+
+const { weightUnit } = useSettings()
+const defaultInputUnit = computed<BodyWeightInputUnit>(() => (weightUnit.value === 'oz' ? 'lb' : 'kg'))
+const inputWeightLabel = computed<'kg' | 'lb'>(() => (defaultInputUnit.value === 'lb' ? 'lb' : 'kg'))
+
+const gramsToInput = (grams: number, inputUnit: BodyWeightInputUnit): number => {
+  const kg = grams / GRAMS_PER_KILOGRAM
+  return inputUnit === 'kg' ? kg : kg * LB_PER_KG
+}
 
 const personsQuery = useQuery({
   queryKey: ['persons'],
@@ -41,6 +56,23 @@ const formatAge = (birthdate?: string | null): string => {
   }
 
   return age >= 0 ? String(age) : 'Not set'
+}
+
+const formatWeight = (value?: number | null) => {
+  if (typeof value !== 'number') {
+    return 'Not set'
+  }
+
+  return `${gramsToInput(value, defaultInputUnit.value).toFixed(1)} ${inputWeightLabel.value}`
+}
+
+const formatRecommendedMaxWeight = (person: Person): string => {
+  const recommendedGrams = getPersonRecommendedMaxWeightGrams(person)
+  if (recommendedGrams <= 0) {
+    return 'Not set'
+  }
+
+  return `${gramsToInput(recommendedGrams, defaultInputUnit.value).toFixed(1)} ${inputWeightLabel.value}`
 }
 </script>
 
@@ -82,14 +114,20 @@ const formatAge = (birthdate?: string | null): string => {
       <RouterLink v-for="person in displayPersons" :key="person.id" :to="`/persons`"
         class="border-line-subtle bg-surface-elevated hover:border-brand-300 block rounded-xl border p-4 transition">
         <h3 class="text-copy text-base font-semibold">{{ normalizeTitleWords(person.name) }}</h3>
-        <div class="text-copy-muted mt-2 space-y-0.5 text-xs">
+        <div class="text-copy-muted mt-2 space-y-1 text-xs">
           <p>
             <span class="text-copy font-medium">Gender:</span>
             <span class="ml-1">{{ formatGender(person.gender) }}</span>
-          </p>
-          <p>
+            <span class="text-line mx-2">|</span>
             <span class="text-copy font-medium">Age:</span>
             <span class="ml-1">{{ formatAge(person.birthdate) }}</span>
+            <span class="text-line mx-2">|</span>
+            <span class="text-copy font-medium">Weight:</span>
+            <span class="ml-1">{{ formatWeight(person.body_weight_grams) }}</span>
+          </p>
+          <p>
+            <span class="text-copy font-medium">Max recommended carry weight:</span>
+            <span class="ml-1">{{ formatRecommendedMaxWeight(person) }}</span>
           </p>
         </div>
       </RouterLink>

@@ -343,7 +343,7 @@ const onSubmitForm = async () => {
             <span class="ml-1">{{ formatWeight(person.body_weight_grams) }}</span>
           </p>
           <p>
-            <span class="text-copy font-medium">Max recommended pack weight:</span>
+            <span class="text-copy font-medium">Max recommended carry weight:</span>
             <span class="ml-1">{{ formatRecommendedMaxWeight(person) }}</span>
           </p>
         </div>
