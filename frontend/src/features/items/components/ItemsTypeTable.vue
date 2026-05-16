@@ -28,7 +28,6 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  openDetails: [item: Item]
   'update:tableDetailMode': [mode: 'simple' | 'expanded']
   'update:selectionMode': [value: boolean]
   'toggle:itemSelection': [itemId: string, checked: boolean]
@@ -205,7 +204,7 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
                   }" />
               </td>
               <AppItemTableRowContent :item="item" :visible-fields="visibleFields"
-                :item-labels="itemLabelsMap?.get(item.id) ?? []" @open-details="emit('openDetails', $event)" />
+                :item-labels="itemLabelsMap?.get(item.id) ?? []" @edit="emit('row:edit', $event)" />
               <td class="w-px px-4 py-3 align-top">
                 <div data-element="items-row-actions" class="relative flex justify-end">
                   <button type="button"

@@ -50,6 +50,7 @@ const emit = defineEmits<{
   requestCategoryChange: [newCategory: string]
   requestRemoveSetItem: [payload: { itemId: string; itemName: string }]
   editSetItem: [payload: { itemId: string; quantity: number; notes: string }]
+  deleteSet: []
 }>()
 
 const addItemIdModel = computed({
@@ -210,7 +211,10 @@ watch(() => props.addItemId, (newItemId) => {
           </p>
         </div>
 
-        <Button label="Close" severity="secondary" outlined @click="closeDialog" />
+        <div class="flex items-center gap-2">
+          <Button label="Delete" severity="danger" outlined @click="emit('deleteSet')" />
+          <Button label="Close" severity="secondary" outlined @click="closeDialog" />
+        </div>
       </div>
 
       <section class="border-line-subtle bg-surface-muted mt-4 rounded-xl border p-3">

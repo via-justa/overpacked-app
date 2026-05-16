@@ -34,7 +34,6 @@ defineProps<{
 }>()
 
 defineEmits<{
-  openDetails: [item: Item]
   'update:tableDetailMode': [type: string, mode: 'simple' | 'expanded']
   'update:tableSelectionMode': [type: string, value: boolean]
   'toggle:tableItemSelection': [type: string, itemId: string, checked: boolean]
@@ -56,7 +55,7 @@ defineEmits<{
       :base-fields="section.baseFields" :extra-fields="section.extraFields" :table-detail-mode="section.tableDetailMode"
       :selection-mode="section.selectionMode" :selected-item-ids="section.selectedItemIds"
       :total-weight-label="section.totalWeightLabel" :total-value-label="section.totalValueLabel"
-      :item-labels-map="section.itemLabelsMap" @open-details="$emit('openDetails', $event)"
+      :item-labels-map="section.itemLabelsMap" @edit="$emit('row:edit', $event)"
       @update:table-detail-mode="$emit('update:tableDetailMode', section.type, $event)"
       @update:selection-mode="$emit('update:tableSelectionMode', section.type, $event)"
       @toggle:item-selection="(itemId, checked) => $emit('toggle:tableItemSelection', section.type, itemId, checked)"
@@ -70,7 +69,7 @@ defineEmits<{
 
   <div v-else data-element="items-card-view" class="grid gap-4 sm:grid-cols-3 xl:grid-cols-4">
     <ItemCard v-for="item in items" :key="item.id" :item="item" :image-src="getImageSrc(item)"
-      :item-labels="itemLabelsMap.get(item.id) ?? []" @open-details="$emit('openDetails', $event)">
+      :item-labels="itemLabelsMap.get(item.id) ?? []" @edit="$emit('row:edit', $event)">
       <template #additional-info>
         <slot name="card-additional-info" :item="item" />
       </template>

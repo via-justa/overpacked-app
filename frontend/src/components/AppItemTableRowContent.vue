@@ -23,7 +23,7 @@ const props = withDefaults(defineProps<{
 })
 
 const emit = defineEmits<{
-  openDetails: [item: Item]
+  edit: [item: Item]
 }>()
 
 const getContrastColor = (color?: string | null): 'light' | 'dark' => {
@@ -68,7 +68,7 @@ const getLabelBorderColor = (color?: string | null): string => {
   <td class="w-80 px-4 py-3 align-top">
     <button v-if="showNameLink" type="button"
       class="text-brand-500 decoration-brand-200 block max-w-full truncate text-left font-semibold underline underline-offset-2"
-      :title="normalizeTitleWords(item.name)" @click="emit('openDetails', item)">
+      :title="normalizeTitleWords(item.name)" @click="emit('edit', item)">
       {{ normalizeTitleWords(item.name) }}
     </button>
     <span v-else class="text-copy block max-w-full truncate font-semibold" :title="normalizeTitleWords(item.name)">

@@ -10,7 +10,7 @@ defineProps<{
 }>()
 
 defineEmits<{
-  openDetails: [item: Item]
+  edit: [item: Item]
 }>()
 
 const formatType = (value: string) => {
@@ -22,8 +22,9 @@ const formatType = (value: string) => {
 </script>
 
 <template>
-  <article data-element="item-card" :data-item-id="item.id" class="surface-panel overflow-hidden"
-    :class="{ 'opacity-50': !item.is_active }">
+  <button data-element="item-card" :data-item-id="item.id" type="button"
+    class="surface-panel hover:border-brand-300 cursor-pointer overflow-hidden text-left transition"
+    :class="{ 'opacity-50': !item.is_active }" @click="$emit('edit', item)">
     <div v-if="imageSrc" class="bg-surface-soft aspect-4/3 overflow-hidden">
       <img :src="imageSrc" :alt="normalizeTitleWords(item.name)" class="h-full w-full object-cover" />
     </div>
@@ -39,11 +40,9 @@ const formatType = (value: string) => {
       </div>
     </div>
     <div class="p-4">
-      <button type="button"
-        class="text-brand-500 decoration-brand-200 text-left text-lg font-semibold underline underline-offset-2"
-        @click="$emit('openDetails', item)">
+      <h3 class="text-ink text-lg font-semibold">
         {{ normalizeTitleWords(item.name) }}
-      </button>
+      </h3>
 
       <div v-if="itemLabels && itemLabels.length > 0" class="mt-2 flex flex-wrap gap-1.5">
         <ItemLabel v-for="label in itemLabels" :key="label.id" :label="label" size="sm" />
@@ -58,5 +57,5 @@ const formatType = (value: string) => {
         <slot name="additional-info" />
       </div>
     </div>
-  </article>
+  </button>
 </template>

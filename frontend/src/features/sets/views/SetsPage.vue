@@ -4,7 +4,6 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import { useToast } from 'primevue/usetoast'
 import AppConfirmDialog from '../../../components/AppConfirmDialog.vue'
-import AppToggleGroup from '../../../components/AppToggleGroup.vue'
 import AppQueryError from '../../../components/AppQueryError.vue'
 import AppLoadingState from '../../../components/AppLoadingState.vue'
 import AppEmptyState from '../../../components/AppEmptyState.vue'
@@ -42,30 +41,7 @@ const toast = useToast()
 const route = useRoute()
 const router = useRouter()
 
-type SetsViewMode = 'cards' | 'table'
-type TableDetailMode = 'simple' | 'expanded'
 type VolumeInputUnit = 'ml' | 'fl_oz'
-
-const SETS_VIEW_MODE_STORAGE_KEY = 'sets:view-mode'
-const SETS_TABLE_DETAIL_MODE_STORAGE_KEY = 'sets:table-detail-mode'
-
-const readStoredSetsViewMode = (): SetsViewMode => {
-  if (globalThis.window === undefined) {
-    return 'cards'
-  }
-
-  const stored = globalThis.localStorage.getItem(SETS_VIEW_MODE_STORAGE_KEY)
-  return stored === 'cards' || stored === 'table' ? stored : 'cards'
-}
-
-const readStoredSetsTableDetailMode = (): TableDetailMode => {
-  if (globalThis.window === undefined) {
-    return 'simple'
-  }
-
-  const stored = globalThis.localStorage.getItem(SETS_TABLE_DETAIL_MODE_STORAGE_KEY)
-  return stored === 'simple' || stored === 'expanded' ? stored : 'simple'
-}
 
 
 const formatDate = (value: string): string => {
@@ -152,10 +128,6 @@ const itemLabelsMap = computed(() => {
   return map
 })
 
-const setsViewMode = ref<SetsViewMode>(readStoredSetsViewMode())
-const tableDetailMode = ref<TableDetailMode>(readStoredSetsTableDetailMode())
-const tableSelectionMode = ref(false)
-const selectedSetIds = ref<string[]>([])
 const isFormDialogOpen = ref(false)
 const isDetailsDialogOpen = ref(false)
 const isItemDetailsDialogOpen = ref(false)
@@ -175,16 +147,10 @@ const setStatsById = ref<Record<string, { itemCount: number; totalWeightGrams: n
 
 const confirmDialogState = ref<
   | { kind: 'set-delete'; setId: string; setName: string }
-  | { kind: 'set-bulk-delete'; setIds: string[] }
   | { kind: 'set-item-remove'; setId: string; itemId: string; itemName: string }
   | { kind: 'category-change'; newCategory: string; mismatchedItems: Array<{ id: string; name: string }> }
   | null
 >(null)
-
-const viewOptions: Array<{ label: string; value: SetsViewMode }> = [
-  { label: 'Cards', value: 'cards' },
-  { label: 'Table', value: 'table' },
-]
 
 const allSets = computed<ItemSet[]>(() => setsQuery.data.value ?? [])
 
@@ -421,10 +387,6 @@ const confirmDialogMessage = computed(() => {
     return `Delete ${confirmDialogState.value.setName}?`
   }
 
-  if (confirmDialogState.value?.kind === 'set-bulk-delete') {
-    return `Delete ${confirmDialogState.value.setIds.length} selected set(s)?`
-  }
-
   if (confirmDialogState.value?.kind === 'set-item-remove') {
     return `Remove ${confirmDialogState.value.itemName} from this set?`
   }
@@ -529,30 +491,6 @@ watch(
   },
   { immediate: true },
 )
-
-watch(setsViewMode, (value) => {
-  if (globalThis.window === undefined) {
-    return
-  }
-
-  globalThis.localStorage.setItem(SETS_VIEW_MODE_STORAGE_KEY, value)
-})
-
-watch(tableDetailMode, (value) => {
-  if (globalThis.window === undefined) {
-    return
-  }
-
-  globalThis.localStorage.setItem(SETS_TABLE_DETAIL_MODE_STORAGE_KEY, value)
-})
-
-watch(allSets, (sets) => {
-  const validIds = new Set(sets.map((entry) => entry.id))
-  selectedSetIds.value = selectedSetIds.value.filter((id) => validIds.has(id))
-  if (selectedSetIds.value.length === 0) {
-    tableSelectionMode.value = false
-  }
-})
 
 const openCreateDialog = () => {
   editingSetId.value = null
@@ -751,40 +689,9 @@ const requestDeleteSet = (set: ItemSet) => {
   }
 }
 
-const onUpdateTableSelectionMode = (value: boolean) => {
-  tableSelectionMode.value = value
-  if (!value) {
-    selectedSetIds.value = []
-  }
-}
-
-const onToggleSetSelection = (setId: string, checked: boolean) => {
-  const next = new Set(selectedSetIds.value)
-  if (checked) {
-    next.add(setId)
-  } else {
-    next.delete(setId)
-  }
-  selectedSetIds.value = Array.from(next)
-  if (selectedSetIds.value.length === 0) {
-    tableSelectionMode.value = false
-  }
-}
-
-const onToggleSelectAllSets = (checked: boolean) => {
-  selectedSetIds.value = checked ? allSets.value.map((set) => set.id) : []
-  tableSelectionMode.value = checked
-}
-
-const onRequestBulkDelete = () => {
-  if (selectedSetIds.value.length === 0) {
-    return
-  }
-
-  confirmDialogState.value = {
-    kind: 'set-bulk-delete',
-    setIds: [...selectedSetIds.value],
-  }
+const onDeleteSetFromDialog = () => {
+  if (!activeSet.value) return
+  requestDeleteSet(activeSet.value)
 }
 
 const requestRemoveSetItem = (itemId: string, itemName: string) => {
@@ -854,23 +761,6 @@ const onConfirmDelete = async () => {
         severity: 'success',
         summary: 'Set deleted',
         detail: 'Set removed successfully.',
-        life: 2500,
-      })
-      return
-    }
-
-    if (current.kind === 'set-bulk-delete') {
-      await Promise.all(current.setIds.map(async (setId) => removeSet(setId)))
-      await queryClient.invalidateQueries({ queryKey: ['sets'] })
-      if (activeSetId.value && current.setIds.includes(activeSetId.value)) {
-        closeDetailsDialog()
-      }
-      selectedSetIds.value = []
-      tableSelectionMode.value = false
-      toast.add({
-        severity: 'success',
-        summary: 'Sets deleted',
-        detail: `${current.setIds.length} set(s) removed successfully.`,
         life: 2500,
       })
       return
@@ -1059,7 +949,8 @@ const onAddItem = async () => {
       @update:set-name-input="(value) => { setNameInput = value }"
       @update:set-category-input="(value) => { setCategoryInput = value }" @add-item="onAddItem"
       @save-set="onSaveSetFromDetails" @request-category-change="onRequestCategoryChange" @edit-set-item="onEditSetItem"
-      @request-remove-set-item="(payload) => { requestRemoveSetItem(payload.itemId, payload.itemName) }" />
+      @request-remove-set-item="(payload) => { requestRemoveSetItem(payload.itemId, payload.itemName) }"
+      @delete-set="onDeleteSetFromDialog" />
 
     <AppQueryError :query="setsQuery" fallback-message="Unable to load sets." data-element="sets-error" />
 
@@ -1075,21 +966,11 @@ const onAddItem = async () => {
       data-element="sets-empty-state" />
 
     <div v-else class="space-y-3">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <AppToggleGroup name="sets-view-mode" data-element="sets-view-mode" :model-value="setsViewMode"
-          :options="viewOptions" fit-content
-          @update:model-value="(value) => { setsViewMode = value as SetsViewMode }" />
-      </div>
-
-      <SetsCollectionView :sets="allSets" :sets-view-mode="setsViewMode" :table-detail-mode="tableDetailMode"
-        :selection-mode="tableSelectionMode" :selected-set-ids="selectedSetIds" :set-stats-by-id="setStatsById"
-        :set-items-by-set-id="setItemsBySetId" :item-table-fields="itemTableFields"
-        :get-item-type-label="getItemTypeLabel" :format-display-weight="formatWeight" :format-value="formatSetValue"
-        :format-date="formatDate" :get-set-labels="getSetLabels" @open-details="onOpenDetails"
-        @open-item-details="onOpenItemDetails" @start-edit="onStartEdit" @request-delete="requestDeleteSet"
-        @update:table-detail-mode="(mode) => { tableDetailMode = mode }"
-        @update:selection-mode="onUpdateTableSelectionMode" @toggle:set-selection="onToggleSetSelection"
-        @toggle:select-all="onToggleSelectAllSets" @bulk:delete="onRequestBulkDelete" />
+      <SetsCollectionView :sets="allSets" :set-stats-by-id="setStatsById" :set-items-by-set-id="setItemsBySetId"
+        :item-table-fields="itemTableFields" :get-item-type-label="getItemTypeLabel"
+        :format-display-weight="formatWeight" :format-value="formatSetValue" :format-date="formatDate"
+        :get-set-labels="getSetLabels" @open-details="onOpenDetails" @open-item-details="onOpenItemDetails"
+        @start-edit="onStartEdit" />
     </div>
   </section>
 </template>

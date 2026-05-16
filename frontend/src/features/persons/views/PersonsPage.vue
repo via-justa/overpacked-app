@@ -2,7 +2,6 @@
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
-import Button from 'primevue/button'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { useMutationWithToast } from '../../../composables/useMutationWithToast'
 import AppQueryError from '../../../components/AppQueryError.vue'
@@ -293,6 +292,12 @@ const onDelete = async (personId: string) => {
   await deleteMutation.mutateAsync(personId)
 }
 
+const onDeleteFromDialog = async () => {
+  if (!editingPersonId.value) return
+  await onDelete(editingPersonId.value)
+  onCancelEdit()
+}
+
 const onSubmitForm = async () => {
   if (isCreateMode.value) {
     await onCreate()
@@ -316,7 +321,8 @@ const onSubmitForm = async () => {
     <PersonFormDialog :open="isFormDialogOpen" :is-create-mode="isCreateMode" :title="formTitle"
       :values="activeFormValues" :weight-input-label="inputWeightLabel" :weight-options="weightOptions"
       :loading="formLoading" @update:open="(value) => { if (!value) onCancelEdit(); isFormDialogOpen = value }"
-      @update:values="(values) => { activeFormValues = values }" @submit="onSubmitForm" @cancel="onCancelEdit" />
+      @update:values="(values) => { activeFormValues = values }" @submit="onSubmitForm" @cancel="onCancelEdit"
+      @delete="onDeleteFromDialog" />
 
     <AppQueryError :query="personsQuery" fallback-message="Unable to load persons." data-element="persons-error" />
 
@@ -327,8 +333,10 @@ const onSubmitForm = async () => {
       data-element="persons-empty-state" />
 
     <div v-else data-element="persons-list" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      <article v-for="person in personsQuery.data.value" :key="person.id" data-element="person-card"
-        :data-person-id="person.id" class="surface-panel p-4">
+      <button v-for="person in personsQuery.data.value" :key="person.id" data-element="person-card"
+        :data-person-id="person.id" type="button"
+        class="surface-panel hover:border-brand-300 cursor-pointer p-4 text-left transition"
+        @click="onStartEdit(person)">
         <h3 class="text-ink text-lg font-semibold">{{ normalizeTitleWords(person.name) }}</h3>
 
         <div class="text-copy-muted mt-2 space-y-1 text-sm">
@@ -347,14 +355,7 @@ const onSubmitForm = async () => {
             <span class="ml-1">{{ formatRecommendedMaxWeight(person) }}</span>
           </p>
         </div>
-
-        <div class="mt-4 flex items-center justify-between gap-2">
-          <Button data-element="person-edit" label="Edit" icon="pi pi-pencil" size="small" outlined
-            @click="onStartEdit(person)" />
-          <Button data-element="person-delete" label="Delete" icon="pi pi-trash" size="small" severity="danger" outlined
-            :loading="deleteMutation.isPending.value" @click="onDelete(person.id)" />
-        </div>
-      </article>
+      </button>
     </div>
   </section>
 </template>

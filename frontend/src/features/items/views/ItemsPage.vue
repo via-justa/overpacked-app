@@ -32,7 +32,6 @@ import {
   formatType as formatTypeDisplay,
   formatText as formatTextDisplay,
 } from '../../../lib/format/display'
-import ItemDetailsDialog from '../components/ItemDetailsDialog.vue'
 import ItemFormDialog from '../components/ItemFormDialog.vue'
 import ItemsCreateOptionsMenu from '../components/ItemsCreateOptionsMenu.vue'
 import ItemsListView from '../components/ItemsListView.vue'
@@ -64,13 +63,6 @@ type TableFieldDefinition = TableFieldOption & {
   render: (item: Item) => string
   renderHref?: (item: Item) => string | undefined
   renderBoolean?: (item: Item) => boolean | null | undefined
-}
-
-type DetailEntry = {
-  label: string
-  value: string
-  href?: string
-  booleanValue?: boolean | null
 }
 
 type ItemTableSection = {
@@ -599,83 +591,6 @@ const getCardStatEntries = (item: Item) => {
   return getCardSummaryEntries(item).filter((entry) => entry.label === 'Weight' || entry.label === 'Volume' || entry.label === 'Value')
 }
 
-const getBaseDetails = (item: Item) => {
-  return [
-    { label: 'Type', value: formatType(item.type) },
-    { label: 'Manufacturer', value: manufacturersById.value.get(item.manufacturer_id) ?? item.manufacturer_id },
-    { label: 'Active', value: '', booleanValue: item.is_active },
-    { label: 'Default carry', value: formatCarryStatus(item.default_carry_status) },
-    { label: 'Default quantity', value: formatNumber(item.default_quantity) },
-    { label: 'Is default', value: '', booleanValue: item.is_default },
-    { label: 'Weight', value: formatWeight(item.weight_grams) },
-    { label: 'Volume', value: formatVolume(item.volume_ml) },
-    { label: 'Value', value: formatValue(item.value) },
-  ]
-}
-
-const getDetailedEntries = (item: Item) => {
-  const entries: DetailEntry[] = [
-    ...getBaseDetails(item),
-    { label: 'Description', value: formatText(item.description) },
-    { label: 'URL', value: item.source_url?.trim() ? 'URL' : 'Not set', href: item.source_url ?? undefined },
-  ]
-
-  if (item.type === 'consumable') {
-    entries.push(
-      { label: 'Dose count', value: formatNumber(item.dose_count) },
-      { label: 'Calories', value: formatNumber(item.calories) },
-      { label: 'Calories per serving', value: formatNumber(item.calories_per_serving) },
-      { label: 'Requires water', value: '', booleanValue: item.requires_water },
-    )
-  }
-
-  if (item.type === 'wearable') {
-    entries.push(
-      { label: 'Season', value: formatText(item.season) },
-      { label: 'Layer', value: formatText(item.layer) },
-      { label: 'Size', value: formatText(item.size) },
-      { label: 'Color', value: formatText(item.color) },
-      { label: 'Waterproof', value: '', booleanValue: item.waterproof },
-    )
-  }
-
-  if (item.type === 'shelter') {
-    entries.push(
-      { label: 'Capacity people', value: formatNumber(item.capacity_people) },
-      { label: 'Season rating', value: formatText(item.season_rating) },
-      { label: 'Freestanding', value: '', booleanValue: item.freestanding },
-      { label: 'Has footprint', value: '', booleanValue: item.has_footprint },
-    )
-  }
-
-  if (item.type === 'sleep') {
-    entries.push(
-      { label: 'Comfort temp C', value: formatNumber(item.comfort_temp_c) },
-      { label: 'Fill type', value: formatText(item.fill_type) },
-      { label: 'R value', value: formatNumber(item.r_value) },
-    )
-  }
-
-  if (item.type === 'electronics') {
-    entries.push(
-      { label: 'Capacity mAh', value: formatNumber(item.capacity_mah) },
-      { label: 'Charge port', value: formatText(item.charge_port) },
-      { label: 'Rechargeable', value: '', booleanValue: item.rechargeable },
-    )
-  }
-
-  if (item.image_mime_type || item.image_size_bytes || item.image_width_px || item.image_height_px) {
-    entries.push(
-      { label: 'Image type', value: formatText(item.image_mime_type) },
-      { label: 'Image size bytes', value: formatNumber(item.image_size_bytes) },
-      { label: 'Image width px', value: formatNumber(item.image_width_px) },
-      { label: 'Image height px', value: formatNumber(item.image_height_px) },
-    )
-  }
-
-  return entries
-}
-
 const { weightUnit, volumeUnit, currency } = useSettings()
 const weightInputUnit = computed<WeightInputUnit>(() => weightUnit.value)
 const volumeInputUnit = computed<VolumeInputUnit>(() => volumeUnit.value)
@@ -741,7 +656,6 @@ const itemsViewMode = ref<ItemsViewMode>(readStoredItemsViewMode())
 const itemsTableDetailModeByType = ref<Record<string, ItemsTableDetailMode>>(readStoredItemsTableDetailModeByType())
 const itemsTableSelectionModeByType = ref<Record<string, boolean>>({})
 const selectedTableItemIdsByType = ref<Record<string, string[]>>({})
-const selectedDetailItemId = ref<string | null>(null)
 const isCreateOptionsOpen = ref(false)
 const isManufacturerDialogOpen = ref(false)
 const isCategoryDialogOpen = ref(false)
@@ -1321,23 +1235,6 @@ const canShowEmptyState = computed(() => {
 
 const hasFilteredItems = computed(() => filteredItems.value.length > 0)
 
-const selectedDetailItem = computed(() => {
-  if (!selectedDetailItemId.value) {
-    return null
-  }
-
-  return itemsQuery.data.value?.find((item) => item.id === selectedDetailItemId.value) ?? null
-})
-
-const isDetailDialogOpen = computed({
-  get: () => selectedDetailItem.value !== null,
-  set: (value: boolean) => {
-    if (!value) {
-      selectedDetailItemId.value = null
-    }
-  },
-})
-
 const isCreateMode = computed(() => editingItemId.value === null)
 
 const activeFormValues = computed<ItemFormValues>({
@@ -1535,7 +1432,6 @@ const onStartEdit = async (item: Item) => {
     editSelectedLabels.value = []
   }
 
-  selectedDetailItemId.value = null
   isManufacturerDialogOpen.value = false
   isCategoryDialogOpen.value = false
   closeCreateOptions()
@@ -1614,25 +1510,6 @@ const onDeleteFromForm = async () => {
   editingItemId.value = null
   editValues.value = emptyFormValues()
   editSelectedLabels.value = []
-}
-
-const openDetails = (item: Item) => {
-  selectedDetailItemId.value = item.id
-}
-
-const onEditFromDetails = async () => {
-  if (!selectedDetailItem.value) {
-    return
-  }
-
-  const item = selectedDetailItem.value
-  selectedDetailItemId.value = null
-  await onStartEdit(item)
-}
-
-const onDeleteFromDetails = async (itemId: string) => {
-  selectedDetailItemId.value = null
-  await onDelete(itemId)
 }
 
 const onAddLabel = (label: Label) => {
@@ -1755,11 +1632,6 @@ onBeforeUnmount(() => {
       confirm-label="Delete" confirm-tone="danger" @update:open="(value) => { if (!value) closeConfirmDialog() }"
       @cancel="closeConfirmDialog" @confirm="onConfirmDelete" />
 
-    <ItemDetailsDialog :open="isDetailDialogOpen" :selected-item="selectedDetailItem" :get-image-src="getItemImageSrc"
-      :get-detailed-entries="getDetailedEntries" :format-type="formatType" :manufacturers-by-id="manufacturersById"
-      :is-delete-loading="deleteMutation.isPending.value" @update:open="isDetailDialogOpen = $event"
-      @edit="onEditFromDetails" @delete="onDeleteFromDetails" />
-
     <ItemFormDialog :open="isFormDialogOpen" :is-create-mode="isCreateMode" :title="formTitle"
       :values="activeFormValues" :item-type-options="itemFormTypeOptions" :dynamic-fields="itemFormDynamicFields"
       :dynamic-fields-loading="itemTypeFieldsQuery.isPending.value" :manufacturers="manufacturersQuery.data.value ?? []"
@@ -1841,7 +1713,7 @@ onBeforeUnmount(() => {
       </div>
 
       <ItemsListView v-else :view-mode="itemsViewMode" :items="filteredItems" :table-sections="itemTableSections"
-        :get-image-src="getItemImageSrc" :item-labels-map="itemLabelsMap" @open-details="openDetails"
+        :get-image-src="getItemImageSrc" :item-labels-map="itemLabelsMap"
         @update:table-detail-mode="(type, mode) => updateTableDetailMode(type, mode)"
         @update:table-selection-mode="(type, value) => updateTableSelectionMode(type, value)"
         @toggle:table-item-selection="(type, itemId, checked) => toggleTableItemSelection(type, itemId, checked)"
