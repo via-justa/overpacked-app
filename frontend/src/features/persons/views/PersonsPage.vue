@@ -329,7 +329,7 @@ const onSubmitForm = async () => {
     <AppLoadingState v-if="personsQuery.isPending.value" message="Loading persons..." data-element="persons-loading" />
 
     <AppEmptyState v-else-if="canShowEmptyState"
-      message="Current crew count: 0. Morale remains surprisingly high. Add your first person to get started!"
+      message="Current crew count: 0. Morale remains surprisingly high. Time to recruit some people for your adventure!"
       data-element="persons-empty-state" />
 
     <div v-else data-element="persons-list" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
-import Message from 'primevue/message'
+import AppQueryState from '../../../components/AppQueryState.vue'
 import { listPersons } from '../../persons/api/personsApi'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { useSettings } from '../../../composables/useSettings'
@@ -92,45 +92,31 @@ const formatRecommendedMaxWeight = (person: Person): string => {
       </RouterLink>
     </div>
 
-    <!-- Error State -->
-    <Message v-if="personsQuery.isError.value" severity="error" :closable="false">
-      {{ personsQuery.error.value instanceof Error ? personsQuery.error.value.message : 'Unable to load persons.' }}
-    </Message>
-
-    <!-- Loading State -->
-    <div v-else-if="personsQuery.isPending.value"
-      class="border-line-subtle bg-surface-muted text-copy-muted rounded-xl border px-4 py-3 text-sm">
-      Loading persons...
-    </div>
-
-    <!-- Empty State -->
-    <div v-else-if="totalPersons === 0"
-      class="border-line-subtle bg-surface-elevated text-copy-muted rounded-xl border px-4 py-3 text-sm">
-      No crew members yet. Add your first person to get started!
-    </div>
-
-    <!-- Persons Grid -->
-    <div v-else class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      <RouterLink v-for="person in displayPersons" :key="person.id" :to="`/persons`"
-        class="border-line-subtle bg-surface-elevated hover:border-brand-300 block rounded-xl border p-4 transition">
-        <h3 class="text-copy text-base font-semibold">{{ normalizeTitleWords(person.name) }}</h3>
-        <div class="text-copy-muted mt-2 space-y-1 text-xs">
-          <p>
-            <span class="text-copy font-medium">Gender:</span>
-            <span class="ml-1">{{ formatGender(person.gender) }}</span>
-            <span class="text-line mx-2">|</span>
-            <span class="text-copy font-medium">Age:</span>
-            <span class="ml-1">{{ formatAge(person.birthdate) }}</span>
-            <span class="text-line mx-2">|</span>
-            <span class="text-copy font-medium">Weight:</span>
-            <span class="ml-1">{{ formatWeight(person.body_weight_grams) }}</span>
-          </p>
-          <p>
-            <span class="text-copy font-medium">Max recommended carry weight:</span>
-            <span class="ml-1">{{ formatRecommendedMaxWeight(person) }}</span>
-          </p>
-        </div>
-      </RouterLink>
-    </div>
+    <AppQueryState :query="personsQuery" loading-message="Loading persons..."
+      empty-message="Current crew count: 0. Morale remains surprisingly high. Time to recruit some people for your adventure!"
+      error-fallback="Unable to load persons.">
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <RouterLink v-for="person in displayPersons" :key="person.id" :to="`/persons`"
+          class="border-line-subtle bg-surface-elevated hover:border-brand-300 block rounded-xl border p-4 transition">
+          <h3 class="text-copy text-base font-semibold">{{ normalizeTitleWords(person.name) }}</h3>
+          <div class="text-copy-muted mt-2 space-y-1 text-xs">
+            <p>
+              <span class="text-copy font-medium">Gender:</span>
+              <span class="ml-1">{{ formatGender(person.gender) }}</span>
+              <span class="text-line mx-2">|</span>
+              <span class="text-copy font-medium">Age:</span>
+              <span class="ml-1">{{ formatAge(person.birthdate) }}</span>
+              <span class="text-line mx-2">|</span>
+              <span class="text-copy font-medium">Weight:</span>
+              <span class="ml-1">{{ formatWeight(person.body_weight_grams) }}</span>
+            </p>
+            <p>
+              <span class="text-copy font-medium">Max recommended carry weight:</span>
+              <span class="ml-1">{{ formatRecommendedMaxWeight(person) }}</span>
+            </p>
+          </div>
+        </RouterLink>
+      </div>
+    </AppQueryState>
   </section>
 </template>

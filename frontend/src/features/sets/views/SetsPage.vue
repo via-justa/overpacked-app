@@ -962,7 +962,7 @@ const onAddItem = async () => {
     <AppLoadingState v-if="setsQuery.isPending.value" message="Loading sets..." data-element="sets-loading" />
 
     <AppEmptyState v-else-if="canShowEmptyState"
-      message="Your organizational system is currently powered by memory and hope. Add your first set to get started!"
+      message="Nothing sorted yet. Peak entropy achieved. Time to start creating some sets to organize your items!"
       data-element="sets-empty-state" />
 
     <div v-else class="space-y-3">

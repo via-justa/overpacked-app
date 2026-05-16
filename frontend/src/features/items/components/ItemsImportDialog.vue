@@ -11,7 +11,6 @@ import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { queryClient } from '../../../lib/query/client'
 import { createItem, createItemType, createManufacturer, listItemTypes, listManufacturers } from '../api/itemsApi'
 import type { ItemCreate } from '../types'
-import { isKnownItemType } from '../types'
 import { slugifyCategoryId } from '../utils/itemUtils'
 
 // ─── types ────────────────────────────────────────────────────────────────────
@@ -182,7 +181,6 @@ const parseImportSourceUrl = (value: string | undefined): string | undefined => 
 const resolveImportedTypeId = (categoryName: string, consumable: boolean): string => {
   if (consumable) return 'consumable'
   const categorySlug = slugifyCategoryId(categoryName)
-  if (isKnownItemType(categorySlug)) return categorySlug
   const aliasType = importedCategoryAliases[categorySlug]
   if (aliasType) return aliasType
   return categorySlug

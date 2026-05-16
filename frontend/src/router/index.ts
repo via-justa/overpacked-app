@@ -55,6 +55,11 @@ const router = createRouter({
           component: () => import('../features/items/views/ItemsPage.vue'),
         },
         {
+          path: 'lists',
+          name: 'lists',
+          component: () => import('../features/lists/views/PackingListsPage.vue'),
+        },
+        {
           path: 'settings',
           name: 'settings',
           component: () => import('../features/settings/views/SettingsPage.vue'),

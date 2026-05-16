@@ -11,6 +11,7 @@ const router = useRouter()
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: 'pi pi-home' },
   { to: '/planner', label: 'Planner', icon: 'pi pi-list-check' },
+  { to: '/lists', label: 'Lists', icon: 'pi pi-list' },
   { to: '/gear', label: 'Gear', icon: 'pi pi-box' },
   { to: '/settings', label: 'Settings', icon: 'pi pi-cog' },
 ]

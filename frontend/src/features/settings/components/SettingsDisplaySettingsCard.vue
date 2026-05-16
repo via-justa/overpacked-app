@@ -56,7 +56,7 @@ const emit = defineEmits<{
     </div>
 
     <footer data-element="settings-actions" class="mt-6 flex flex-wrap items-center gap-3">
-      <Button data-element="settings-save" label="Save Changes" icon="pi pi-check"
+      <Button data-element="settings-save" label="Save" icon="pi pi-check"
         :disabled="!isDirty || isSavingSettings || isLoadingSettings" :loading="isSavingSettings"
         @click="emit('save')" />
       <Button data-element="settings-reset" label="Reset" icon="pi pi-refresh" severity="secondary" outlined

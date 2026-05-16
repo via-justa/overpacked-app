@@ -571,6 +571,128 @@ type ApiPaths = {
       }
     }
   }
+  '/api/v1/packing-lists': {
+    get: {
+      responses: {
+        200: {
+          content: {
+            'application/json': Array<Record<string, unknown>>
+          }
+        }
+      }
+    }
+    post: {
+      requestBody: {
+        content: {
+          'application/json': Record<string, unknown>
+        }
+      }
+      responses: {
+        201: {
+          content: {
+            'application/json': Record<string, unknown>
+          }
+        }
+      }
+    }
+  }
+  '/api/v1/packing-lists/{listId}': {
+    get: {
+      parameters: {
+        path: {
+          listId: string
+        }
+      }
+      responses: {
+        200: {
+          content: {
+            'application/json': Record<string, unknown>
+          }
+        }
+      }
+    }
+    patch: {
+      parameters: {
+        path: {
+          listId: string
+        }
+      }
+      requestBody: {
+        content: {
+          'application/json': Record<string, unknown>
+        }
+      }
+      responses: {
+        200: {
+          content: {
+            'application/json': Record<string, unknown>
+          }
+        }
+      }
+    }
+    delete: {
+      parameters: {
+        path: {
+          listId: string
+        }
+      }
+      responses: {
+        204: {
+          content: never
+        }
+      }
+    }
+  }
+  '/api/v1/packing-lists/{listId}/labels': {
+    get: {
+      parameters: {
+        path: {
+          listId: string
+        }
+      }
+      responses: {
+        200: {
+          content: {
+            'application/json': Array<Record<string, unknown>>
+          }
+        }
+      }
+    }
+    post: {
+      parameters: {
+        path: {
+          listId: string
+        }
+      }
+      requestBody: {
+        content: {
+          'application/json': Record<string, unknown>
+        }
+      }
+      responses: {
+        201: {
+          content: {
+            'application/json': Record<string, unknown>
+          }
+        }
+      }
+    }
+  }
+  '/api/v1/packing-lists/{listId}/labels/{labelId}': {
+    delete: {
+      parameters: {
+        path: {
+          listId: string
+          labelId: string
+        }
+      }
+      responses: {
+        204: {
+          content: never
+        }
+      }
+    }
+  }
 }
 
 let authToken: string | null = null

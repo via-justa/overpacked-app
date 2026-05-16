@@ -2,7 +2,7 @@
 import { computed, ref, watchEffect } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
-import Message from 'primevue/message'
+import AppQueryState from '../../../components/AppQueryState.vue'
 import { listSets, listSetItems } from '../../sets/api/setsApi'
 import { listItemTypes, listItemLabels } from '../../items/api/itemsApi'
 import { useSettings } from '../../../composables/useSettings'
@@ -186,51 +186,37 @@ const formatDate = (date: string): string => {
       </RouterLink>
     </div>
 
-    <!-- Error State -->
-    <Message v-if="setsQuery.isError.value" severity="error" :closable="false">
-      {{ setsQuery.error.value instanceof Error ? setsQuery.error.value.message : 'Unable to load sets.' }}
-    </Message>
+    <AppQueryState :query="setsQuery" loading-message="Loading sets..."
+      empty-message="Nothing sorted yet. Peak entropy achieved. Time to start creating some sets to organize your items!"
+      error-fallback="Unable to load sets.">
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <RouterLink v-for="set in displaySets" :key="set.id" :to="`/sets`"
+          class="border-line-subtle bg-surface-elevated hover:border-brand-300 block rounded-xl border p-4 transition">
+          <h3 class="text-copy text-base font-semibold">{{ normalizeTitleWords(set.name) }}</h3>
+          <p class="text-copy-muted mt-2 text-sm">
+            {{ getItemTypeLabel(set.set_category) }}
+            <span class="text-line mx-2">/</span>
+            {{ setStatsById[set.id]?.itemCount ?? 0 }} items
+            <span class="text-line mx-2">/</span>
+            {{ formatDisplayWeight(setStatsById[set.id]?.totalWeightGrams ?? 0, weightUnit) }}
+            <span class="text-line mx-2">/</span>
+            {{ formatValue(setStatsById[set.id]?.totalValue ?? 0, currency) }}
+          </p>
 
-    <!-- Loading State -->
-    <div v-else-if="setsQuery.isPending.value"
-      class="border-line-subtle bg-surface-muted text-copy-muted rounded-xl border px-4 py-3 text-sm">
-      Loading sets...
-    </div>
+          <div v-if="getSetLabels(set.id).length > 0" class="mt-2 flex flex-wrap gap-1">
+            <span v-for="label in getSetLabels(set.id)" :key="label.id"
+              class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium" :style="{
+                backgroundColor: label.color ?? '#6b7280',
+                color: getLabelTextColor(label.color),
+                border: `1px solid ${getLabelBorderColor(label.color)}`
+              }">
+              {{ label.name }}
+            </span>
+          </div>
 
-    <!-- Empty State -->
-    <div v-else-if="totalSets === 0"
-      class="border-line-subtle bg-surface-elevated text-copy-muted rounded-xl border px-4 py-3 text-sm">
-      No sets yet. Create your first gear collection!
-    </div>
-
-    <!-- Sets Grid -->
-    <div v-else class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      <RouterLink v-for="set in displaySets" :key="set.id" :to="`/sets`"
-        class="border-line-subtle bg-surface-elevated hover:border-brand-300 block rounded-xl border p-4 transition">
-        <h3 class="text-copy text-base font-semibold">{{ normalizeTitleWords(set.name) }}</h3>
-        <p class="text-copy-muted mt-2 text-sm">
-          {{ getItemTypeLabel(set.set_category) }}
-          <span class="text-line mx-2">/</span>
-          {{ setStatsById[set.id]?.itemCount ?? 0 }} items
-          <span class="text-line mx-2">/</span>
-          {{ formatDisplayWeight(setStatsById[set.id]?.totalWeightGrams ?? 0, weightUnit) }}
-          <span class="text-line mx-2">/</span>
-          {{ formatValue(setStatsById[set.id]?.totalValue ?? 0, currency) }}
-        </p>
-
-        <div v-if="getSetLabels(set.id).length > 0" class="mt-2 flex flex-wrap gap-1">
-          <span v-for="label in getSetLabels(set.id)" :key="label.id"
-            class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium" :style="{
-              backgroundColor: label.color ?? '#6b7280',
-              color: getLabelTextColor(label.color),
-              border: `1px solid ${getLabelBorderColor(label.color)}`
-            }">
-            {{ label.name }}
-          </span>
-        </div>
-
-        <p class="text-copy-subtle mt-1 text-xs">Updated {{ formatDate(set.updated_at) }}</p>
-      </RouterLink>
-    </div>
+          <p class="text-copy-subtle mt-1 text-xs">Updated {{ formatDate(set.updated_at) }}</p>
+        </RouterLink>
+      </div>
+    </AppQueryState>
   </section>
 </template>
