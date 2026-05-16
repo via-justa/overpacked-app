@@ -22,7 +22,8 @@ const formatType = (value: string) => {
 </script>
 
 <template>
-  <article data-element="item-card" :data-item-id="item.id" class="surface-panel overflow-hidden">
+  <article data-element="item-card" :data-item-id="item.id" class="surface-panel overflow-hidden"
+    :class="{ 'opacity-50': !item.is_active }">
     <div v-if="imageSrc" class="bg-surface-soft aspect-4/3 overflow-hidden">
       <img :src="imageSrc" :alt="normalizeTitleWords(item.name)" class="h-full w-full object-cover" />
     </div>

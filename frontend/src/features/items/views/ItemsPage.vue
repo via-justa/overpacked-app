@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import { useToast } from 'primevue/usetoast'
@@ -53,7 +53,7 @@ type ItemsViewMode = 'cards' | 'table'
 type ItemsTableDetailMode = 'simple' | 'expanded'
 type ItemTypeFilter = 'all' | string
 type CreateTarget = 'item' | 'manufacturer' | 'category' | 'import'
-type TableFieldKey = 'type' | 'manufacturer' | 'active' | 'default_carry' | 'default_quantity' | 'is_default' | 'weight' | 'volume' | 'value' | 'labels' | 'description' | 'source_url' | 'dose_count' | 'calories' | 'calories_per_serving' | 'requires_water' | 'season' | 'layer' | 'waterproof' | 'size' | 'color' | 'capacity_people' | 'season_rating' | 'freestanding' | 'has_footprint' | 'comfort_temp_c' | 'fill_type' | 'r_value' | 'capacity_mah' | 'charge_port' | 'rechargeable'
+type TableFieldKey = 'type' | 'manufacturer' | 'active' | 'default_carry' | 'default_quantity' | 'is_default' | 'weight' | 'volume' | 'weight_volume' | 'value' | 'labels' | 'description' | 'source_url' | 'dose_count' | 'calories' | 'calories_per_serving' | 'requires_water' | 'season' | 'layer' | 'waterproof' | 'size' | 'color' | 'capacity_people' | 'season_rating' | 'freestanding' | 'has_footprint' | 'comfort_temp_c' | 'fill_type' | 'r_value' | 'capacity_mah' | 'charge_port' | 'rechargeable'
 
 type TableFieldOption = {
   key: TableFieldKey
@@ -90,18 +90,16 @@ type ItemTableSection = {
 const ITEMS_VIEW_MODE_STORAGE_KEY = 'items:view-mode'
 const ITEMS_TYPE_FILTER_STORAGE_KEY = 'items:type-filter'
 const ITEMS_TABLE_DETAIL_MODE_BY_TYPE_STORAGE_KEY = 'items:table-detail-mode-by-type'
+const ITEMS_SHOW_INACTIVE_STORAGE_KEY = 'items:show-inactive'
 
 const isViewMode = (value: string): value is 'cards' | 'table' => value === 'cards' || value === 'table'
 
 const commonTableFieldOptions: TableFieldOption[] = [
-  { key: 'type', label: 'Type' },
   { key: 'manufacturer', label: 'Manufacturer' },
-  { key: 'active', label: 'Active' },
   { key: 'default_carry', label: 'Default Carry' },
   { key: 'default_quantity', label: 'Qty' },
   { key: 'is_default', label: 'Default' },
-  { key: 'weight', label: 'Weight' },
-  { key: 'volume', label: 'Volume' },
+  { key: 'weight_volume', label: 'W/V' },
   { key: 'value', label: 'Value' },
   { key: 'labels', label: 'Labels' },
   { key: 'description', label: 'Notes' },
@@ -153,6 +151,15 @@ const readStoredItemsViewMode = (): ItemsViewMode => {
 
 const readStoredItemsTypeFilter = (): ItemTypeFilter => {
   return getStoredValue(ITEMS_TYPE_FILTER_STORAGE_KEY, (value): value is string => value.trim().length > 0, 'all')
+}
+
+const readStoredShowInactive = (): boolean => {
+  if (globalThis.window === undefined) {
+    return false
+  }
+
+  const stored = globalThis.localStorage.getItem(ITEMS_SHOW_INACTIVE_STORAGE_KEY)
+  return stored === 'true'
 }
 
 const readStoredItemsTableDetailModeByType = (): Record<string, ItemsTableDetailMode> => {
@@ -550,6 +557,9 @@ const formatNumber = (value?: number | null) => {
 }
 
 const formatValue = (value?: number | null): string => {
+  if (value === 0) {
+    return 'Not set'
+  }
   return formatValueDisplay(value, currency.value, toRoundedString)
 }
 
@@ -793,6 +803,9 @@ const itemViewOptions: Array<{ label: string; value: ItemsViewMode }> = [
   { label: 'Table', value: 'table' },
 ]
 
+const showInactive = ref<boolean>(readStoredShowInactive())
+const isSettingsMenuOpen = ref(false)
+const settingsMenuPosition = ref({ top: 0, left: 0 })
 const itemTypeFilter = ref<ItemTypeFilter>(readStoredItemsTypeFilter())
 const itemTypeFilterOptions = computed<Array<{ value: ItemTypeFilter; label: string }>>(() => {
   const options: Array<{ value: ItemTypeFilter; label: string }> = [{ value: 'all', label: 'All' }]
@@ -827,7 +840,14 @@ const itemFormTypeOptions = computed<Array<{ label: string; value: string }>>(()
 })
 
 const filteredItems = computed(() => {
-  const items = itemsQuery.data.value ?? []
+  let items = itemsQuery.data.value ?? []
+
+  // Filter by active status
+  if (!showInactive.value) {
+    items = items.filter((item) => item.is_active)
+  }
+
+  // Filter by type
   if (itemTypeFilter.value === 'all') {
     return items
   }
@@ -884,6 +904,22 @@ const createTableFieldDefinition = (field: TableFieldOption): TableFieldDefiniti
     if (key === 'labels') {
       const count = itemLabelsMap.value.get(item.id)?.length ?? 0
       return count > 0 ? String(count) : 'Not set'
+    }
+
+    if (key === 'weight_volume') {
+      const hasWeight = typeof item.weight_grams === 'number'
+      const hasVolume = typeof item.volume_ml === 'number'
+
+      if (hasWeight && hasVolume) {
+        return `${formatWeight(item.weight_grams)} / ${formatVolume(item.volume_ml)}`
+      }
+      if (hasWeight) {
+        return formatWeight(item.weight_grams)
+      }
+      if (hasVolume) {
+        return formatVolume(item.volume_ml)
+      }
+      return 'Not set'
     }
 
     switch (key) {
@@ -1376,10 +1412,42 @@ const consumeCreateQuery = async () => {
   })
 }
 
+const consumeActionQuery = async () => {
+  const action = route.query.action
+  if (!action || typeof action !== 'string') {
+    return
+  }
+
+  const nextQuery = { ...route.query }
+  delete nextQuery.action
+  await router.replace({
+    path: route.path,
+    query: nextQuery,
+  })
+
+  if (action === 'create-item') {
+    openCreateDialog()
+  } else if (action === 'manufacturers') {
+    isManufacturerDialogOpen.value = true
+  } else if (action === 'categories') {
+    isCategoryDialogOpen.value = true
+  } else if (action === 'import') {
+    isImportDialogOpen.value = true
+  }
+}
+
 watch(
   () => route.query.create,
   () => {
     void consumeCreateQuery()
+  },
+  { immediate: true },
+)
+
+watch(
+  () => route.query.action,
+  () => {
+    void consumeActionQuery()
   },
   { immediate: true },
 )
@@ -1392,6 +1460,10 @@ watch(itemTypeFilter, (value) => {
   setStoredValue(ITEMS_TYPE_FILTER_STORAGE_KEY, value)
 })
 
+watch(showInactive, (value) => {
+  setStoredValue(ITEMS_SHOW_INACTIVE_STORAGE_KEY, String(value))
+})
+
 watch(itemsTableDetailModeByType, (value) => {
   setStoredValue(ITEMS_TABLE_DETAIL_MODE_BY_TYPE_STORAGE_KEY, JSON.stringify(value))
 }, { deep: true })
@@ -1399,6 +1471,18 @@ watch(itemsTableDetailModeByType, (value) => {
 watch(isFormDialogOpen, (value) => {
   if (!value) {
     onCancelEdit()
+  }
+})
+
+onMounted(() => {
+  if (globalThis.document) {
+    globalThis.document.addEventListener('click', onDocumentClickSettings)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (globalThis.document) {
+    globalThis.document.removeEventListener('click', onDocumentClickSettings)
   }
 })
 
@@ -1608,6 +1692,61 @@ const onSubmitForm = async () => {
 
   await onSaveEdit()
 }
+
+const toggleSettingsMenu = (event: MouseEvent) => {
+  if (isSettingsMenuOpen.value) {
+    isSettingsMenuOpen.value = false
+    return
+  }
+
+  const trigger = event.currentTarget
+  if (!(trigger instanceof HTMLElement)) {
+    isSettingsMenuOpen.value = true
+    return
+  }
+
+  const rect = trigger.getBoundingClientRect()
+  const menuWidth = 200
+  const menuHeight = 60
+  const gap = 8
+
+  const left = Math.max(8, rect.right - menuWidth)
+  const openUpward = rect.bottom + gap + menuHeight > globalThis.window.innerHeight - 8
+  const top = openUpward ? Math.max(8, rect.top - gap - menuHeight) : rect.bottom + gap
+
+  settingsMenuPosition.value = { top, left }
+  isSettingsMenuOpen.value = true
+}
+
+const closeSettingsMenu = () => {
+  isSettingsMenuOpen.value = false
+}
+
+const onDocumentClickSettings = (event: MouseEvent) => {
+  const target = event.target
+  if (!(target instanceof HTMLElement)) {
+    closeSettingsMenu()
+    return
+  }
+
+  if (target.closest('[data-element="items-settings-menu"]')) {
+    return
+  }
+
+  closeSettingsMenu()
+}
+
+onMounted(() => {
+  if (globalThis.document) {
+    globalThis.document.addEventListener('click', onDocumentClickSettings)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (globalThis.document) {
+    globalThis.document.removeEventListener('click', onDocumentClickSettings)
+  }
+})
 </script>
 
 <template>
@@ -1654,23 +1793,46 @@ const onSubmitForm = async () => {
       data-element="items-empty-state" />
 
     <div v-else data-element="items-list" class="space-y-3">
-      <div data-element="items-summary" class="grid gap-2 sm:grid-cols-3">
-        <AppSummaryCard label="Total gear" :value="filteredSummary.totalItems" />
-        <AppSummaryCard label="Total weight" :value="filteredSummary.totalWeightLabel" />
-        <AppSummaryCard label="Total value" :value="filteredSummary.totalValueLabel" />
+      <div data-element="items-summary" class="grid grid-cols-3 gap-2">
+        <AppSummaryCard label="Gear" :value="filteredSummary.totalItems" />
+        <AppSummaryCard label="Weight" :value="filteredSummary.totalWeightLabel" />
+        <AppSummaryCard label="Value" :value="filteredSummary.totalValueLabel" />
       </div>
 
       <!-- Click-outside backdrop -->
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div class="flex flex-wrap items-center gap-3">
-          <!-- View Mode Toggle -->
-          <AppToggleGroup name="items-view-mode" data-element="items-view-mode" :model-value="itemsViewMode"
-            :options="itemViewOptions" fit-content
-            @update:model-value="(value) => { itemsViewMode = value as ItemsViewMode }" />
+      <div class="flex flex-wrap items-center gap-4">
+        <!-- View Mode Toggle -->
+        <AppToggleGroup name="items-view-mode" data-element="items-view-mode" :model-value="itemsViewMode"
+          :options="itemViewOptions" fit-content
+          @update:model-value="(value) => { itemsViewMode = value as ItemsViewMode }" />
 
-          <AppCategoryFilter v-model="itemTypeFilter" :options="itemTypeFilterOptions" label="Item type filter"
-            data-element="items-type-filter" />
+        <!-- Settings Button -->
+        <div class="ml-auto">
+          <div data-element="items-settings-menu" class="relative">
+            <button type="button"
+              class="text-copy-muted hover:text-copy hover:bg-surface-soft inline-flex h-9 w-9 items-center justify-center rounded-full transition"
+              aria-label="View settings" @click="toggleSettingsMenu">
+              <i class="pi pi-cog text-sm" aria-hidden="true" />
+            </button>
+
+            <div v-if="isSettingsMenuOpen"
+              class="border-line-subtle bg-surface-elevated fixed z-30 w-48 rounded-lg border shadow-sm" :style="{
+                top: `${settingsMenuPosition.top}px`,
+                left: `${settingsMenuPosition.left}px`,
+              }">
+              <div class="px-3 py-2.5">
+                <label class="flex cursor-pointer items-center gap-2.5">
+                  <input type="checkbox" v-model="showInactive" />
+                  <span class="text-copy text-sm font-medium">Show inactive</span>
+                </label>
+              </div>
+            </div>
+          </div>
         </div>
+        <AppCategoryFilter v-model="itemTypeFilter" :options="itemTypeFilterOptions" label="Item type filter"
+          data-element="items-type-filter" />
+
+
       </div>
 
       <div v-if="!hasFilteredItems" data-element="items-filter-empty-state"

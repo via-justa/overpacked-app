@@ -77,11 +77,11 @@ const getLabelBorderColor = (color?: string | null): string => {
   </td>
   <td v-for="field in visibleFields" :key="`${item.id}-${field.key}`" class="whitespace-nowrap px-4 py-3 align-top">
     <template v-if="field.key === 'labels'">
-      <span v-if="itemLabels.length > 0" class="group/labels relative inline-flex items-center gap-1.5"
+      <span class="group/labels relative inline-flex items-center gap-1.5"
         :aria-label="`${itemLabels.length} label${itemLabels.length === 1 ? '' : 's'}`">
         <i class="pi pi-tag text-copy-subtle hover:text-copy cursor-default text-sm" aria-hidden="true" />
         <span class="text-copy-subtle hover:text-copy cursor-default text-xs font-medium">{{ itemLabels.length }}</span>
-        <div
+        <div v-if="itemLabels.length > 0"
           class="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 w-max max-w-xs -translate-x-1/2 rounded-lg border border-line-subtle bg-surface-elevated px-3 py-2 opacity-0 shadow-panel transition-opacity group-hover/labels:opacity-100">
           <div class="flex flex-wrap gap-1.5">
             <span v-for="label in itemLabels" :key="label.id"
@@ -95,7 +95,6 @@ const getLabelBorderColor = (color?: string | null): string => {
           </div>
         </div>
       </span>
-      <AppNotSetValue v-else :label="field.label" />
     </template>
     <template v-else-if="field.key === 'description'">
       <span v-if="field.render(item) !== 'Not set'" class="group/note relative inline-flex"

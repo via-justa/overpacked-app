@@ -51,7 +51,7 @@ defineEmits<{
 </script>
 
 <template>
-  <div v-if="viewMode === 'table'" data-element="items-table-view" class="space-y-6">
+  <div v-if="viewMode === 'table'" data-element="items-table-view" class="w-full space-y-6">
     <ItemsTypeTable v-for="section in tableSections" :key="section.type" :title="section.title" :items="section.items"
       :base-fields="section.baseFields" :extra-fields="section.extraFields" :table-detail-mode="section.tableDetailMode"
       :selection-mode="section.selectionMode" :selected-item-ids="section.selectedItemIds"

@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
-import Button from 'primevue/button'
-import AppCreateButton from './AppCreateButton.vue'
+import { ref } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
+import AppActionsMenu from './AppActionsMenu.vue'
 
 type NavItem = {
   to: string
   label: string
   icon: string
 }
+
+type ActionTarget = 'add-item' | 'add-set' | 'add-person' | 'manage-manufacturers' | 'manage-categories' | 'import-csv' | 'settings' | 'logout' | 'dashboard' | 'packs' | 'sets' | 'gear' | 'persons'
 
 const props = defineProps<{
   navItems: NavItem[]
@@ -24,41 +25,62 @@ const onLogout = () => {
 }
 
 const router = useRouter()
-const route = useRoute()
 
-const createTargetPath = computed(() => {
-  if (props.currentPath.startsWith('/persons')) {
-    return '/persons'
-  }
+const isActionsMenuOpen = ref(false)
+const actionsMenuPosition = ref<{ top: number; left: number }>({ top: 84, left: 16 })
 
-  if (props.currentPath.startsWith('/gear')) {
-    return '/gear'
-  }
-
-  if (props.currentPath.startsWith('/sets')) {
-    return '/sets'
-  }
-
-  return null
-})
-
-const canCreateFromCurrentPage = computed(() => createTargetPath.value !== null)
-
-const onCreatePerson = async () => {
-  if (!createTargetPath.value) {
+const openActionsMenu = (event: Event) => {
+  const trigger = event.currentTarget
+  if (!(trigger instanceof HTMLElement)) {
+    isActionsMenuOpen.value = true
     return
   }
 
-  await router.push({
-    path: createTargetPath.value,
-    query: {
-      ...route.query,
-      create: '1',
-    },
-  })
+  const rect = trigger.getBoundingClientRect()
+  const viewportWidth = globalThis.window?.innerWidth ?? 1024
+
+  // On mobile, center the menu; on desktop, align to button
+  const isMobile = viewportWidth < 768
+
+  actionsMenuPosition.value = {
+    top: rect.bottom + 8,
+    left: isMobile ? 16 : Math.max(16, rect.left),
+  }
+
+  isActionsMenuOpen.value = true
 }
 
-const settingsItem = props.navItems.find((item) => item.to === '/settings')
+const closeActionsMenu = () => {
+  isActionsMenuOpen.value = false
+}
+
+const onSelectAction = async (target: ActionTarget) => {
+  closeActionsMenu()
+
+  if (target === 'logout') {
+    onLogout()
+    return
+  }
+
+  const actionRoutes: Record<Exclude<ActionTarget, 'logout'>, { path: string; query?: Record<string, string> }> = {
+    'add-item': { path: '/gear', query: { action: 'create-item' } },
+    'add-set': { path: '/sets', query: { create: '1' } },
+    'add-person': { path: '/persons', query: { create: '1' } },
+    'manage-manufacturers': { path: '/gear', query: { action: 'manufacturers' } },
+    'manage-categories': { path: '/gear', query: { action: 'categories' } },
+    'import-csv': { path: '/gear', query: { action: 'import' } },
+    'settings': { path: '/settings' },
+    'dashboard': { path: '/dashboard' },
+    'packs': { path: '/packs' },
+    'sets': { path: '/sets' },
+    'gear': { path: '/gear' },
+    'persons': { path: '/persons' },
+  }
+
+  const route = actionRoutes[target]
+  await router.push(route)
+}
+
 const primaryNavItems = props.navItems.filter((item) => item.to !== '/settings')
 </script>
 
@@ -67,10 +89,15 @@ const primaryNavItems = props.navItems.filter((item) => item.to !== '/settings')
     class="border-line-subtle bg-surface-elevated fixed inset-x-0 top-0 z-40 border-b backdrop-blur">
     <div class="flex w-full flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-10">
       <div class="flex items-center gap-3">
+        <button ref="actionsButtonRef" type="button" data-element="nav-menu-button"
+          class="text-copy hover:bg-surface-soft hover:text-ink inline-flex h-8 w-8 items-center justify-center rounded-lg transition"
+          aria-label="Menu" @click="openActionsMenu">
+          <i class="pi pi-bars" aria-hidden="true"></i>
+        </button>
         <p class="text-brand-500 text-xs font-semibold uppercase tracking-[0.18em]">Packing List</p>
       </div>
 
-      <nav data-element="top-nav-primary" class="flex flex-wrap items-center gap-1">
+      <nav data-element="top-nav-primary" class="hidden items-center gap-1 md:flex">
         <RouterLink v-for="item in primaryNavItems" :key="item.to" :to="item.to"
           :data-element="`nav-link-${item.to.replace('/', '') || 'home'}`"
           :aria-current="currentPath.startsWith(item.to) ? 'page' : undefined"
@@ -82,17 +109,11 @@ const primaryNavItems = props.navItems.filter((item) => item.to !== '/settings')
         </RouterLink>
       </nav>
 
-      <div class="flex items-center gap-2">
-        <AppCreateButton data-element="nav-create-person" :visible="canCreateFromCurrentPage" @click="onCreatePerson" />
-        <RouterLink v-if="settingsItem" :to="settingsItem.to" data-element="nav-link-settings"
-          class="border-line text-copy hover:bg-surface-soft hover:text-ink flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition"
-          :class="currentPath.startsWith(settingsItem.to) ? 'bg-surface-soft' : ''">
-          <i :class="settingsItem.icon" aria-hidden="true"></i>
-          <span>{{ settingsItem.label }}</span>
-        </RouterLink>
-        <Button data-element="nav-logout" label="Logout" icon="pi pi-sign-out" size="small" outlined
-          @click="onLogout" />
-      </div>
+      <!-- Spacer to balance the left side and keep nav centered on desktop -->
+      <div class="hidden md:block" aria-hidden="true"></div>
     </div>
+
+    <AppActionsMenu :open="isActionsMenuOpen" :position="actionsMenuPosition" :current-path="props.currentPath"
+      @update:open="isActionsMenuOpen = $event" @select="onSelectAction" />
   </header>
 </template>

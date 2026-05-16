@@ -115,7 +115,7 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
 </script>
 
 <template>
-  <section class="surface-panel overflow-visible">
+  <section class="surface-panel w-full overflow-visible">
     <div class="border-line-subtle relative border-b py-3 pl-12 pr-4">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-3">
@@ -172,7 +172,7 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
     </div>
 
     <div v-else class="overflow-x-auto overflow-y-visible">
-      <table class="divide-line text-copy min-w-full table-fixed divide-y text-sm">
+      <table class="divide-line text-copy min-w-full table-auto divide-y text-sm">
         <caption class="sr-only">{{ title }} gear items with {{ visibleFields.length }} columns</caption>
         <thead class="bg-surface-muted text-copy-subtle text-left text-xs font-semibold uppercase tracking-[0.06em]">
           <tr>
@@ -193,7 +193,7 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
         </thead>
         <tbody class="divide-line divide-y">
           <template v-for="item in items" :key="item.id">
-            <tr :data-item-id="item.id" class="group hover:bg-surface-muted">
+            <tr :data-item-id="item.id" class="group hover:bg-surface-muted" :class="{ 'opacity-50': !item.is_active }">
               <td class="w-8 px-3 py-3 align-top">
                 <input type="checkbox" :checked="selectionMode && selectedItemIds.includes(item.id)"
                   :aria-label="`Select ${item.name}`" class="transition-opacity" @change="(event) => {

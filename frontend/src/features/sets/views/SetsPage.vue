@@ -8,7 +8,6 @@ import AppToggleGroup from '../../../components/AppToggleGroup.vue'
 import AppQueryError from '../../../components/AppQueryError.vue'
 import AppLoadingState from '../../../components/AppLoadingState.vue'
 import AppEmptyState from '../../../components/AppEmptyState.vue'
-import AppSummaryCard from '../../../components/AppSummaryCard.vue'
 import type { AppItemTableField } from '../../../components/AppItemTableRowContent.vue'
 import ItemDetailsDialog from '../../items/components/ItemDetailsDialog.vue'
 import SetDetailsDialog from '../components/SetDetailsDialog.vue'
@@ -319,8 +318,8 @@ const activeSetStats = computed(() => {
 
 const availableItemsForAdd = computed(() => {
   // Use setCategoryInput when details dialog is open to get real-time updates
-  const activeCategory = isDetailsDialogOpen.value 
-    ? setCategoryInput.value?.trim() 
+  const activeCategory = isDetailsDialogOpen.value
+    ? setCategoryInput.value?.trim()
     : activeSet.value?.set_category?.trim()
   const existing = new Set(activeSetItems.value.map((entry) => entry.item_id))
   return filterAvailableItems(activeCategory, existing, addItemId.value)
@@ -362,7 +361,7 @@ function filterAvailableItems(
 
 const tempCreateSetItemsWithDetails = computed(() => {
   const itemsMap = new Map((itemsQuery.data.value ?? []).map((item) => [item.id, item]))
-  
+
   return tempCreateSetItems.value.map((tempItem) => {
     const item = itemsMap.get(tempItem.itemId)
     return {
@@ -370,20 +369,6 @@ const tempCreateSetItemsWithDetails = computed(() => {
       item,
     }
   }).filter((entry) => entry.item !== undefined)
-})
-
-const setSummary = computed(() => {
-  const sets = allSets.value
-  const totalItems = sets.reduce((sum, entry) => sum + (setStatsById.value[entry.id]?.itemCount ?? 0), 0)
-  const totalWeight = sets.reduce((sum, entry) => sum + (setStatsById.value[entry.id]?.totalWeightGrams ?? 0), 0)
-  const totalValue = sets.reduce((sum, entry) => sum + (setStatsById.value[entry.id]?.totalValue ?? 0), 0)
-
-  return {
-    totalSets: sets.length,
-    totalItems,
-    totalWeightLabel: formatWeight(totalWeight),
-    totalValueLabel: formatValue(totalValue),
-  }
 })
 
 const confirmDialogMessage = computed(() => {
@@ -610,7 +595,7 @@ const onSubmitSet = async () => {
       })
     } else {
       const newSet = await createSet({ name, set_category: setCategory })
-      
+
       // Add temporary items to the newly created set
       if (tempCreateSetItems.value.length > 0) {
         await Promise.all(
@@ -623,11 +608,11 @@ const onSubmitSet = async () => {
           )
         )
       }
-      
+
       const itemCount = tempCreateSetItems.value.length
       const itemWord = itemCount === 1 ? 'item' : 'items'
       const itemsMessage = itemCount > 0 ? ` with ${itemCount} ${itemWord}` : ''
-      
+
       toast.add({
         severity: 'success',
         summary: 'Set created',
@@ -663,7 +648,7 @@ const onSaveSetFromDetails = async () => {
   if (!setCategory) {
     return
   }
-  
+
   if (!activeSetId.value) {
     return
   }
@@ -889,7 +874,7 @@ const onAddTempItem = () => {
 
   // Check if item already exists in temp list
   const existingIndex = tempCreateSetItems.value.findIndex((item) => item.itemId === addItemId.value)
-  
+
   if (existingIndex >= 0) {
     // Update existing item
     tempCreateSetItems.value[existingIndex] = {
@@ -982,8 +967,9 @@ const onAddItem = async () => {
 <template>
   <section data-component="sets-page" class="flex w-full flex-col gap-4">
     <AppConfirmDialog :open="confirmDialogState !== null" :title="confirmDialogTitle" :message="confirmDialogMessage"
-      :confirm-label="confirmDialogLabel" confirm-tone="danger" @update:open="(value) => { if (!value) onCancelCategoryChange() }"
-      @cancel="onCancelCategoryChange" @confirm="onConfirmDelete" />
+      :confirm-label="confirmDialogLabel" confirm-tone="danger"
+      @update:open="(value) => { if (!value) onCancelCategoryChange() }" @cancel="onCancelCategoryChange"
+      @confirm="onConfirmDelete" />
 
     <SetFormDialog :model-value="isFormDialogOpen" :editing-set-id="editingSetId" :set-name-input="setNameInput"
       :set-category-input="setCategoryInput" :item-type-options="itemTypeOptions" :is-submitting-set="isSubmittingSet"
@@ -996,11 +982,8 @@ const onAddItem = async () => {
       @update:set-category-input="(value) => { setCategoryInput = value }"
       @update:add-item-id="(value) => { addItemId = value }"
       @update:add-item-quantity="(value) => { addItemQuantity = value }"
-      @update:add-item-notes="(value) => { addItemNotes = value }"
-      @add-item="onAddTempItem"
-      @remove-item="onRemoveTempItem"
-      @edit-item="onEditTempItem"
-      @submit="onSubmitSet" />
+      @update:add-item-notes="(value) => { addItemNotes = value }" @add-item="onAddTempItem"
+      @remove-item="onRemoveTempItem" @edit-item="onEditTempItem" @submit="onSubmitSet" />
 
     <ItemDetailsDialog :open="isItemDetailsDialogOpen" :selected-item="selectedItemDetail"
       :get-image-src="getItemImageSrc" :get-detailed-entries="getItemDetailedEntries" :format-type="formatType"
@@ -1012,20 +995,17 @@ const onAddItem = async () => {
       :active-set-stats="activeSetStats"
       :set-items-loading="activeSet ? (setItemsLoadingBySetId[activeSet.id] ?? false) : false"
       :available-items-for-add="availableItemsForAdd" :add-item-id="addItemId" :add-item-quantity="addItemQuantity"
-      :add-item-notes="addItemNotes" :is-adding-item="isAddingItem"
-      :get-item-type-label="getItemTypeLabel"
+      :add-item-notes="addItemNotes" :is-adding-item="isAddingItem" :get-item-type-label="getItemTypeLabel"
       :format-display-weight="formatWeight" :set-name-input="setNameInput" :set-category-input="setCategoryInput"
-      :item-type-options="itemTypeOptions" :is-submitting-set="isSubmittingSet"
-      :manufacturers-by-id="manufacturersById" :volume-input-unit="volumeInputUnit" :currency="currency"
+      :item-type-options="itemTypeOptions" :is-submitting-set="isSubmittingSet" :manufacturers-by-id="manufacturersById"
+      :volume-input-unit="volumeInputUnit" :currency="currency"
       @update:model-value="(value) => { if (!value) closeDetailsDialog() }"
       @update:add-item-id="(value) => { addItemId = value }"
       @update:add-item-quantity="(value) => { addItemQuantity = value }"
       @update:add-item-notes="(value) => { addItemNotes = value }"
       @update:set-name-input="(value) => { setNameInput = value }"
       @update:set-category-input="(value) => { setCategoryInput = value }" @add-item="onAddItem"
-      @save-set="onSaveSetFromDetails"
-      @request-category-change="onRequestCategoryChange"
-      @edit-set-item="onEditSetItem"
+      @save-set="onSaveSetFromDetails" @request-category-change="onRequestCategoryChange" @edit-set-item="onEditSetItem"
       @request-remove-set-item="(payload) => { requestRemoveSetItem(payload.itemId, payload.itemName) }" />
 
     <AppQueryError :query="setsQuery" fallback-message="Unable to load sets." data-element="sets-error" />
@@ -1042,13 +1022,6 @@ const onAddItem = async () => {
       data-element="sets-empty-state" />
 
     <div v-else class="space-y-3">
-      <div class="grid gap-2 sm:grid-cols-4">
-        <AppSummaryCard label="Total sets" :value="setSummary.totalSets" />
-        <AppSummaryCard label="Assigned items" :value="setSummary.totalItems" />
-        <AppSummaryCard label="Total weight" :value="setSummary.totalWeightLabel" />
-        <AppSummaryCard label="Total value" :value="setSummary.totalValueLabel" />
-      </div>
-
       <div class="flex flex-wrap items-center justify-between gap-3">
         <AppToggleGroup name="sets-view-mode" data-element="sets-view-mode" :model-value="setsViewMode"
           :options="viewOptions" fit-content

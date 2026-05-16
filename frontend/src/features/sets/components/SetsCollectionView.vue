@@ -116,8 +116,7 @@ const getExpandedFieldDisplays = (set: ItemSet): ExpandedFieldDisplay[] => {
 
 <template>
   <div v-if="setsViewMode === 'cards'" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-    <article v-for="set in sets" :key="set.id"
-      class="surface-panel p-4">
+    <article v-for="set in sets" :key="set.id" class="surface-panel p-4">
       <h3 class="text-ink text-lg font-semibold">{{ normalizeTitleWords(set.name) }}</h3>
       <p class="text-copy-muted mt-2 text-sm">
         {{ getItemTypeLabel(set.set_category) }}
@@ -131,15 +130,14 @@ const getExpandedFieldDisplays = (set: ItemSet): ExpandedFieldDisplay[] => {
       <p class="text-copy-subtle mt-1 text-xs">Updated {{ formatDate(set.updated_at) }}</p>
 
       <div class="mt-4 flex flex-wrap gap-2">
-        <Button size="small" label="Edit" icon="pi pi-pencil" outlined
-          @click="emit('openDetails', set)" />
+        <Button size="small" label="Edit" icon="pi pi-pencil" outlined @click="emit('openDetails', set)" />
         <Button size="small" label="Delete" icon="pi pi-trash" severity="danger" outlined
           @click="emit('requestDelete', set)" />
       </div>
     </article>
   </div>
 
-  <section v-else class="surface-panel overflow-visible">
+  <section v-else class="surface-panel w-full overflow-visible">
     <div class="border-line-subtle relative border-b py-3 pl-12 pr-4">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-3">
@@ -273,8 +271,7 @@ const getExpandedFieldDisplays = (set: ItemSet): ExpandedFieldDisplay[] => {
   <!-- Teleport menu to body to escape overflow container -->
   <Teleport to="body">
     <div v-if="activeMenuSet" data-element="sets-row-actions-menu"
-      class="border-line-subtle bg-surface-elevated fixed z-30 w-44 rounded-lg border py-1 shadow-sm"
-      :style="{
+      class="border-line-subtle bg-surface-elevated fixed z-30 w-44 rounded-lg border py-1 shadow-sm" :style="{
         top: `${rowActionsMenuPosition.top}px`,
         left: `${rowActionsMenuPosition.left}px`,
       }">
@@ -283,8 +280,7 @@ const getExpandedFieldDisplays = (set: ItemSet): ExpandedFieldDisplay[] => {
         @click="emit('openDetails', activeMenuSet); closeRowActions()">
         Edit
       </button>
-      <button type="button"
-        class="block w-full px-3 py-2 text-left text-xs font-medium text-red-700 hover:bg-red-50"
+      <button type="button" class="block w-full px-3 py-2 text-left text-xs font-medium text-red-700 hover:bg-red-50"
         @click="emit('requestDelete', activeMenuSet); closeRowActions()">
         Delete
       </button>
