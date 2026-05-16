@@ -16,7 +16,6 @@ interface ItemTableSection {
   title: string
   items: Item[]
   baseFields: TableField[]
-  extraFields: TableField[]
   tableDetailMode: 'simple' | 'expanded'
   selectionMode: boolean
   selectedItemIds: string[]
@@ -52,7 +51,7 @@ defineEmits<{
 <template>
   <div v-if="viewMode === 'table'" data-element="items-table-view" class="w-full space-y-6">
     <ItemsTypeTable v-for="section in tableSections" :key="section.type" :title="section.title" :items="section.items"
-      :base-fields="section.baseFields" :extra-fields="section.extraFields" :table-detail-mode="section.tableDetailMode"
+      :base-fields="section.baseFields" :table-detail-mode="section.tableDetailMode"
       :selection-mode="section.selectionMode" :selected-item-ids="section.selectedItemIds"
       :total-weight-label="section.totalWeightLabel" :total-value-label="section.totalValueLabel"
       :item-labels-map="section.itemLabelsMap" @edit="$emit('row:edit', $event)"

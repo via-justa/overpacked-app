@@ -38,8 +38,7 @@ import ItemsListView from '../components/ItemsListView.vue'
 import ItemsManufacturerDialog from '../components/ItemsManufacturerDialog.vue'
 import ItemsCategoryDialog from '../components/ItemsCategoryDialog.vue'
 import ItemsImportDialog from '../components/ItemsImportDialog.vue'
-import type { Item, ItemCreate, ItemFormValues, ItemTypeField, ItemUpdate, KnownItemType, Label, LabelCreate } from '../types'
-import { KNOWN_ITEM_TYPES, isKnownItemType } from '../types'
+import type { Item, ItemCreate, ItemFormValues, ItemTypeField, ItemUpdate, Label, LabelCreate } from '../types'
 
 const toast = useToast()
 const { executeInlineMutation } = useInlineMutation()
@@ -52,7 +51,7 @@ type ItemsViewMode = 'cards' | 'table'
 type ItemsTableDetailMode = 'simple' | 'expanded'
 type ItemTypeFilter = 'all' | string
 type CreateTarget = 'item' | 'manufacturer' | 'category' | 'import'
-type TableFieldKey = 'type' | 'manufacturer' | 'active' | 'default_carry' | 'default_quantity' | 'is_default' | 'weight' | 'volume' | 'weight_volume' | 'value' | 'labels' | 'description' | 'source_url' | 'dose_count' | 'calories' | 'calories_per_serving' | 'requires_water' | 'season' | 'layer' | 'waterproof' | 'size' | 'color' | 'capacity_people' | 'season_rating' | 'freestanding' | 'has_footprint' | 'comfort_temp_c' | 'fill_type' | 'r_value' | 'capacity_mah' | 'charge_port' | 'rechargeable'
+type TableFieldKey = 'type' | 'manufacturer' | 'active' | 'default_carry' | 'default_quantity' | 'is_default' | 'weight' | 'volume' | 'weight_volume' | 'value' | 'labels' | 'description' | 'source_url'
 
 type TableFieldOption = {
   key: TableFieldKey
@@ -70,7 +69,6 @@ type ItemTableSection = {
   title: string
   items: Item[]
   baseFields: TableFieldDefinition[]
-  extraFields: TableFieldDefinition[]
   tableDetailMode: ItemsTableDetailMode
   selectionMode: boolean
   selectedItemIds: string[]
@@ -97,38 +95,6 @@ const commonTableFieldOptions: TableFieldOption[] = [
   { key: 'description', label: 'Notes' },
   { key: 'source_url', label: 'URL' },
 ]
-
-const extraTableFieldOptionsByType: Record<KnownItemType, TableFieldOption[]> = {
-  consumable: [
-    { key: 'dose_count', label: 'Dose Count' },
-    { key: 'calories', label: 'Calories' },
-    { key: 'calories_per_serving', label: 'Cal/Serving' },
-    { key: 'requires_water', label: 'Requires Water' },
-  ],
-  wearable: [
-    { key: 'season', label: 'Season' },
-    { key: 'layer', label: 'Layer' },
-    { key: 'waterproof', label: 'Waterproof' },
-    { key: 'size', label: 'Size' },
-    { key: 'color', label: 'Color' },
-  ],
-  shelter: [
-    { key: 'capacity_people', label: 'Capacity' },
-    { key: 'season_rating', label: 'Season Rating' },
-    { key: 'freestanding', label: 'Freestanding' },
-    { key: 'has_footprint', label: 'Has Footprint' },
-  ],
-  sleep: [
-    { key: 'comfort_temp_c', label: 'Comfort Temp (°C)' },
-    { key: 'fill_type', label: 'Fill Type' },
-    { key: 'r_value', label: 'R-Value' },
-  ],
-  electronics: [
-    { key: 'capacity_mah', label: 'Capacity (mAh)' },
-    { key: 'charge_port', label: 'Charge Port' },
-    { key: 'rechargeable', label: 'Rechargeable' },
-  ],
-}
 
 const toIntegerString = (value?: number | null): string => {
   if (typeof value !== 'number') {
@@ -188,8 +154,6 @@ const toNumberString = (value?: number | null): string => {
   return toRoundedString(value)
 }
 
-const toBooleanValue = Boolean
-
 const parseNumber = (value: string): number | undefined => {
   if (!value.trim()) {
     return undefined
@@ -225,25 +189,6 @@ const emptyFormValues = (): ItemFormValues => ({
   is_default: true,
   weight_value: '',
   volume_value: '',
-  dose_count: '',
-  calories: '',
-  calories_per_serving: '',
-  requires_water: false,
-  season: '',
-  layer: '',
-  waterproof: false,
-  size: '',
-  color: '',
-  capacity_people: '',
-  season_rating: '',
-  freestanding: false,
-  has_footprint: false,
-  comfort_temp_c: '',
-  fill_type: '',
-  r_value: '',
-  capacity_mah: '',
-  charge_port: '',
-  rechargeable: false,
   image_blob: '',
   image_mime_type: '',
   image_size_bytes: '',
@@ -295,25 +240,6 @@ const toFormValues = (item: Item): ItemFormValues => ({
     typeof item.volume_ml === 'number'
       ? toRoundedString(mlToInput(item.volume_ml, volumeInputUnit.value))
       : '',
-  dose_count: toIntegerString(item.dose_count),
-  calories: toNumberString(item.calories),
-  calories_per_serving: toNumberString(item.calories_per_serving),
-  requires_water: toBooleanValue(item.requires_water),
-  season: item.season ? item.season as ItemFormValues['season'] : '',
-  layer: item.layer ? item.layer as ItemFormValues['layer'] : '',
-  waterproof: toBooleanValue(item.waterproof),
-  size: item.size ?? '',
-  color: item.color ?? '',
-  capacity_people: toIntegerString(item.capacity_people),
-  season_rating: item.season_rating ? item.season_rating as ItemFormValues['season_rating'] : '',
-  freestanding: toBooleanValue(item.freestanding),
-  has_footprint: toBooleanValue(item.has_footprint),
-  comfort_temp_c: toNumberString(item.comfort_temp_c),
-  fill_type: item.fill_type ? item.fill_type as ItemFormValues['fill_type'] : '',
-  r_value: toNumberString(item.r_value),
-  capacity_mah: toIntegerString(item.capacity_mah),
-  charge_port: item.charge_port ? item.charge_port as ItemFormValues['charge_port'] : '',
-  rechargeable: toBooleanValue(item.rechargeable),
   image_blob: item.image_blob ?? '',
   image_mime_type: item.image_mime_type ?? '',
   image_size_bytes: toIntegerString(item.image_size_bytes),
@@ -374,99 +300,6 @@ const applyImagePayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemF
   }
 }
 
-const applyConsumablePayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
-  const parsedDoseCount = parseInteger(values.dose_count)
-  if (parsedDoseCount !== undefined) {
-    payload.dose_count = parsedDoseCount
-  }
-
-  const parsedCalories = parseInteger(values.calories)
-  if (parsedCalories !== undefined) {
-    payload.calories = parsedCalories
-  }
-
-  if (parsedCalories !== undefined && parsedDoseCount !== undefined && parsedDoseCount > 0) {
-    payload.calories_per_serving = Math.round((parsedCalories / parsedDoseCount) * 100) / 100
-  }
-
-  payload.requires_water = values.requires_water
-}
-
-const applyWearablePayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
-  if (values.season) {
-    payload.season = values.season
-  }
-  if (values.layer) {
-    payload.layer = values.layer
-  }
-  payload.waterproof = values.waterproof
-  if (values.size.trim()) {
-    payload.size = values.size.trim()
-  }
-  if (values.color.trim()) {
-    payload.color = values.color.trim()
-  }
-}
-
-const applyShelterPayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
-  const parsedCapacityPeople = parseNumber(values.capacity_people)
-  if (parsedCapacityPeople !== undefined) {
-    payload.capacity_people = parsedCapacityPeople
-  }
-  if (values.season_rating) {
-    payload.season_rating = values.season_rating
-  }
-  payload.freestanding = values.freestanding
-  payload.has_footprint = values.has_footprint
-}
-
-const applySleepPayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
-  const parsedComfortTempC = parseNumber(values.comfort_temp_c)
-  if (parsedComfortTempC !== undefined) {
-    payload.comfort_temp_c = parsedComfortTempC
-  }
-  if (values.fill_type) {
-    payload.fill_type = values.fill_type
-  }
-  const parsedRValue = parseNumber(values.r_value)
-  if (parsedRValue !== undefined) {
-    payload.r_value = parsedRValue
-  }
-}
-
-const applyElectronicsPayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
-  const parsedCapacityMah = parseInteger(values.capacity_mah)
-  if (parsedCapacityMah !== undefined) {
-    payload.capacity_mah = parsedCapacityMah
-  }
-  if (values.charge_port) {
-    payload.charge_port = values.charge_port
-  }
-  payload.rechargeable = values.rechargeable
-}
-
-const applyTypeSpecificPayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
-  switch (values.type) {
-    case 'consumable':
-      applyConsumablePayloadFields(payload, values)
-      break
-    case 'wearable':
-      applyWearablePayloadFields(payload, values)
-      break
-    case 'shelter':
-      applyShelterPayloadFields(payload, values)
-      break
-    case 'sleep':
-      applySleepPayloadFields(payload, values)
-      break
-    case 'electronics':
-      applyElectronicsPayloadFields(payload, values)
-      break
-    default:
-      break
-  }
-}
-
 const toDynamicAttributeValue = (field: ItemTypeField, rawValue: string | boolean | undefined): unknown => {
   if (field.data_type === 'boolean') {
     return typeof rawValue === 'boolean' ? rawValue : undefined
@@ -488,7 +321,7 @@ const toDynamicAttributeValue = (field: ItemTypeField, rawValue: string | boolea
 }
 
 const toDynamicAttributes = (values: ItemFormValues, fields: ItemTypeField[]): Record<string, unknown> | undefined => {
-  if (isKnownItemType(values.type) || fields.length === 0) {
+  if (fields.length === 0) {
     return undefined
   }
 
@@ -515,7 +348,6 @@ const toPayload = (values: ItemFormValues, dynamicFields: ItemTypeField[]): Item
 
   applyCommonPayloadFields(payload, values)
   applyImagePayloadFields(payload, values)
-  applyTypeSpecificPayloadFields(payload, values)
 
   const dynamicAttributes = toDynamicAttributes(values, dynamicFields)
   if (dynamicAttributes !== undefined) {
@@ -741,16 +573,9 @@ const createTargetOptions: Array<{ value: CreateTarget; label: string; descripti
 
 const itemFormTypeOptions = computed<Array<{ label: string; value: string }>>(() => {
   const fetched = itemTypesQuery.data.value ?? []
-  if (fetched.length > 0) {
-    return fetched
-      .map((itemType) => ({ label: normalizeTitleWords(itemType.name), value: itemType.id }))
-      .sort((left, right) => left.label.localeCompare(right.label))
-  }
-
-  return KNOWN_ITEM_TYPES.map((value) => ({
-    value,
-    label: formatType(value),
-  }))
+  return fetched
+    .map((itemType) => ({ label: normalizeTitleWords(itemType.name), value: itemType.id }))
+    .sort((left, right) => left.label.localeCompare(right.label))
 })
 
 const filteredItems = computed(() => {
@@ -797,11 +622,6 @@ const createTableFieldDefinition = (field: TableFieldOption): TableFieldDefiniti
     switch (key) {
       case 'active': return item.is_active
       case 'is_default': return item.is_default
-      case 'requires_water': return item.requires_water
-      case 'waterproof': return item.waterproof
-      case 'freestanding': return item.freestanding
-      case 'has_footprint': return item.has_footprint
-      case 'rechargeable': return item.rechargeable
       default: return undefined
     }
   }
@@ -848,25 +668,6 @@ const createTableFieldDefinition = (field: TableFieldOption): TableFieldDefiniti
       case 'value': return formatValue(item.value)
       case 'description': return formatText(item.description)
       case 'source_url': return item.source_url?.trim() ? 'URL' : 'Not set'
-      case 'dose_count': return formatNumber(item.dose_count)
-      case 'calories': return formatNumber(item.calories)
-      case 'calories_per_serving': return formatNumber(item.calories_per_serving)
-      case 'requires_water': return ''
-      case 'season': return formatText(item.season)
-      case 'layer': return formatText(item.layer)
-      case 'waterproof': return ''
-      case 'size': return formatText(item.size)
-      case 'color': return formatText(item.color)
-      case 'capacity_people': return formatNumber(item.capacity_people)
-      case 'season_rating': return formatText(item.season_rating)
-      case 'freestanding': return ''
-      case 'has_footprint': return ''
-      case 'comfort_temp_c': return formatNumber(item.comfort_temp_c)
-      case 'fill_type': return formatText(item.fill_type)
-      case 'r_value': return formatNumber(item.r_value)
-      case 'capacity_mah': return formatNumber(item.capacity_mah)
-      case 'charge_port': return formatText(item.charge_port)
-      case 'rechargeable': return ''
       default: return 'Not set'
     }
   }
@@ -875,13 +676,6 @@ const createTableFieldDefinition = (field: TableFieldOption): TableFieldDefiniti
 }
 
 const commonTableFieldDefinitions = commonTableFieldOptions.map(createTableFieldDefinition)
-const extraTableFieldDefinitionsByType: Record<KnownItemType, TableFieldDefinition[]> = {
-  consumable: extraTableFieldOptionsByType.consumable.map(createTableFieldDefinition),
-  wearable: extraTableFieldOptionsByType.wearable.map(createTableFieldDefinition),
-  shelter: extraTableFieldOptionsByType.shelter.map(createTableFieldDefinition),
-  sleep: extraTableFieldOptionsByType.sleep.map(createTableFieldDefinition),
-  electronics: extraTableFieldOptionsByType.electronics.map(createTableFieldDefinition),
-}
 
 const itemTableSections = computed<ItemTableSection[]>(() => {
   const items = filteredItems.value
@@ -899,13 +693,11 @@ const itemTableSections = computed<ItemTableSection[]>(() => {
   return [...grouped.entries()]
     .sort((left, right) => left[0].localeCompare(right[0]))
     .map(([type, groupedItems]) => {
-      const knownType = isKnownItemType(type) ? type : null
       return {
         type,
         title: formatType(type),
         items: groupedItems,
         baseFields: commonTableFieldDefinitions,
-        extraFields: knownType ? extraTableFieldDefinitionsByType[knownType] : [],
         tableDetailMode: itemsTableDetailModeByType.value[type] ?? 'simple',
         selectionMode: itemsTableSelectionModeByType.value[type] ?? false,
         selectedItemIds: selectedTableItemIdsByType.value[type] ?? [],
@@ -1030,7 +822,7 @@ const onRowDuplicate = async (item: Item) => {
       const duplicateValues = toFormValues(item)
       duplicateValues.name = `${item.name} Copy`
       const payload = toPayload(duplicateValues, []) as ItemCreate
-      if (!isKnownItemType(item.type) && item.attributes) {
+      if (item.attributes) {
         payload.attributes = item.attributes
       }
 

@@ -4,7 +4,6 @@ import { normalizeTitleWords } from '../../lib/text/normalize'
 import { getSettings } from '../settings/api/settingsApi'
 import { listItemTypeFields, listItemTypes, listManufacturers, updateItem } from './api/itemsApi'
 import type { Item, ItemCreate, ItemFormValues, ItemTypeField, ItemUpdate, Manufacturer } from './types'
-import { KNOWN_ITEM_TYPES, isKnownItemType } from './types'
 
 type WeightInputUnit = 'g' | 'oz'
 type VolumeInputUnit = 'ml' | 'fl_oz'
@@ -87,25 +86,6 @@ const emptyFormValues = (): ItemFormValues => ({
   is_default: true,
   weight_value: '',
   volume_value: '',
-  dose_count: '',
-  calories: '',
-  calories_per_serving: '',
-  requires_water: false,
-  season: '',
-  layer: '',
-  waterproof: false,
-  size: '',
-  color: '',
-  capacity_people: '',
-  season_rating: '',
-  freestanding: false,
-  has_footprint: false,
-  comfort_temp_c: '',
-  fill_type: '',
-  r_value: '',
-  capacity_mah: '',
-  charge_port: '',
-  rechargeable: false,
   image_blob: '',
   image_mime_type: '',
   image_size_bytes: '',
@@ -157,25 +137,6 @@ const toFormValues = (item: Item, weightInputUnit: WeightInputUnit, volumeInputU
     typeof item.volume_ml === 'number'
       ? toRoundedString(mlToInput(item.volume_ml, volumeInputUnit))
       : '',
-  dose_count: toIntegerString(item.dose_count),
-  calories: toNumberString(item.calories),
-  calories_per_serving: toNumberString(item.calories_per_serving),
-  requires_water: Boolean(item.requires_water),
-  season: item.season ?? '',
-  layer: item.layer ?? '',
-  waterproof: Boolean(item.waterproof),
-  size: item.size ?? '',
-  color: item.color ?? '',
-  capacity_people: toIntegerString(item.capacity_people),
-  season_rating: item.season_rating ?? '',
-  freestanding: Boolean(item.freestanding),
-  has_footprint: Boolean(item.has_footprint),
-  comfort_temp_c: toNumberString(item.comfort_temp_c),
-  fill_type: item.fill_type ?? '',
-  r_value: toNumberString(item.r_value),
-  capacity_mah: toIntegerString(item.capacity_mah),
-  charge_port: item.charge_port ?? '',
-  rechargeable: Boolean(item.rechargeable),
   image_blob: item.image_blob ?? '',
   image_mime_type: item.image_mime_type ?? '',
   image_size_bytes: toIntegerString(item.image_size_bytes),
@@ -241,99 +202,6 @@ const applyImagePayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemF
   }
 }
 
-const applyConsumablePayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
-  const parsedDoseCount = parseInteger(values.dose_count)
-  if (parsedDoseCount !== undefined) {
-    payload.dose_count = parsedDoseCount
-  }
-
-  const parsedCalories = parseInteger(values.calories)
-  if (parsedCalories !== undefined) {
-    payload.calories = parsedCalories
-  }
-
-  if (parsedCalories !== undefined && parsedDoseCount !== undefined && parsedDoseCount > 0) {
-    payload.calories_per_serving = Math.round((parsedCalories / parsedDoseCount) * 100) / 100
-  }
-
-  payload.requires_water = values.requires_water
-}
-
-const applyWearablePayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
-  if (values.season) {
-    payload.season = values.season
-  }
-  if (values.layer) {
-    payload.layer = values.layer
-  }
-  payload.waterproof = values.waterproof
-  if (values.size.trim()) {
-    payload.size = values.size.trim()
-  }
-  if (values.color.trim()) {
-    payload.color = values.color.trim()
-  }
-}
-
-const applyShelterPayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
-  const parsedCapacityPeople = parseNumber(values.capacity_people)
-  if (parsedCapacityPeople !== undefined) {
-    payload.capacity_people = parsedCapacityPeople
-  }
-  if (values.season_rating) {
-    payload.season_rating = values.season_rating
-  }
-  payload.freestanding = values.freestanding
-  payload.has_footprint = values.has_footprint
-}
-
-const applySleepPayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
-  const parsedComfortTempC = parseNumber(values.comfort_temp_c)
-  if (parsedComfortTempC !== undefined) {
-    payload.comfort_temp_c = parsedComfortTempC
-  }
-  if (values.fill_type) {
-    payload.fill_type = values.fill_type
-  }
-  const parsedRValue = parseNumber(values.r_value)
-  if (parsedRValue !== undefined) {
-    payload.r_value = parsedRValue
-  }
-}
-
-const applyElectronicsPayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
-  const parsedCapacityMah = parseInteger(values.capacity_mah)
-  if (parsedCapacityMah !== undefined) {
-    payload.capacity_mah = parsedCapacityMah
-  }
-  if (values.charge_port) {
-    payload.charge_port = values.charge_port
-  }
-  payload.rechargeable = values.rechargeable
-}
-
-const applyTypeSpecificPayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
-  switch (values.type) {
-    case 'consumable':
-      applyConsumablePayloadFields(payload, values)
-      break
-    case 'wearable':
-      applyWearablePayloadFields(payload, values)
-      break
-    case 'shelter':
-      applyShelterPayloadFields(payload, values)
-      break
-    case 'sleep':
-      applySleepPayloadFields(payload, values)
-      break
-    case 'electronics':
-      applyElectronicsPayloadFields(payload, values)
-      break
-    default:
-      break
-  }
-}
-
 const toDynamicAttributeValue = (field: ItemTypeField, rawValue: string | boolean | undefined): unknown => {
   if (field.data_type === 'boolean') {
     return typeof rawValue === 'boolean' ? rawValue : undefined
@@ -355,7 +223,7 @@ const toDynamicAttributeValue = (field: ItemTypeField, rawValue: string | boolea
 }
 
 const toDynamicAttributes = (values: ItemFormValues, fields: ItemTypeField[]): Record<string, unknown> | undefined => {
-  if (isKnownItemType(values.type) || fields.length === 0) {
+  if (fields.length === 0) {
     return undefined
   }
 
@@ -387,7 +255,6 @@ const toPayload = (
 
   applyCommonPayloadFields(payload, values, weightInputUnit, volumeInputUnit)
   applyImagePayloadFields(payload, values)
-  applyTypeSpecificPayloadFields(payload, values)
 
   const dynamicAttributes = toDynamicAttributes(values, dynamicFields)
   if (dynamicAttributes !== undefined) {
@@ -440,16 +307,9 @@ export const useItemEditDialog = () => {
 
   const itemFormTypeOptions = computed<Array<{ label: string; value: string }>>(() => {
     const fetched = itemTypesQuery.data.value ?? []
-    if (fetched.length > 0) {
-      return fetched
-        .map((itemType) => ({ label: normalizeTitleWords(itemType.name), value: itemType.id }))
-        .sort((left, right) => left.label.localeCompare(right.label))
-    }
-
-    return KNOWN_ITEM_TYPES.map((value) => ({
-      value,
-      label: normalizeTitleWords(value.replaceAll('_', ' ')),
-    }))
+    return fetched
+      .map((itemType) => ({ label: normalizeTitleWords(itemType.name), value: itemType.id }))
+      .sort((left, right) => left.label.localeCompare(right.label))
   })
 
   const dynamicFields = computed<ItemTypeField[]>(() => {

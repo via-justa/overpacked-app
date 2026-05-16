@@ -18,7 +18,6 @@ const props = defineProps<{
   title: string
   items: Item[]
   baseFields: TableField[]
-  extraFields: TableField[]
   tableDetailMode: 'simple' | 'expanded'
   selectionMode: boolean
   selectedItemIds: string[]
@@ -71,46 +70,70 @@ type ExpandedFieldDisplay = {
   booleanValue?: boolean | null
 }
 
+const formatAttributeLabel = (key: string): string => {
+  return key
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
+const formatAttributeValue = (value: unknown): string | null => {
+  if (value === null || value === undefined) {
+    return null
+  }
+
+  if (typeof value === 'boolean') {
+    return null // Will be rendered as boolean
+  }
+
+  if (typeof value === 'number') {
+    return String(value)
+  }
+
+  if (typeof value === 'string') {
+    return value
+  }
+
+  return String(value)
+}
+
 const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
   const displays: ExpandedFieldDisplay[] = []
 
-  for (const field of props.extraFields) {
-    const href = field.renderHref?.(item)
-    if (href) {
-      displays.push({
-        key: field.key,
-        label: field.label,
-        value: 'URL',
-        href,
-      })
+  if (!item.attributes || typeof item.attributes !== 'object') {
+    return displays
+  }
+
+  for (const [key, value] of Object.entries(item.attributes)) {
+    if (value === null || value === undefined) {
       continue
     }
 
-    const booleanValue = field.renderBoolean?.(item)
-    if (typeof booleanValue === 'boolean') {
+    const label = formatAttributeLabel(key)
+
+    if (typeof value === 'boolean') {
       displays.push({
-        key: field.key,
-        label: field.label,
+        key,
+        label,
         value: '',
-        booleanValue,
+        booleanValue: value,
       })
       continue
     }
 
-    const value = field.render(item)
-    if (!value || value === 'Not set') {
-      continue
+    const formattedValue = formatAttributeValue(value)
+    if (formattedValue) {
+      displays.push({
+        key,
+        label,
+        value: formattedValue,
+      })
     }
-
-    displays.push({
-      key: field.key,
-      label: field.label,
-      value,
-    })
   }
 
   return displays
 }
+
 </script>
 
 <template>
