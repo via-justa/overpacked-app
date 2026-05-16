@@ -171,9 +171,9 @@ jobs:
               });
             }
 
-            if (!hasSkipChangelog && toAdd.length === 0) {
+            if (!hasSkipChangelog && matchedLabels.length === 0) {
               core.setFailed(
-                `No labels were added from PR title and skip-changelog label is not present. ` +
+                `No labels matched from PR title and skip-changelog label is not present. ` +
                 `Update the PR title with a keyword (feature/fix/chore/refactor/dependencies/etc.) or add skip-changelog.`
               );
             }
