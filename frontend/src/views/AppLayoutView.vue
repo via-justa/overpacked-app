@@ -10,10 +10,8 @@ const router = useRouter()
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: 'pi pi-home' },
-  { to: '/packs', label: 'Packs', icon: 'pi pi-briefcase' },
-  { to: '/sets', label: 'Sets', icon: 'pi pi-sitemap' },
+  { to: '/planner', label: 'Planner', icon: 'pi pi-list-check' },
   { to: '/gear', label: 'Gear', icon: 'pi pi-box' },
-  { to: '/persons', label: 'Persons', icon: 'pi pi-users' },
   { to: '/settings', label: 'Settings', icon: 'pi pi-cog' },
 ]
 

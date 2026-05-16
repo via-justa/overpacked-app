@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
-type ActionTarget = 'add-item' | 'add-set' | 'add-person' | 'manage-manufacturers' | 'manage-categories' | 'import-csv' | 'settings' | 'logout' | 'dashboard' | 'packs' | 'sets' | 'gear' | 'persons'
+export type ActionTarget = 'add-item' | 'add-set' | 'add-person' | 'add-packing-list' | 'manage-manufacturers' | 'manage-categories' | 'import-csv' | 'settings' | 'logout' | 'dashboard' | 'planner' | 'sets' | 'lists' | 'gear' | 'persons'
 
 interface ActionOption {
   value: ActionTarget
@@ -23,11 +23,13 @@ const emit = defineEmits<{
 
 const menuRef = ref<HTMLElement | null>(null)
 const focusedIndex = ref(0)
+const actionsExpanded = ref(false)
 
 const actionOptions: ActionOption[] = [
   { value: 'add-item', label: 'Add Item', description: 'Create a new gear item.', icon: 'pi pi-box' },
   { value: 'add-set', label: 'Add Set', description: 'Create a new gear set.', icon: 'pi pi-sitemap' },
   { value: 'add-person', label: 'Add Person', description: 'Create a new person.', icon: 'pi pi-user' },
+  { value: 'add-packing-list', label: 'Add Packing List', description: 'Create a new packing list.', icon: 'pi pi-check-square' },
   { value: 'manage-manufacturers', label: 'Manage Manufacturers', description: 'Create and edit manufacturers.', icon: 'pi pi-building' },
   { value: 'manage-categories', label: 'Manage Categories', description: 'Create and edit custom categories.', icon: 'pi pi-tag' },
   { value: 'import-csv', label: 'Import from CSV', description: 'Preview and import gear from CSV.', icon: 'pi pi-upload' },
@@ -35,12 +37,18 @@ const actionOptions: ActionOption[] = [
   { value: 'logout', label: 'Logout', description: 'Sign out of your account.', icon: 'pi pi-sign-out' },
 ]
 
-const navigationOptions: ActionOption[] = [
+const desktopNavigationOptions: ActionOption[] = [
   { value: 'dashboard' as ActionTarget, label: 'Dashboard', description: 'View your dashboard.', icon: 'pi pi-home' },
-  { value: 'packs' as ActionTarget, label: 'Packs', description: 'Manage your packs.', icon: 'pi pi-briefcase' },
-  { value: 'sets' as ActionTarget, label: 'Sets', description: 'Manage your gear sets.', icon: 'pi pi-sitemap' },
+  { value: 'planner' as ActionTarget, label: 'Planner', description: 'Sets, lists, and persons.', icon: 'pi pi-list-check' },
   { value: 'gear' as ActionTarget, label: 'Gear', description: 'Manage your gear items.', icon: 'pi pi-box' },
+]
+
+const mobileNavigationOptions: ActionOption[] = [
+  { value: 'dashboard' as ActionTarget, label: 'Dashboard', description: 'View your dashboard.', icon: 'pi pi-home' },
+  { value: 'sets' as ActionTarget, label: 'Sets', description: 'Manage your gear sets.', icon: 'pi pi-sitemap' },
+  { value: 'lists' as ActionTarget, label: 'Packing Lists', description: 'Trip checklist templates.', icon: 'pi pi-check-square' },
   { value: 'persons' as ActionTarget, label: 'Persons', description: 'Manage persons.', icon: 'pi pi-users' },
+  { value: 'gear' as ActionTarget, label: 'Gear', description: 'Manage your gear items.', icon: 'pi pi-box' },
 ]
 
 const isMobile = ref(false)
@@ -63,10 +71,14 @@ onUnmounted(() => {
 })
 
 const allOptions = computed(() => {
+  const navigationItems = isMobile.value ? mobileNavigationOptions : desktopNavigationOptions
   if (isMobile.value) {
-    return [...navigationOptions, ...actionOptions]
+    // On mobile, if actions are collapsed, only show navigation + settings + logout
+    if (!actionsExpanded.value) {
+      return [...navigationItems, actionOptions[actionOptions.length - 2], actionOptions[actionOptions.length - 1]]
+    }
   }
-  return actionOptions
+  return isMobile.value ? [...navigationItems, ...actionOptions] : actionOptions
 })
 
 const handleBackdropClick = () => {
@@ -137,17 +149,32 @@ watch(() => props.open, async (isOpen) => {
   }
 
   if (isOpen) {
+    // Reset actions expanded state on mobile
+    if (isMobile.value) {
+      actionsExpanded.value = false
+    }
+
     // Find current page in menu and focus it, otherwise focus first item
     const currentPath = props.currentPath ?? ''
     let targetIndex = 0
 
     if (currentPath) {
       const pathSegment = currentPath.split('/')[1] || 'dashboard'
-      const index = allOptions.value.findIndex(opt =>
-        opt.value === pathSegment ||
-        (pathSegment === 'gear' && opt.value === 'add-item') ||
-        (pathSegment === '' && opt.value === 'dashboard')
-      )
+
+      // Map path segments to option values
+      let optionValue = pathSegment
+
+      // Special mappings
+      if (pathSegment === 'gear') {
+        optionValue = 'gear'
+      } else if (pathSegment === '' || pathSegment === 'dashboard') {
+        optionValue = 'dashboard'
+      } else if (!isMobile.value && (pathSegment === 'sets' || pathSegment === 'lists' || pathSegment === 'persons')) {
+        // On desktop, sets/lists/persons should highlight planner
+        optionValue = 'planner'
+      }
+
+      const index = allOptions.value.findIndex(opt => opt.value === optionValue)
       if (index !== -1) {
         targetIndex = index
       }
@@ -194,9 +221,22 @@ onUnmounted(() => {
           <div class="grid gap-2 pb-32">
             <template v-for="(option, index) in allOptions" :key="option.value">
               <!-- Separator after navigation items on mobile -->
-              <div v-if="isMobile && index === navigationOptions.length" class="border-line-subtle my-1 border-t"></div>
+              <div v-if="isMobile && index === mobileNavigationOptions.length" class="border-line-subtle my-1 border-t">
+              </div>
+              <!-- Actions section header on mobile -->
+              <button v-if="isMobile && index === mobileNavigationOptions.length" type="button"
+                class="text-copy-subtle hover:text-copy flex items-center justify-between px-1 pb-1 pt-2 text-xs font-semibold uppercase tracking-[0.08em] transition"
+                @click="actionsExpanded = !actionsExpanded">
+                <span>Actions</span>
+                <i :class="actionsExpanded ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" class="text-xs"
+                  aria-hidden="true"></i>
+              </button>
+              <!-- Separator after collapsed Actions header -->
+              <div v-if="isMobile && !actionsExpanded && index === mobileNavigationOptions.length"
+                class="border-line-subtle my-1 border-t"></div>
               <!-- Separator before settings (after import-csv or last action option) -->
-              <div v-if="index === allOptions.length - 2" class="border-line-subtle my-1 border-t"></div>
+              <div v-if="index === allOptions.length - 2 && (!isMobile || actionsExpanded)"
+                class="border-line-subtle my-1 border-t"></div>
               <button type="button" role="menuitem" :data-action-option="option.value"
                 class="bg-surface-elevated hover:bg-surface-soft focus:bg-surface-soft outline-none ring-2 ring-transparent hover:ring-brand-500 focus:ring-brand-500 ring-offset-2 flex items-start gap-3 rounded-lg px-3 py-2 text-left transition"
                 @mouseenter="handleMouseEnter(index)" @click="handleOptionClick(option.value)">

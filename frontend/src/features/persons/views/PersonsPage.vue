@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import Button from 'primevue/button'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
@@ -305,12 +305,18 @@ const onSubmitForm = async () => {
 
 <template>
   <section data-component="persons-page" class="flex w-full flex-col gap-4">
+    <!-- Header -->
+    <div class="hidden items-center justify-between md:flex">
+      <h1 class="text-copy text-2xl font-bold">Persons</h1>
+      <RouterLink to="/planner" class="text-brand-500 hover:text-brand-600 text-sm font-medium">
+        ← Back to Planner
+      </RouterLink>
+    </div>
+
     <PersonFormDialog :open="isFormDialogOpen" :is-create-mode="isCreateMode" :title="formTitle"
-      :values="activeFormValues" :weight-input-label="inputWeightLabel"
-      :weight-options="weightOptions" :loading="formLoading"
-      @update:open="(value) => { if (!value) onCancelEdit(); isFormDialogOpen = value }"
-      @update:values="(values) => { activeFormValues = values }" @submit="onSubmitForm"
-      @cancel="onCancelEdit" />
+      :values="activeFormValues" :weight-input-label="inputWeightLabel" :weight-options="weightOptions"
+      :loading="formLoading" @update:open="(value) => { if (!value) onCancelEdit(); isFormDialogOpen = value }"
+      @update:values="(values) => { activeFormValues = values }" @submit="onSubmitForm" @cancel="onCancelEdit" />
 
     <AppQueryError :query="personsQuery" fallback-message="Unable to load persons." data-element="persons-error" />
 

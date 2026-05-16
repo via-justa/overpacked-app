@@ -57,7 +57,7 @@ const submit = () => {
       <div>
         <h3 class="text-ink text-sm font-semibold">Start fresh</h3>
         <p class="text-copy-muted text-xs">
-          Permanently erase all persons, packs, items, sets, manufacturers, and custom categories.
+          Permanently erase all persons, items, sets, manufacturers, and custom categories.
         </p>
       </div>
 

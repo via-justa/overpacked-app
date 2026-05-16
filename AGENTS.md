@@ -97,7 +97,6 @@ Only these are mandatory for items:
 
 ## Frontend UI Learnings (Required)
 - Reusable popup shell: use `frontend/src/components/AppTemplateDialog.vue` for form popups instead of inline `Dialog` markup.
-- Reusable create action: use `frontend/src/components/AppCreateButton.vue` for top-nav create actions that may be reused in other sections.
 - Prevent top-nav layout jump: do not conditionally remove the create button with `v-if`; keep it rendered and hide it with `invisible pointer-events-none` so width is preserved.
 - Persons form UX: in popups, render form fields in a single vertical column (no responsive two-column split).
 - Date display consistency: avoid locale-based date rendering for persons; keep fixed day-month-year formatting for list display and form input.

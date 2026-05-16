@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import AppActionsMenu from './AppActionsMenu.vue'
+import AppActionsMenu, { type ActionTarget } from './AppActionsMenu.vue'
 
 type NavItem = {
   to: string
   label: string
   icon: string
 }
-
-type ActionTarget = 'add-item' | 'add-set' | 'add-person' | 'manage-manufacturers' | 'manage-categories' | 'import-csv' | 'settings' | 'logout' | 'dashboard' | 'packs' | 'sets' | 'gear' | 'persons'
 
 const props = defineProps<{
   navItems: NavItem[]
@@ -66,13 +64,15 @@ const onSelectAction = async (target: ActionTarget) => {
     'add-item': { path: '/gear', query: { action: 'create-item' } },
     'add-set': { path: '/sets', query: { create: '1' } },
     'add-person': { path: '/persons', query: { create: '1' } },
+    'add-packing-list': { path: '/lists', query: { create: '1' } },
     'manage-manufacturers': { path: '/gear', query: { action: 'manufacturers' } },
     'manage-categories': { path: '/gear', query: { action: 'categories' } },
     'import-csv': { path: '/gear', query: { action: 'import' } },
     'settings': { path: '/settings' },
     'dashboard': { path: '/dashboard' },
-    'packs': { path: '/packs' },
+    'planner': { path: '/planner' },
     'sets': { path: '/sets' },
+    'lists': { path: '/lists' },
     'gear': { path: '/gear' },
     'persons': { path: '/persons' },
   }
@@ -94,7 +94,7 @@ const primaryNavItems = props.navItems.filter((item) => item.to !== '/settings')
           aria-label="Menu" @click="openActionsMenu">
           <i class="pi pi-bars" aria-hidden="true"></i>
         </button>
-        <p class="text-brand-500 text-xs font-semibold uppercase tracking-[0.18em]">Packing List</p>
+        <p class="text-brand-500 text-xs font-semibold uppercase tracking-[0.18em]">Overpacked</p>
       </div>
 
       <nav data-element="top-nav-primary" class="hidden items-center gap-1 md:flex">

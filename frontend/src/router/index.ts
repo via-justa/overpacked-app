@@ -26,14 +26,24 @@ const router = createRouter({
           component: () => import('../features/dashboard/views/DashboardPage.vue'),
         },
         {
+          path: 'planner',
+          name: 'planner',
+          component: () => import('../features/planner/views/PlannerPage.vue'),
+        },
+        {
+          path: 'sets',
+          name: 'sets',
+          component: () => import('../features/sets/views/SetsPage.vue'),
+        },
+        {
+          path: 'lists',
+          name: 'lists',
+          component: () => import('../features/planner/views/PackingListsPage.vue'),
+        },
+        {
           path: 'persons',
           name: 'persons',
           component: () => import('../features/persons/views/PersonsPage.vue'),
-        },
-        {
-          path: 'packs',
-          name: 'packs',
-          component: () => import('../features/packs/views/PacksPage.vue'),
         },
         {
           path: 'items',
@@ -43,11 +53,6 @@ const router = createRouter({
           path: 'gear',
           name: 'gear',
           component: () => import('../features/items/views/ItemsPage.vue'),
-        },
-        {
-          path: 'sets',
-          name: 'sets',
-          component: () => import('../features/sets/views/SetsPage.vue'),
         },
         {
           path: 'settings',
