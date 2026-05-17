@@ -14,6 +14,7 @@ import (
 	"github.com/via-justa/overpacked-app/backend/internal/db"
 	"github.com/via-justa/overpacked-app/backend/internal/http/handlers"
 	"github.com/via-justa/overpacked-app/backend/internal/migrations"
+	"github.com/via-justa/overpacked-app/backend/internal/seeds"
 	"github.com/via-justa/overpacked-app/backend/internal/store"
 )
 
@@ -83,4 +84,8 @@ func (a *App) Shutdown(ctx context.Context) error {
 
 func (a *App) RunMigrationCommand(ctx context.Context, command string, args []string) error {
 	return migrations.Run(ctx, a.db, command, args)
+}
+
+func (a *App) RunSeeds(ctx context.Context) error {
+	return seeds.Run(ctx, a.db)
 }

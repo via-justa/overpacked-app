@@ -15,6 +15,20 @@ services:
     volumes:
       - packing_light_db_data:/var/lib/postgresql/data
 
+  seed:
+    image: ghcr.io/via-justa/overpacked-app/backend:latest
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-packing_light}?sslmode=disable
+      APP_USERNAME: ${APP_USERNAME:-admin}
+      APP_PASSWORD: ${APP_PASSWORD:-pw123}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+    command: ["/app/api", "seed"]
+    profiles:
+      - seed
+
   backend:
     image: ghcr.io/via-justa/overpacked-app/backend:latest
     depends_on:

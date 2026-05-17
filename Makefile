@@ -1,4 +1,4 @@
-.PHONY: help install install-backend install-frontend up down logs backend frontend build build-backend build-frontend test test-backend test-backend-container test-api-curl-compose test-frontend gen-api gen-api-go clean-frontend
+.PHONY: help install install-backend install-frontend up down logs backend frontend build build-backend build-frontend test test-backend test-backend-container test-api-curl-compose test-frontend gen-api gen-api-go clean-frontend seed seed-compose
 
 COMPOSE ?= docker compose -f dev/docker-compose.yml
 
@@ -20,6 +20,8 @@ help:
 	@echo "  make test-frontend     		Run frontend type-check"
 	@echo "  make gen-api-go        		Regenerate Go API types from OpenAPI spec"
 	@echo "  make gen-api           		Regenerate frontend OpenAPI types"
+	@echo "  make seed              		Run database seeds (local)"
+	@echo "  make seed-compose      		Run database seeds (docker-compose)"
 	@echo "  make clean-frontend    		Remove frontend dist output"
 
 install: install-backend install-frontend
@@ -76,6 +78,12 @@ gen-api-go:
 
 gen-api:
 	cd frontend && npm run gen:api
+
+seed:
+	cd backend && go run ./cmd/api seed
+
+seed-compose:
+	$(COMPOSE) run --rm seed
 
 clean-frontend:
 	rm -rf frontend/dist

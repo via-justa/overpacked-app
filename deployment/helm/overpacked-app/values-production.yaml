@@ -21,6 +21,8 @@ backend:
     username: admin
     password: change-me-in-production
     jwtSecret: change-me-in-production
+  seed:
+    enabled: true
   resources:
     requests:
       cpu: 200m

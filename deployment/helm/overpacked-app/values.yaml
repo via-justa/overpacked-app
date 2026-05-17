@@ -60,6 +60,12 @@ backend:
     jwtSecret: change-me-jwt-secret
   # Additional environment variables for the backend container.
   extraEnv: []
+  # Seed initContainer configuration
+  seed:
+    # Enable seed initContainer that runs database seeds before backend starts.
+    enabled: false
+    # Command to run seeds. Default runs migrations then seeds.
+    command: ["/app/api", "seed"]
   resources:
     # CPU and memory requests/limits for the backend.
     requests:

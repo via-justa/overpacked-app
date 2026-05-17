@@ -1,0 +1,301 @@
+# Seed data for manufacturers table
+# Manufacturers are companies that produce outdoor gear and clothing
+
+table: manufacturers
+records:
+  - name: Patagonia
+    website: https://www.patagonia.com
+  - name: The North Face
+    website: https://www.thenorthface.com
+  - name: Arc'teryx
+    website: https://arcteryx.com
+  - name: Columbia Sportswear
+    website: https://www.columbia.com
+  - name: Mammut
+    website: https://www.mammut.com
+  - name: Fjällräven
+    website: https://www.fjallraven.com
+  - name: Salomon
+    website: https://www.salomon.com
+  - name: Mountain Hardwear
+    website: https://www.mountainhardwear.com
+  - name: Black Diamond
+    website: https://www.blackdiamondequipment.com
+  - name: Outdoor Research
+    website: https://www.outdoorresearch.com
+  - name: Rab
+    website: https://rab.equipment
+  - name: Marmot
+    website: https://www.marmot.com
+  - name: Helly Hansen
+    website: https://www.hellyhansen.com
+  - name: Jack Wolfskin
+    website: https://www.jack-wolfskin.com
+  - name: Haglöfs
+    website: https://www.haglofs.com
+  - name: Norrona
+    website: https://www.norrona.com
+  - name: Millet
+    website: https://www.millet.com
+  - name: Vaude
+    website: https://www.vaude.com
+  - name: Montbell
+    website: https://en.montbell.jp
+  - name: Mountain Equipment
+    website: https://www.mountain-equipment.com
+  - name: Klättermusen
+    website: https://www.klattermusen.com
+  - name: Lundhags
+    website: https://www.lundhags.com
+  - name: Berghaus
+    website: https://www.berghaus.com
+  - name: Cotopaxi
+    website: https://www.cotopaxi.com
+  - name: REI Co-op
+    website: https://www.rei.com
+  - name: Osprey
+    website: https://www.osprey.com
+  - name: Deuter
+    website: https://www.deuter.com
+  - name: Gregory
+    website: https://www.gregory.com
+  - name: Mystery Ranch
+    website: https://www.mysteryranch.com
+  - name: Hyperlite Mountain Gear
+    website: https://www.hyperlitemountaingear.com
+  - name: Exped
+    website: https://www.exped.com
+  - name: MSR
+    website: https://www.msrgear.com
+  - name: Sea to Summit
+    website: https://seatosummit.com
+  - name: Big Agnes
+    website: https://www.bigagnes.com
+  - name: Nemo Equipment
+    website: https://www.nemoequipment.com
+  - name: Therm-a-Rest
+    website: https://www.thermarest.com
+  - name: Scarpa
+    website: https://www.scarpa.com
+  - name: La Sportiva
+    website: https://www.lasportiva.com
+  - name: LOWA
+    website: https://www.lowa.com
+  - name: Hanwag
+    website: https://www.hanwag.com
+  - name: Meindl
+    website: https://meindl.de
+  - name: Danner
+    website: https://www.danner.com
+  - name: KEEN
+    website: https://www.keenfootwear.com
+  - name: Smartwool
+    website: https://www.smartwool.com
+  - name: Icebreaker
+    website: https://www.icebreaker.com
+  - name: Kuhl
+    website: https://www.kuhl.com
+  - name: Kathmandu
+    website: https://www.kathmanduoutdoor.com
+  - name: Fjord Nansen
+    website: https://fjordnansen.com
+  - name: Peak Performance
+    website: https://www.peakperformance.com
+  - name: Ortovox
+    website: https://www.ortovox.com
+  - name: Prana
+    website: https://www.prana.com
+  - name: Royal Robbins
+    website: https://www.royalrobbins.com
+  - name: Trew Gear
+    website: https://trewgear.com
+  - name: Houdini Sportswear
+    website: https://houdinisportswear.com
+  - name: Swanndri
+    website: https://www.swanndri.co.nz
+  - name: Craghoppers
+    website: https://www.craghoppers.com
+  - name: Sherpa Adventure Gear
+    website: https://www.sherpaadventuregear.com
+  - name: Montane
+    website: https://montane.com
+  - name: Alpkit
+    website: https://alpkit.com
+  - name: YETI
+    website: https://www.yeti.com
+  - name: Stanley
+    website: https://www.stanley1913.com
+  - name: Hydro Flask
+    website: https://www.hydroflask.com
+  - name: CamelBak
+    website: https://www.camelbak.com
+  - name: Platypus
+    website: https://www.platy.com
+  - name: GSI Outdoors
+    website: https://gsioutdoors.com
+  - name: Primus
+    website: https://primusequipment.com
+  - name: Snow Peak
+    website: https://www.snowpeak.com
+  - name: BioLite
+    website: https://www.bioliteenergy.com
+  - name: Jetboil
+    website: https://jetboil.johnsonoutdoors.com
+  - name: Kelty
+    website: https://www.kelty.com
+  - name: Sierra Designs
+    website: https://sierradesigns.com
+  - name: Eureka!
+    website: https://eurekacamping.johnsonoutdoors.com
+  - name: Hilleberg
+    website: https://hilleberg.com
+  - name: Snugpak
+    website: https://snugpak.com
+  - name: Vango
+    website: https://www.vango.co.uk
+  - name: Terra Nova Equipment
+    website: https://www.terra-nova.co.uk
+  - name: Inov-8
+    website: https://www.inov-8.com
+  - name: Altra Running
+    website: https://www.altrarunning.com
+  - name: HOKA
+    website: https://www.hoka.com
+  - name: Merrell
+    website: https://www.merrell.com
+  - name: Vasque
+    website: https://www.vasque.com
+  - name: Zamberlan
+    website: https://www.zamberlanusa.com
+  - name: Aku
+    website: https://akuoutdoor.us
+  - name: Garmont
+    website: https://www.garmont.com
+  - name: Tecnica
+    website: https://www.blizzard-tecnica.com
+  - name: Dynafit
+    website: https://www.dynafit.com
+  - name: Scarpa North America
+    website: https://us.scarpa.com
+  - name: Julbo
+    website: https://www.julbo.com
+  - name: Smith Optics
+    website: https://www.smithoptics.com
+  - name: Petzl
+    website: https://www.petzl.com
+  - name: Edelrid
+    website: https://edelrid.com
+  - name: CAMP
+    website: https://www.camp.it
+  - name: Grivel
+    website: https://grivel.com
+  - name: Silva
+    website: https://silvasweden.com
+  - name: Suunto
+    website: https://www.suunto.com
+  - name: Garmin
+    website: https://www.garmin.com
+  - name: Buff
+    website: https://www.buff.com
+  - name: Devold
+    website: https://www.devold.com
+  - name: Jöttnar
+    website: https://www.jottnar.com
+  - name: Paramo
+    website: https://www.paramo-clothing.com
+  - name: Keela
+    website: https://keelaoutdoors.com
+  - name: Páramo Directional Clothing
+    website: https://www.paramo-clothing.com
+  - name: Aclima
+    website: https://aclima.com
+  - name: Brynje
+    website: https://www.brynje.no
+  - name: Isbjörn of Sweden
+    website: https://isbjornofsweden.com
+  - name: North Bend
+    website: https://www.northbend.com
+  - name: Pinewood
+    website: https://www.pinewood.eu
+  - name: RevolutionRace
+    website: https://www.revolutionrace.com
+  - name: Direct Alpine
+    website: https://www.directalpine.com
+  - name: Tilak
+    website: https://www.tilak.cz
+  - name: High Point
+    website: https://www.highpoint.cz
+  - name: Ocún
+    website: https://www.ocun.com
+  - name: Rock Empire
+    website: https://www.rockempire.com
+  - name: Maier Sports
+    website: https://www.maier-sports.com
+  - name: Schöffel
+    website: https://www.schoeffel.com
+  - name: Maloja
+    website: https://www.maloja.com
+  - name: Zanier
+    website: https://www.zanier.com
+  - name: UYN
+    website: https://www.uynsports.com
+  - name: Quechua
+    website: https://www.quechua.com
+  - name: Forclaz
+    website: https://www.forclaz.com
+  - name: Wedze
+    website: https://www.wedze.com
+  - name: Regatta
+    website: https://www.regatta.com
+  - name: Dare 2b
+    website: https://www.dare2b.com
+  - name: Trespass
+    website: https://www.trespass.com
+  - name: Mountain Warehouse
+    website: https://www.mountainwarehouse.com
+  - name: Hi-Tec
+    website: https://hi-tec.com
+  - name: Karrimor
+    website: https://www.karrimor.com
+  - name: Gelert
+    website: https://www.gelert.com
+  - name: Highlander
+    website: https://highlander-outdoor.com
+  - name: Naturehike
+    website: https://www.naturehike.com
+  - name: 3F UL Gear
+    website: https://3fulgear.com
+  - name: OneTigris
+    website: https://www.onetigris.com
+  - name: Aonijie
+    website: https://www.aonijie.com
+  - name: Tatonka
+    website: https://www.tatonka.com
+  - name: Campus
+    website: https://campusoutdoor.com
+  - name: Elbrus
+    website: https://www.elbrus.com.pl
+  - name: Viking Outdoor Footwear
+    website: https://www.vikingoutdoorfootwear.com
+  - name: Hannah
+    website: https://www.hannahoutdoor.com
+  - name: Loap
+    website: https://www.loap.cz
+  - name: Northfinder
+    website: https://northfinder.com
+  - name: Kilpi
+    website: https://www.kilpi.com
+  - name: Trimm
+    website: https://www.trimm.cz
+  - name: Husky
+    website: https://www.huskyeu.eu
+  - name: Ferrino
+    website: https://www.ferrino.it
+  - name: Rockland
+    website: https://rockland.eu
+  - name: Iguana
+    website: https://iguana-sports.com
+  - name: Brugi
+    website: https://www.brugi.it
+  - name: McKinley
+    website: https://www.mckinley.eu

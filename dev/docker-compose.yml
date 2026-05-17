@@ -16,6 +16,33 @@ services:
     volumes:
       - packing_light_db_data:/var/lib/postgresql/data
 
+  seed:
+    image: golang:1.26-alpine
+    depends_on:
+      db:
+        condition: service_healthy
+    working_dir: /workspace/backend
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-packing_light}?sslmode=disable
+      APP_USERNAME: ${APP_USERNAME:-admin}
+      APP_PASSWORD: ${APP_PASSWORD:-pw123}
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
+    volumes:
+      - ../:/workspace
+      - ${HOME}/go/pkg/mod:/go/pkg/mod
+      - ${HOME}/Library/Caches/go-build:/root/.cache/go-build
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        echo "Running database migrations..."
+        go run ./cmd/api up
+        echo "Running database seeds..."
+        go run ./cmd/api seed
+    profiles:
+      - seed
+
   backend:
     image: golang:1.26-alpine
     depends_on:

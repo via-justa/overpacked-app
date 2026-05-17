@@ -28,7 +28,18 @@ func main() {
 	}
 
 	if len(os.Args) > 1 {
-		if err := application.RunMigrationCommand(ctx, os.Args[1], os.Args[2:]); err != nil {
+		command := os.Args[1]
+
+		// Handle seed command
+		if command == "seed" {
+			if err := application.RunSeeds(ctx); err != nil {
+				log.Fatalf("seed command failed: %v", err)
+			}
+			return
+		}
+
+		// Handle migration commands
+		if err := application.RunMigrationCommand(ctx, command, os.Args[2:]); err != nil {
 			log.Fatalf("migration command failed: %v", err)
 		}
 		return

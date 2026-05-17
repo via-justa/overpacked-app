@@ -1,0 +1,185 @@
+# Seed data for labels table
+# Labels are tags that can be applied to items and packing lists
+
+table: labels
+records:
+  - name: backpack
+    color: "#FF5733"
+  - name: slinger
+    color: "#3498DB"
+  - name: pannier bag
+    color: "#9B59B6"
+  - name: handlebar bag
+    color: "#1ABC9C"
+  - name: seatpost bag
+    color: "#F39C12"
+  - name: map
+    color: "#E74C3C"
+  - name: compass
+    color: "#16A085"
+  - name: gps device
+    color: "#8E44AD"
+  - name: headlamp
+    color: "#2980B9"
+  - name: batteries
+    color: "#D35400"
+  - name: power bank
+    color: "#27AE60"
+  - name: first aid kit
+    color: "#C0392B"
+  - name: whistle
+    color: "#2C3E50"
+  - name: multi-tool
+    color: "#7F8C8D"
+  - name: knife
+    color: "#34495E"
+  - name: lighter
+    color: "#E67E22"
+  - name: ferro rod
+    color: "#95A5A6"
+  - name: matches
+    color: "#D98880"
+  - name: tent
+    color: "#76D7C4"
+  - name: footprint
+    color: "#F8B739"
+  - name: tarp
+    color: "#85C1E2"
+  - name: sleeping bag
+    color: "#BB8FCE"
+  - name: quilt
+    color: "#F1948A"
+  - name: sleeping pad
+    color: "#73C6B6"
+  - name: pillow
+    color: "#F7DC6F"
+  - name: rain fly
+    color: "#AED6F1"
+  - name: paracord
+    color: "#ABEBC6"
+  - name: utility rope
+    color: "#FAD7A0"
+  - name: clothesline
+    color: "#D7BDE2"
+  - name: tent stakes
+    color: "#A9CCE3"
+  - name: bivy
+    color: "#A3E4D7"
+  - name: tent repair kit
+    color: "#F9E79F"
+  - name: sleeping pad repair kit
+    color: "#FADBD8"
+  - name: base layer
+    color: "#D5F4E6"
+  - name: hiking pants
+    color: "#FCF3CF"
+  - name: hiking shorts
+    color: "#EBDEF0"
+  - name: hiking shirt
+    color: "#D6EAF8"
+  - name: mid-layer
+    color: "#E8DAEF"
+  - name: fleece
+    color: "#D1F2EB"
+  - name: down jacket
+    color: "#FDEBD0"
+  - name: rain jacket
+    color: "#F8BBD0"
+  - name: poncho
+    color: "#C5CAE9"
+  - name: rain pants
+    color: "#B2DFDB"
+  - name: hiking boots
+    color: "#FFCCBC"
+  - name: trail runners
+    color: "#D7CCC8"
+  - name: camp shoes
+    color: "#F0F4C3"
+  - name: sandals
+    color: "#DCEDC8"
+  - name: socks
+    color: "#B3E5FC"
+  - name: hat
+    color: "#FFE0B2"
+  - name: cap
+    color: "#FFCCBC"
+  - name: gloves
+    color: "#CFD8DC"
+  - name: neck warmer
+    color: "#FFAB91"
+  - name: sunglasses
+    color: "#80CBC4"
+  - name: stove
+    color: "#EF9A9A"
+  - name: fuel canister
+    color: "#CE93D8"
+  - name: cooking pot
+    color: "#90CAF9"
+  - name: cooking pan
+    color: "#80DEEA"
+  - name: spork
+    color: "#A5D6A7"
+  - name: eating utensils
+    color: "#E6EE9C"
+  - name: mug
+    color: "#FFF59D"
+  - name: cup
+    color: "#FFE082"
+  - name: bowl
+    color: "#FFCC80"
+  - name: water bottle
+    color: "#81D4FA"
+  - name: hydration bladder
+    color: "#80DEEA"
+  - name: water filter
+    color: "#64B5F6"
+  - name: purifier tabs
+    color: "#4FC3F7"
+  - name: dehydrated meal
+    color: "#BCAAA4"
+  - name: snacks
+    color: "#FFB74D"
+  - name: energy bars
+    color: "#FF8A65"
+  - name: dry bag
+    color: "#4DD0E1"
+  - name: stuff sack
+    color: "#4DB6AC"
+  - name: toothbrush
+    color: "#AED581"
+  - name: toothpaste
+    color: "#DCE775"
+  - name: soap
+    color: "#FFF176"
+  - name: toilet paper
+    color: "#FFD54F"
+  - name: trowel
+    color: "#A1887F"
+  - name: towel
+    color: "#90A4AE"
+  - name: sunscreen
+    color: "#FFEB3B"
+  - name: insect repellent
+    color: "#9CCC65"
+  - name: trash bag
+    color: "#78909C"
+  - name: trekking poles
+    color: "#8D6E63"
+  - name: chair
+    color: "#FFAB40"
+  - name: solar charger
+    color: "#FFD740"
+  - name: notebook
+    color: "#B0BEC5"
+  - name: pen
+    color: "#546E7A"
+  - name: camera
+    color: "#607D8B"
+  - name: binoculars
+    color: "#455A64"
+  - name: duct tape
+    color: "#757575"
+  - name: hand warmer
+    color: "#FF6E40"
+  - name: gaiters
+    color: "#5D4037"

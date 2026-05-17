@@ -31,6 +31,7 @@ COPY --from=builder /app/api .
 
 # Copy any static assets if needed
 COPY --from=builder /app/internal/migrations/sql ./internal/migrations/sql
+COPY --from=builder /app/internal/seeds/data ./internal/seeds/data
 
 RUN chown -R app:app /app
 

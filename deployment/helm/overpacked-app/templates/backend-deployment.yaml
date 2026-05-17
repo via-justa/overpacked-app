@@ -22,6 +22,17 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ include "overpacked-app.serviceAccountName" . }}
+      {{- if .Values.backend.seed.enabled }}
+      initContainers:
+        - name: seed
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          command:
+            {{- toYaml .Values.backend.seed.command | nindent 12 }}
+          envFrom:
+            - secretRef:
+                name: {{ default (printf "%s-backend" (include "overpacked-app.fullname" .)) .Values.backend.existingSecret }}
+      {{- end }}
       containers:
         - name: backend
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
