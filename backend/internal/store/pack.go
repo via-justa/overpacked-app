@@ -273,6 +273,39 @@ func (s *PackStore) ListItems(ctx context.Context, packID uuid.UUID) ([]domain.P
 	return out, nil
 }
 
+func (s *PackStore) GetItemByID(ctx context.Context, packID uuid.UUID, itemID uuid.UUID) (*domain.PackItem, error) {
+	query := `
+		SELECT id, pack_id, item_id, quantity, carry_status, notes, created_at, updated_at
+		FROM pack_items
+		WHERE pack_id = $1 AND item_id = $2`
+
+	var item domain.PackItem
+	var carryStatus string
+	var notes sql.NullString
+
+	err := s.db.QueryRowContext(ctx, query, packID, itemID).Scan(
+		&item.ID,
+		&item.PackID,
+		&item.ItemID,
+		&item.Quantity,
+		&carryStatus,
+		&notes,
+		&item.CreatedAt,
+		&item.UpdatedAt,
+	)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, domain.ErrNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("get pack item: %w", err)
+	}
+
+	item.CarryStatus = domain.CarryStatus(carryStatus)
+	item.Notes = strPtr(notes)
+
+	return &item, nil
+}
+
 func (s *PackStore) UpdateItem(ctx context.Context, item *domain.PackItem) error {
 	query := `
 		UPDATE pack_items

@@ -58,6 +58,7 @@ EOF
 fi
 
 echo "==> starting db and backend services"
+${COMPOSE_CMD} -f "${ROOT_DIR}/docker-compose.yml" down --volumes --remove-orphans
 ${COMPOSE_CMD} -f "${ROOT_DIR}/docker-compose.yml" up -d db backend
 
 echo "==> waiting for API health at ${API_BASE_URL}/health"

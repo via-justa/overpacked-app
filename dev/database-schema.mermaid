@@ -16,17 +16,14 @@ erDiagram
     ITEM_TYPES ||--o{ ITEM_TYPE_FIELDS : defines_fields
     MANUFACTURERS ||--o{ ITEMS : makes
 
-    TRIP ||--o{ TRIP_PACKS : includes
-    PACKS ||--o{ TRIP_PACKS : assigned_to_trips
-
-    TRIP ||--o{ TRIP_ITEMS : contains_items
-    ITEMS ||--o{ TRIP_ITEMS : used_in_trips
-
-    TRIP ||--o{ TRIP_SETS : includes_sets
-    ITEM_SETS ||--o{ TRIP_SETS : used_in_trips
-
     TRIP ||--o{ TRIP_PERSONS : includes_persons
     PERSONS ||--o{ TRIP_PERSONS : participates_in_trips
+
+    TRIP_PERSONS ||--o{ TRIP_PERSON_PACKS : has_packs
+    PACKS ||--o{ TRIP_PERSON_PACKS : assigned_to_person
+
+    TRIP_PERSONS ||--o{ TRIP_PERSON_ITEMS : has_items
+    ITEMS ||--o{ TRIP_PERSON_ITEMS : assigned_to_person
 
     PACKING_LISTS ||--o{ PACKING_LIST_LABELS : has_labels
     LABELS ||--o{ PACKING_LIST_LABELS : applied_to_lists
@@ -174,35 +171,25 @@ erDiagram
         datetime updated_at
     }
 
-    TRIP_PACKS {
-        uuid id PK
-        uuid trip_id FK
-        uuid pack_id FK "unique with trip_id"
-    }
-
-    TRIP_ITEMS {
-        uuid id PK
-        uuid trip_id FK
-        uuid item_id FK "unique with trip_id"
-        int quantity
-        string carry_status "packed, worn; default: packed"
-        string notes
-        datetime created_at
-        datetime updated_at
-    }
-
-    TRIP_SETS {
-        uuid id PK
-        uuid trip_id FK
-        uuid set_id FK "unique with trip_id"
-        datetime created_at
-        datetime updated_at
-    }
-
     TRIP_PERSONS {
         uuid id PK
         uuid trip_id FK
         uuid person_id FK "unique with trip_id"
+    }
+
+    TRIP_PERSON_PACKS {
+        uuid id PK
+        uuid trip_person_id FK
+        uuid pack_id FK "unique with trip_person_id"
+    }
+
+    TRIP_PERSON_ITEMS {
+        uuid id PK
+        uuid trip_person_id FK
+        uuid item_id FK "unique with trip_person_id"
+        int quantity
+        datetime created_at
+        datetime updated_at
     }
 
     PACKING_LISTS {

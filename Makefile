@@ -86,4 +86,4 @@ seed-compose:
 	$(COMPOSE) run --rm seed
 
 clean-frontend:
-	rm -rf frontend/dist
+	rm -rf frontend/dist && rm -rf frontend/node_modules

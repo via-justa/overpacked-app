@@ -41,15 +41,15 @@ This file defines repository-level guidance for coding agents working in this pr
 - All backend endpoints after login use JWT tokens for auth
 
 ### Persons
-- Peaple who carry packs.
-- Pack recommanded weight is calculated based on the age, gender and body weight
+- People who carry packs.
+- Pack recommended weight is calculated based on the age, gender and body weight
 
 ### Packs
-- A pack is used by exactly one person.
-- Packs contain items through a many-to-many relationship (PACK_ITEMS).
-- Packs can track which sets contributed items through PACK_SETS.
-- Sets added to packs are inflated
-- items added directly to packs take priority over inflated sets
+- Packs are created in the context of a trip person via POST /api/v1/trips/{tripId}/persons/{personId}/packs
+- A pack exists only within the context of a trip and is assigned to a person
+- Packs are not standalone entities - they are managed through trip > person > pack hierarchy
+- Packs contain items through PACK_ITEMS (many-to-many relationship)
+- Pack items can be marked as "packed" or "worn" via carry_status field
 
 ### Items
 - Items support multiple types; defined in ITEM_TYPES table.
@@ -61,6 +61,14 @@ This file defines repository-level guidance for coding agents working in this pr
 - Items can belong to multiple sets through SET_ITEMS.
 - A set can be assigned to many packs, and a pack can include many sets through PACK_SETS.
 - Assigning a set to a pack inflates set items into PACK_ITEMS; pack quantities remain independently editable.
+
+### Trips
+- Trips organize multi-person journeys with person-specific gear.
+- Each trip contains persons through TRIP_PERSONS junction.
+- Each person in a trip can have multiple packs through TRIP_PERSON_PACKS.
+- Each person in a trip can have items directly through TRIP_PERSON_ITEMS (worn or packed).
+- Trip sets were removed - sets and packing lists are builder helpers only, not stored with trips at runtime.
+- Trip metadata: name, type (day_hike, overnight, multi_day, thru_hike), duration, distance, route URLs.
 
 ### Item Required Fields
 Only these are mandatory for items:
@@ -145,7 +153,6 @@ Only these are mandatory for items:
 
 ### Examples
 - `ItemsPage.vue` (page): Manages items state, queries, mutations, filtering, and domain formatting logic
-- `ItemDetailsDialog.vue` (component): Renders item details in a dialog; receives formatted data and emits events
 - `ItemFormDialog.vue` (component): Wraps form in a dialog; delegates form logic to `ItemFormCard`
 - `ItemsCreateOptionsMenu.vue` (component): Renders a floating menu; receives options array and emits selection events
 - `ItemCard.vue` (component): Renders a single item card; accepts pre-calculated image URL and formatted values

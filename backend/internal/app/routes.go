@@ -26,7 +26,6 @@ type apiServer struct {
 	itemTypes     *handlers.ItemTypesHandler
 	labels        *handlers.LabelsHandler
 	sets          *handlers.SetsHandler
-	packs         *handlers.PacksHandler
 	packingLists  *handlers.PackingListsHandler
 	trips         *handlers.TripsHandler
 }
@@ -136,32 +135,6 @@ func (s *apiServer) UpdateManufacturer(w http.ResponseWriter, r *http.Request, m
 	s.manufacturers.UpdateManufacturer(w, r, manufacturerId)
 }
 
-func (s *apiServer) ListPacks(w http.ResponseWriter, r *http.Request) { s.packs.ListPacks(w, r) }
-func (s *apiServer) CreatePack(w http.ResponseWriter, r *http.Request) {
-	s.packs.CreatePack(w, r)
-}
-func (s *apiServer) DeletePack(w http.ResponseWriter, r *http.Request, packId openapi_types.UUID) {
-	s.packs.DeletePack(w, r, packId)
-}
-func (s *apiServer) GetPack(w http.ResponseWriter, r *http.Request, packId openapi_types.UUID) {
-	s.packs.GetPack(w, r, packId)
-}
-func (s *apiServer) UpdatePack(w http.ResponseWriter, r *http.Request, packId openapi_types.UUID) {
-	s.packs.UpdatePack(w, r, packId)
-}
-func (s *apiServer) ListPackItems(w http.ResponseWriter, r *http.Request, packId openapi_types.UUID) {
-	s.packs.ListPackItems(w, r, packId)
-}
-func (s *apiServer) AddPackItem(w http.ResponseWriter, r *http.Request, packId openapi_types.UUID) {
-	s.packs.AddPackItem(w, r, packId)
-}
-func (s *apiServer) RemovePackItem(w http.ResponseWriter, r *http.Request, packId, itemId openapi_types.UUID) {
-	s.packs.RemovePackItem(w, r, packId, itemId)
-}
-func (s *apiServer) UpdatePackItem(w http.ResponseWriter, r *http.Request, packId, itemId openapi_types.UUID) {
-	s.packs.UpdatePackItem(w, r, packId, itemId)
-}
-
 func (s *apiServer) ListSets(w http.ResponseWriter, r *http.Request) { s.sets.ListSets(w, r) }
 func (s *apiServer) CreateSet(w http.ResponseWriter, r *http.Request) {
 	s.sets.CreateSet(w, r)
@@ -203,51 +176,42 @@ func (s *apiServer) DeleteTrip(w http.ResponseWriter, r *http.Request, tripId op
 	s.trips.DeleteTrip(w, r, tripId)
 }
 
-// Trip packs handlers
-func (s *apiServer) ListTripPacks(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
-	s.trips.ListTripPacks(w, r, tripId)
-}
-func (s *apiServer) AddTripPack(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
-	s.trips.AddTripPack(w, r, tripId)
-}
-func (s *apiServer) RemoveTripPack(w http.ResponseWriter, r *http.Request, tripId, packId openapi_types.UUID) {
-	s.trips.RemoveTripPack(w, r, tripId, packId)
-}
-
-// Trip items handlers
-func (s *apiServer) ListTripItems(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
-	s.trips.ListTripItems(w, r, tripId)
-}
-func (s *apiServer) AddTripItem(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
-	s.trips.AddTripItem(w, r, tripId)
-}
-func (s *apiServer) UpdateTripItem(w http.ResponseWriter, r *http.Request, tripId, itemId openapi_types.UUID) {
-	s.trips.UpdateTripItem(w, r, tripId, itemId)
-}
-func (s *apiServer) RemoveTripItem(w http.ResponseWriter, r *http.Request, tripId, itemId openapi_types.UUID) {
-	s.trips.RemoveTripItem(w, r, tripId, itemId)
-}
-
-// Trip sets handlers
-func (s *apiServer) ListTripSets(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
-	s.trips.ListTripSets(w, r, tripId)
-}
-func (s *apiServer) AddTripSet(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
-	s.trips.AddTripSet(w, r, tripId)
-}
-func (s *apiServer) RemoveTripSet(w http.ResponseWriter, r *http.Request, tripId, setId openapi_types.UUID) {
-	s.trips.RemoveTripSet(w, r, tripId, setId)
-}
-
 // Trip persons handlers
-func (s *apiServer) ListTripPersons(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
-	s.trips.ListTripPersons(w, r, tripId)
-}
 func (s *apiServer) AddTripPerson(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
 	s.trips.AddTripPerson(w, r, tripId)
 }
 func (s *apiServer) RemoveTripPerson(w http.ResponseWriter, r *http.Request, tripId, personId openapi_types.UUID) {
 	s.trips.RemoveTripPerson(w, r, tripId, personId)
+}
+
+// Trip person packs handlers
+func (s *apiServer) AddTripPersonPack(w http.ResponseWriter, r *http.Request, tripId, personId openapi_types.UUID) {
+	s.trips.AddTripPersonPack(w, r, tripId, personId)
+}
+func (s *apiServer) RemoveTripPersonPack(w http.ResponseWriter, r *http.Request, tripId, personId, packId openapi_types.UUID) {
+	s.trips.RemoveTripPersonPack(w, r, tripId, personId, packId)
+}
+
+// Trip person items handlers
+func (s *apiServer) AddTripPersonItem(w http.ResponseWriter, r *http.Request, tripId, personId openapi_types.UUID) {
+	s.trips.AddTripPersonItem(w, r, tripId, personId)
+}
+func (s *apiServer) UpdateTripPersonItem(w http.ResponseWriter, r *http.Request, tripId, personId, itemId openapi_types.UUID) {
+	s.trips.UpdateTripPersonItem(w, r, tripId, personId, itemId)
+}
+func (s *apiServer) RemoveTripPersonItem(w http.ResponseWriter, r *http.Request, tripId, personId, itemId openapi_types.UUID) {
+	s.trips.RemoveTripPersonItem(w, r, tripId, personId, itemId)
+}
+
+// Trip person pack items handlers
+func (s *apiServer) AddTripPersonPackItem(w http.ResponseWriter, r *http.Request, tripId, personId, packId openapi_types.UUID) {
+	s.trips.AddTripPersonPackItem(w, r, tripId, personId, packId)
+}
+func (s *apiServer) UpdateTripPersonPackItem(w http.ResponseWriter, r *http.Request, tripId, personId, packId, itemId openapi_types.UUID) {
+	s.trips.UpdateTripPersonPackItem(w, r, tripId, personId, packId, itemId)
+}
+func (s *apiServer) RemoveTripPersonPackItem(w http.ResponseWriter, r *http.Request, tripId, personId, packId, itemId openapi_types.UUID) {
+	s.trips.RemoveTripPersonPackItem(w, r, tripId, personId, packId, itemId)
 }
 
 // PackingLists handlers
@@ -296,7 +260,6 @@ func NewRouter(authHandler *handlers.AuthHandler, st *store.Store, appPassword s
 		itemTypes:     handlers.NewItemTypesHandler(st),
 		labels:        handlers.NewLabelsHandler(st),
 		sets:          handlers.NewSetsHandler(st),
-		packs:         handlers.NewPacksHandler(st),
 		packingLists:  handlers.NewPackingListsHandler(st.PackingLists, st.Labels),
 		trips:         handlers.NewTripsHandler(st),
 	}, api.StdHTTPServerOptions{

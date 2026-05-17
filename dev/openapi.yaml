@@ -1213,266 +1213,6 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/packs:
-    get:
-      tags:
-        - packs
-      summary: List all packs
-      operationId: listPacks
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: List of packs
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Pack'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-    post:
-      tags:
-        - packs
-      summary: Create a new pack
-      operationId: createPack
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PackCreate'
-      responses:
-        '201':
-          description: Pack created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pack'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-
-  /api/v1/packs/{packId}:
-    get:
-      tags:
-        - packs
-      summary: Get pack by ID
-      operationId: getPack
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: packId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Pack retrieved
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pack'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    patch:
-      tags:
-        - packs
-      summary: Update pack
-      operationId: updatePack
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: packId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PackUpdate'
-      responses:
-        '200':
-          description: Pack updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pack'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags:
-        - packs
-      summary: Delete pack
-      operationId: deletePack
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: packId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '204':
-          description: Pack deleted
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/packs/{packId}/items:
-    get:
-      tags:
-        - pack-items
-      summary: List items in a pack
-      operationId: listPackItems
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: packId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: List of items in pack
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PackItemWithDetails'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    post:
-      tags:
-        - pack-items
-      summary: Add item to pack
-      operationId: addPackItem
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: packId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PackItemCreate'
-      responses:
-        '201':
-          description: Item added to pack
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PackItemWithDetails'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/packs/{packId}/items/{itemId}:
-    patch:
-      tags:
-        - pack-items
-      summary: Update item in pack
-      operationId: updatePackItem
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: packId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: itemId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PackItemUpdate'
-      responses:
-        '200':
-          description: Item in pack updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PackItemWithDetails'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags:
-        - pack-items
-      summary: Remove item from pack
-      operationId: removePackItem
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: packId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: itemId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '204':
-          description: Item removed from pack
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
   /api/v1/trips:
     get:
       tags:
@@ -1522,7 +1262,8 @@ paths:
     get:
       tags:
         - trips
-      summary: Get trip by ID
+      summary: Get trip by ID with full nested data
+      description: Returns complete trip details including all persons, their packs, pack items, and direct person items in a single call
       operationId: getTripById
       security:
         - bearerAuth: []
@@ -1535,11 +1276,11 @@ paths:
             format: uuid
       responses:
         '200':
-          description: Trip details
+          description: Trip details with nested persons, packs, and items
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Trip'
+                $ref: '#/components/schemas/TripWithDetails'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1601,351 +1342,7 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/trips/{tripId}/packs:
-    get:
-      tags:
-        - trip-packs
-      summary: List packs in a trip
-      operationId: listTripPacks
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: tripId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: List of packs in trip
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TripPackWithDetails'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    post:
-      tags:
-        - trip-packs
-      summary: Add pack to trip
-      operationId: addTripPack
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: tripId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TripPackCreate'
-      responses:
-        '201':
-          description: Pack added to trip
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TripPackWithDetails'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/trips/{tripId}/packs/{packId}:
-    delete:
-      tags:
-        - trip-packs
-      summary: Remove pack from trip
-      operationId: removeTripPack
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: tripId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: packId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '204':
-          description: Pack removed from trip
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/trips/{tripId}/items:
-    get:
-      tags:
-        - trip-items
-      summary: List items in a trip
-      operationId: listTripItems
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: tripId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: List of items in trip
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TripItemWithDetails'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    post:
-      tags:
-        - trip-items
-      summary: Add item to trip
-      operationId: addTripItem
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: tripId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TripItemCreate'
-      responses:
-        '201':
-          description: Item added to trip
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TripItemWithDetails'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/trips/{tripId}/items/{itemId}:
-    patch:
-      tags:
-        - trip-items
-      summary: Update item in trip
-      operationId: updateTripItem
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: tripId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: itemId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TripItemUpdate'
-      responses:
-        '200':
-          description: Item in trip updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TripItemWithDetails'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    delete:
-      tags:
-        - trip-items
-      summary: Remove item from trip
-      operationId: removeTripItem
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: tripId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: itemId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '204':
-          description: Item removed from trip
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/trips/{tripId}/sets:
-    get:
-      tags:
-        - trip-sets
-      summary: List sets in a trip
-      operationId: listTripSets
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: tripId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: List of sets in trip
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TripSetWithDetails'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    post:
-      tags:
-        - trip-sets
-      summary: Add set to trip
-      operationId: addTripSet
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: tripId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TripSetCreate'
-      responses:
-        '201':
-          description: Set added to trip
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TripSetWithDetails'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-  /api/v1/trips/{tripId}/sets/{setId}:
-    delete:
-      tags:
-        - trip-sets
-      summary: Remove set from trip
-      operationId: removeTripSet
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: tripId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: setId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '204':
-          description: Set removed from trip
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
   /api/v1/trips/{tripId}/persons:
-    get:
-      tags:
-        - trip-persons
-      summary: List persons in a trip
-      operationId: listTripPersons
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: tripId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: List of persons in trip
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TripPersonWithDetails'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
     post:
       tags:
         - trip-persons
@@ -2004,6 +1401,345 @@ paths:
       responses:
         '204':
           description: Person removed from trip
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/persons/{personId}/packs:
+    post:
+      tags:
+        - trip-person-packs
+      summary: Create pack for person in trip
+      description: Creates a new pack and assigns it to the person in the trip context
+      operationId: addTripPersonPack
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripPersonPackCreate'
+      responses:
+        '201':
+          description: Pack created and assigned to person in trip
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripPersonPackWithDetails'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/persons/{personId}/packs/{packId}:
+    delete:
+      tags:
+        - trip-person-packs
+      summary: Remove pack from person in trip
+      operationId: removeTripPersonPack
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: packId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Pack removed from person in trip
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/persons/{personId}/packs/{packId}/items:
+    post:
+      tags:
+        - trip-person-pack-items
+      summary: Add item to pack for a person in a trip
+      operationId: addTripPersonPackItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: packId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackItemCreate'
+      responses:
+        '201':
+          description: Item added to pack
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackItemWithDetails'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/persons/{personId}/packs/{packId}/items/{itemId}:
+    patch:
+      tags:
+        - trip-person-pack-items
+      summary: Update item in pack for a person in a trip
+      operationId: updateTripPersonPackItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: packId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackItemUpdate'
+      responses:
+        '200':
+          description: Item in pack updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackItemWithDetails'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - trip-person-pack-items
+      summary: Remove item from pack for a person in a trip
+      operationId: removeTripPersonPackItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: packId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Item removed from pack
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/persons/{personId}/items:
+    post:
+      tags:
+        - trip-person-items
+      summary: Assign item to person in trip
+      operationId: addTripPersonItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripPersonItemCreate'
+      responses:
+        '201':
+          description: Item assigned to person in trip
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripPersonItemWithDetails'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/persons/{personId}/items/{itemId}:
+    patch:
+      tags:
+        - trip-person-items
+      summary: Update item for person in trip
+      operationId: updateTripPersonItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripPersonItemUpdate'
+      responses:
+        '200':
+          description: Item for person in trip updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripPersonItemWithDetails'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - trip-person-items
+      summary: Remove item from person in trip
+      operationId: removeTripPersonItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Item removed from person in trip
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -3065,6 +2801,9 @@ components:
         carry_status:
           type: string
           enum: [packed, worn]
+        notes:
+          type: string
+          nullable: true
 
     PackItemUpdate:
       type: object
@@ -3075,15 +2814,22 @@ components:
         carry_status:
           type: string
           enum: [packed, worn]
+        notes:
+          type: string
+          nullable: true
 
     PackItemWithDetails:
       type: object
       required:
+        - id
         - item_id
         - quantity
         - carry_status
         - item
       properties:
+        id:
+          type: string
+          format: uuid
         item_id:
           type: string
           format: uuid
@@ -3093,6 +2839,9 @@ components:
         carry_status:
           type: string
           enum: [packed, worn]
+        notes:
+          type: string
+          nullable: true
         item:
           $ref: '#/components/schemas/Item'
 
@@ -3138,6 +2887,19 @@ components:
         updated_at:
           type: string
           format: date-time
+
+    TripWithDetails:
+      allOf:
+        - $ref: '#/components/schemas/Trip'
+        - type: object
+          required:
+            - persons
+          properties:
+            persons:
+              type: array
+              items:
+                $ref: '#/components/schemas/TripPersonDetailsNested'
+              description: All persons participating in this trip with their packs and items
 
     TripCreate:
       type: object
@@ -3186,102 +2948,6 @@ components:
           type: number
           format: float
 
-    TripPackCreate:
-      type: object
-      required:
-        - pack_id
-      properties:
-        pack_id:
-          type: string
-          format: uuid
-
-    TripPackWithDetails:
-      type: object
-      required:
-        - pack_id
-        - pack
-      properties:
-        pack_id:
-          type: string
-          format: uuid
-        pack:
-          $ref: '#/components/schemas/Pack'
-
-    TripItemCreate:
-      type: object
-      required:
-        - item_id
-        - quantity
-        - carry_status
-      properties:
-        item_id:
-          type: string
-          format: uuid
-        quantity:
-          type: number
-          format: float
-        carry_status:
-          type: string
-          enum: [packed, worn]
-        notes:
-          type: string
-
-    TripItemUpdate:
-      type: object
-      properties:
-        quantity:
-          type: number
-          format: float
-        carry_status:
-          type: string
-          enum: [packed, worn]
-        notes:
-          type: string
-
-    TripItemWithDetails:
-      type: object
-      required:
-        - item_id
-        - quantity
-        - carry_status
-        - item
-      properties:
-        item_id:
-          type: string
-          format: uuid
-        quantity:
-          type: number
-          format: float
-        carry_status:
-          type: string
-          enum: [packed, worn]
-        notes:
-          type: string
-          nullable: true
-        item:
-          $ref: '#/components/schemas/Item'
-
-    TripSetCreate:
-      type: object
-      required:
-        - set_id
-      properties:
-        set_id:
-          type: string
-          format: uuid
-
-    TripSetWithDetails:
-      type: object
-      required:
-        - set_id
-        - set
-      properties:
-        set_id:
-          type: string
-          format: uuid
-        set:
-          $ref: '#/components/schemas/ItemSet'
-
     TripPersonCreate:
       type: object
       required:
@@ -3302,6 +2968,161 @@ components:
           format: uuid
         person:
           $ref: '#/components/schemas/Person'
+
+    TripPersonDetailsNested:
+      type: object
+      required:
+        - trip_person_id
+        - person_id
+        - person
+        - packs
+        - items
+      properties:
+        trip_person_id:
+          type: string
+          format: uuid
+          description: ID of the trip_persons junction record
+        person_id:
+          type: string
+          format: uuid
+        person:
+          $ref: '#/components/schemas/Person'
+        packs:
+          type: array
+          items:
+            $ref: '#/components/schemas/TripPersonPackDetailsNested'
+          description: Packs assigned to this person for the trip
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TripPersonItemWithDetails'
+          description: Items directly assigned to this person (worn or not in packs)
+
+    TripPersonPackCreate:
+      type: object
+      required:
+        - name
+        - trip_type
+      properties:
+        name:
+          type: string
+        trip_type:
+          type: string
+          enum: [day_hike, overnight, multi_day, thru_hike]
+        notes:
+          type: string
+          nullable: true
+
+    TripPersonPackWithDetails:
+      type: object
+      required:
+        - id
+        - trip_person_id
+        - pack_id
+        - pack
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        trip_person_id:
+          type: string
+          format: uuid
+        pack_id:
+          type: string
+          format: uuid
+        pack:
+          $ref: '#/components/schemas/Pack'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TripPersonPackDetailsNested:
+      allOf:
+        - $ref: '#/components/schemas/TripPersonPackWithDetails'
+        - type: object
+          required:
+            - items
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/PackItemWithDetails'
+              description: Items in this pack
+
+    TripPersonItemCreate:
+      type: object
+      required:
+        - item_id
+        - quantity
+        - carry_status
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        carry_status:
+          type: string
+          enum: [packed, worn]
+        notes:
+          type: string
+
+    TripPersonItemUpdate:
+      type: object
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+        carry_status:
+          type: string
+          enum: [packed, worn]
+        notes:
+          type: string
+
+    TripPersonItemWithDetails:
+      type: object
+      required:
+        - id
+        - trip_person_id
+        - item_id
+        - quantity
+        - carry_status
+        - item
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        trip_person_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        carry_status:
+          type: string
+          enum: [packed, worn]
+        notes:
+          type: string
+          nullable: true
+        item:
+          $ref: '#/components/schemas/Item'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
 
     PackingList:
       type: object

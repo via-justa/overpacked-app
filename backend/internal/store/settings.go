@@ -107,10 +107,9 @@ func (s *SettingsStore) StartFresh(ctx context.Context) error {
 	// Remove all user data while preserving system item types and schema rows.
 	if _, err = tx.ExecContext(ctx, `
 		TRUNCATE TABLE
+			trip_person_items,
+			trip_person_packs,
 			trip_persons,
-			trip_sets,
-			trip_items,
-			trip_packs,
 			trips,
 			pack_items,
 			packs,

@@ -21,37 +21,32 @@ type Trip struct {
 	UpdatedAt       time.Time
 }
 
-// TripPack represents a pack assigned to a trip
-type TripPack struct {
-	ID     uuid.UUID
-	TripID uuid.UUID
-	PackID uuid.UUID
-}
-
-// TripItem represents an item assigned to a trip with quantity and carry status
-type TripItem struct {
-	ID          uuid.UUID
-	TripID      uuid.UUID
-	ItemID      uuid.UUID
-	Quantity    int
-	CarryStatus CarryStatus
-	Notes       *string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-}
-
-// TripSet represents a set assigned to a trip
-type TripSet struct {
+// TripPerson represents a person participating in a trip
+type TripPerson struct {
 	ID        uuid.UUID
 	TripID    uuid.UUID
-	SetID     uuid.UUID
+	PersonID  uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
 
-// TripPerson represents a person participating in a trip
-type TripPerson struct {
-	ID       uuid.UUID
-	TripID   uuid.UUID
-	PersonID uuid.UUID
+// TripPersonPack represents a pack assigned to a person in a trip
+type TripPersonPack struct {
+	ID           uuid.UUID
+	TripPersonID uuid.UUID
+	PackID       uuid.UUID
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+}
+
+// TripPersonItem represents an item assigned to a person in a trip (worn/not in pack)
+type TripPersonItem struct {
+	ID           uuid.UUID
+	TripPersonID uuid.UUID
+	ItemID       uuid.UUID
+	Quantity     int
+	CarryStatus  CarryStatus
+	Notes        *string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }

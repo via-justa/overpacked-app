@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -49,28 +50,56 @@ func TestTripsHandlerUpdateInvalidBody(t *testing.T) {
 	}
 }
 
-func TestTripsHandlerAddTripItemInvalidBody(t *testing.T) {
+func TestTripsHandlerAddPersonPackInvalidBody(t *testing.T) {
 	t.Parallel()
 
 	h := NewTripsHandler(nil)
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+uuid.NewString()+"/items", bytes.NewReader([]byte(`{"item_id":`)))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+uuid.NewString()+"/persons/"+uuid.NewString()+"/packs", bytes.NewReader([]byte(`{"pack_id":`)))
 	w := httptest.NewRecorder()
 
-	h.AddTripItem(w, req, types.UUID(uuid.New()))
+	h.AddTripPersonPack(w, req, types.UUID(uuid.New()), types.UUID(uuid.New()))
 
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400 for invalid request body, got %d", w.Code)
 	}
 }
 
-func TestTripsHandlerUpdateTripItemInvalidBody(t *testing.T) {
+func TestTripsHandlerAddPersonItemInvalidBody(t *testing.T) {
 	t.Parallel()
 
 	h := NewTripsHandler(nil)
-	req := httptest.NewRequest(http.MethodPatch, "/api/v1/trips/"+uuid.NewString()+"/items/"+uuid.NewString(), bytes.NewReader([]byte(`{"quantity":`)))
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+uuid.NewString()+"/persons/"+uuid.NewString()+"/items", bytes.NewReader([]byte(`{"item_id":`)))
 	w := httptest.NewRecorder()
 
-	h.UpdateTripItem(w, req, types.UUID(uuid.New()), types.UUID(uuid.New()))
+	h.AddTripPersonItem(w, req, types.UUID(uuid.New()), types.UUID(uuid.New()))
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid request body, got %d", w.Code)
+	}
+}
+
+func TestTripsHandlerUpdatePersonItemInvalidBody(t *testing.T) {
+	t.Parallel()
+
+	h := NewTripsHandler(nil)
+	req := httptest.NewRequest(http.MethodPatch, "/api/v1/trips/"+uuid.NewString()+"/persons/"+uuid.NewString()+"/items/"+uuid.NewString(), bytes.NewReader([]byte(`{"quantity":`)))
+	w := httptest.NewRecorder()
+
+	h.UpdateTripPersonItem(w, req, types.UUID(uuid.New()), types.UUID(uuid.New()), types.UUID(uuid.New()))
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid request body, got %d", w.Code)
+	}
+}
+
+func TestTripsHandlerAddPersonPackItemInvalidBody(t *testing.T) {
+	t.Parallel()
+
+	h := NewTripsHandler(nil)
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+uuid.NewString()+"/persons/"+uuid.NewString()+"/packs/"+uuid.NewString()+"/items", bytes.NewReader([]byte(`{"item_id":`)))
+	w := httptest.NewRecorder()
+
+	h.AddTripPersonPackItem(w, req, types.UUID(uuid.New()), types.UUID(uuid.New()), types.UUID(uuid.New()))
 
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400 for invalid request body, got %d", w.Code)
@@ -109,9 +138,22 @@ func newContainerizedTripsHandler(t *testing.T) (*TripsHandler, *sql.DB) {
 		t.Fatalf("run migrations: %v", tripsMigrationsErr)
 	}
 
-	if _, err := dbConn.ExecContext(context.Background(), "TRUNCATE TABLE packing_list_labels, packing_lists, trip_persons, trip_sets, trip_items, trip_packs, trips, pack_items, packs, set_items, item_sets, item_labels, labels, items, persons, manufacturers, item_types RESTART IDENTITY CASCADE"); err != nil {
-		_ = dbConn.Close()
-		t.Fatalf("truncate trip-related tables: %v", err)
+	// Truncate user data tables (avoid system tables like item_types)
+	truncateTables := []string{
+		"packing_list_labels", "packing_lists",
+		"trip_person_items", "trip_person_packs", "trip_persons", "trips",
+		"pack_items", "packs",
+		"set_items", "item_sets",
+		"item_labels", "labels",
+		"items",
+		"persons",
+		"manufacturers",
+	}
+	for _, table := range truncateTables {
+		if _, err := dbConn.ExecContext(context.Background(), fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE", table)); err != nil {
+			_ = dbConn.Close()
+			t.Fatalf("truncate table %s: %v", table, err)
+		}
 	}
 
 	return NewTripsHandler(store.New(dbConn)), dbConn
@@ -132,15 +174,21 @@ func insertTripTestData(t *testing.T, dbConn *sql.DB) (manufacturerID, personID,
 		t.Fatalf("insert person: %v", err)
 	}
 
+	// Insert item type
+	itemTypeID := "test-item-type"
+	if _, err := dbConn.ExecContext(context.Background(), "INSERT INTO item_types (id, name, base_profile) VALUES ($1, $2, $3)", itemTypeID, "Test Type", "shelter"); err != nil {
+		t.Fatalf("insert item type: %v", err)
+	}
+
 	// Insert item
 	itemID = types.UUID(uuid.New())
-	if _, err := dbConn.ExecContext(context.Background(), "INSERT INTO items (id, manufacturer_id, type_id, name, is_active) VALUES ($1, $2, $3, $4, $5)", itemID, manufacturerID, "shelter", "Test Item", true); err != nil {
+	if _, err := dbConn.ExecContext(context.Background(), "INSERT INTO items (id, manufacturer_id, type_id, name, is_active) VALUES ($1, $2, $3, $4, $5)", itemID, manufacturerID, itemTypeID, "Test Item", true); err != nil {
 		t.Fatalf("insert item: %v", err)
 	}
 
 	// Insert set
 	setID = types.UUID(uuid.New())
-	if _, err := dbConn.ExecContext(context.Background(), "INSERT INTO item_sets (id, name, set_category, is_active) VALUES ($1, $2, $3, $4)", setID, "Test Set", "consumable", true); err != nil {
+	if _, err := dbConn.ExecContext(context.Background(), "INSERT INTO item_sets (id, name, set_category, is_active) VALUES ($1, $2, $3, $4)", setID, "Test Set", itemTypeID, true); err != nil {
 		t.Fatalf("insert set: %v", err)
 	}
 
@@ -274,192 +322,371 @@ func TestTripsHandlerIntegrationCRUD(t *testing.T) {
 	}
 }
 
-func TestTripsHandlerIntegrationTripPacks(t *testing.T) {
+func TestTripsHandlerIntegrationNestedGet(t *testing.T) {
 	h, dbConn := newContainerizedTripsHandler(t)
 	defer func() { _ = dbConn.Close() }()
 
-	_, _, _, _, packID := insertTripTestData(t, dbConn)
+	_, personID, itemID, _, packID := insertTripTestData(t, dbConn)
 	trip := mustCreateTrip(t, h)
 
-	// Add pack to trip
-	addPackReqBody := api.TripPackCreate{PackId: packID}
+	// Add person to trip
+	addPersonReqBody := api.TripPersonCreate{PersonId: personID}
+	addPersonReqBytes, _ := json.Marshal(addPersonReqBody)
+	addPersonReq := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+trip.Id.String()+"/persons", bytes.NewReader(addPersonReqBytes))
+	addPersonW := httptest.NewRecorder()
+	h.AddTripPerson(addPersonW, addPersonReq, trip.Id)
+
+	if addPersonW.Code != http.StatusCreated {
+		t.Fatalf("expected 201 for add person, got %d: %s", addPersonW.Code, addPersonW.Body.String())
+	}
+
+	// Create pack for person
+	addPackReqBody := api.TripPersonPackCreate{
+		Name:     "Test Pack",
+		TripType: "overnight",
+	}
 	addPackReqBytes, _ := json.Marshal(addPackReqBody)
-	addPackReq := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+trip.Id.String()+"/packs", bytes.NewReader(addPackReqBytes))
+	addPackReq := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+trip.Id.String()+"/persons/"+personID.String()+"/packs", bytes.NewReader(addPackReqBytes))
 	addPackW := httptest.NewRecorder()
-	h.AddTripPack(addPackW, addPackReq, trip.Id)
+	h.AddTripPersonPack(addPackW, addPackReq, trip.Id, personID)
 
 	if addPackW.Code != http.StatusCreated {
 		t.Fatalf("expected 201 for add pack, got %d: %s", addPackW.Code, addPackW.Body.String())
 	}
 
-	// List trip packs
-	listReq := httptest.NewRequest(http.MethodGet, "/api/v1/trips/"+trip.Id.String()+"/packs", nil)
-	listW := httptest.NewRecorder()
-	h.ListTripPacks(listW, listReq, trip.Id)
+	// Add item to pack
+	addPackItemReqBody := api.PackItemCreate{
+		ItemId:      itemID,
+		Quantity:    1.0,
+		CarryStatus: api.PackItemCreateCarryStatusPacked,
+	}
+	addPackItemReqBytes, _ := json.Marshal(addPackItemReqBody)
+	addPackItemReq := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+trip.Id.String()+"/persons/"+personID.String()+"/packs/"+packID.String()+"/items", bytes.NewReader(addPackItemReqBytes))
+	addPackItemW := httptest.NewRecorder()
+	h.AddTripPersonPackItem(addPackItemW, addPackItemReq, trip.Id, personID, packID)
 
-	if listW.Code != http.StatusOK {
-		t.Fatalf("expected 200 for list trip packs, got %d", listW.Code)
+	if addPackItemW.Code != http.StatusCreated {
+		t.Fatalf("expected 201 for add pack item, got %d: %s", addPackItemW.Code, addPackItemW.Body.String())
 	}
 
-	var packs []api.TripPackWithDetails
-	if err := json.NewDecoder(listW.Body).Decode(&packs); err != nil {
-		t.Fatalf("decode packs list: %v", err)
+	// Add item directly to person
+	addPersonItemReqBody := api.TripPersonItemCreate{
+		ItemId:      itemID,
+		Quantity:    1,
+		CarryStatus: api.TripPersonItemCreateCarryStatusWorn,
+	}
+	addPersonItemReqBytes, _ := json.Marshal(addPersonItemReqBody)
+	addPersonItemReq := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+trip.Id.String()+"/persons/"+personID.String()+"/items", bytes.NewReader(addPersonItemReqBytes))
+	addPersonItemW := httptest.NewRecorder()
+	h.AddTripPersonItem(addPersonItemW, addPersonItemReq, trip.Id, personID)
+
+	if addPersonItemW.Code != http.StatusCreated {
+		t.Fatalf("expected 201 for add person item, got %d: %s", addPersonItemW.Code, addPersonItemW.Body.String())
 	}
 
-	if len(packs) != 1 {
-		t.Errorf("expected 1 pack, got %d", len(packs))
-	}
-	if packs[0].PackId != packID {
-		t.Errorf("expected pack ID %s, got %s", packID, packs[0].PackId)
+	// Get full trip with nested data
+	getReq := httptest.NewRequest(http.MethodGet, "/api/v1/trips/"+trip.Id.String(), nil)
+	getW := httptest.NewRecorder()
+	h.GetTripById(getW, getReq, trip.Id)
+
+	if getW.Code != http.StatusOK {
+		t.Fatalf("expected 200 for get trip, got %d", getW.Code)
 	}
 
-	// Remove pack from trip
-	removeReq := httptest.NewRequest(http.MethodDelete, "/api/v1/trips/"+trip.Id.String()+"/packs/"+packID.String(), nil)
+	var tripDetails api.TripWithDetails
+	if err := json.NewDecoder(getW.Body).Decode(&tripDetails); err != nil {
+		t.Fatalf("decode trip details: %v", err)
+	}
+
+	// Verify nested structure
+	if len(tripDetails.Persons) != 1 {
+		t.Fatalf("expected 1 person, got %d", len(tripDetails.Persons))
+	}
+
+	person := tripDetails.Persons[0]
+	if person.PersonId != personID {
+		t.Errorf("expected person ID %s, got %s", personID, person.PersonId)
+	}
+
+	if len(person.Packs) != 1 {
+		t.Fatalf("expected 1 pack, got %d", len(person.Packs))
+	}
+
+	pack := person.Packs[0]
+	if pack.PackId != packID {
+		t.Errorf("expected pack ID %s, got %s", packID, pack.PackId)
+	}
+
+	if len(pack.Items) != 1 {
+		t.Fatalf("expected 1 item in pack, got %d", len(pack.Items))
+	}
+
+	packItem := pack.Items[0]
+	if packItem.ItemId != itemID {
+		t.Errorf("expected pack item ID %s, got %s", itemID, packItem.ItemId)
+	}
+
+	if len(person.Items) != 1 {
+		t.Fatalf("expected 1 item on person, got %d", len(person.Items))
+	}
+
+	personItem := person.Items[0]
+	if personItem.ItemId != itemID {
+		t.Errorf("expected person item ID %s, got %s", itemID, personItem.ItemId)
+	}
+	if personItem.CarryStatus != api.Worn {
+		t.Errorf("expected carry status worn, got %s", personItem.CarryStatus)
+	}
+}
+
+func TestTripsHandlerIntegrationTripPersonPacks(t *testing.T) {
+	h, dbConn := newContainerizedTripsHandler(t)
+	defer func() { _ = dbConn.Close() }()
+
+	_, personID, _, _, packID := insertTripTestData(t, dbConn)
+	trip := mustCreateTrip(t, h)
+
+	// Add person to trip
+	addPersonReqBody := api.TripPersonCreate{PersonId: personID}
+	addPersonReqBytes, _ := json.Marshal(addPersonReqBody)
+	addPersonReq := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+trip.Id.String()+"/persons", bytes.NewReader(addPersonReqBytes))
+	addPersonW := httptest.NewRecorder()
+	h.AddTripPerson(addPersonW, addPersonReq, trip.Id)
+
+	if addPersonW.Code != http.StatusCreated {
+		t.Fatalf("expected 201 for add person, got %d: %s", addPersonW.Code, addPersonW.Body.String())
+	}
+
+	// Create pack for person
+	addPackReqBody := api.TripPersonPackCreate{
+		Name:     "Test Pack",
+		TripType: "overnight",
+	}
+	addPackReqBytes, _ := json.Marshal(addPackReqBody)
+	addPackReq := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+trip.Id.String()+"/persons/"+personID.String()+"/packs", bytes.NewReader(addPackReqBytes))
+	addPackW := httptest.NewRecorder()
+	h.AddTripPersonPack(addPackW, addPackReq, trip.Id, personID)
+
+	if addPackW.Code != http.StatusCreated {
+		t.Fatalf("expected 201 for add pack, got %d: %s", addPackW.Code, addPackW.Body.String())
+	}
+
+	var packDetails api.TripPersonPackWithDetails
+	if err := json.NewDecoder(addPackW.Body).Decode(&packDetails); err != nil {
+		t.Fatalf("decode pack details: %v", err)
+	}
+
+	if packDetails.PackId != packID {
+		t.Errorf("expected pack ID %s, got %s", packID, packDetails.PackId)
+	}
+
+	// Verify pack in nested GET
+	getReq := httptest.NewRequest(http.MethodGet, "/api/v1/trips/"+trip.Id.String(), nil)
+	getW := httptest.NewRecorder()
+	h.GetTripById(getW, getReq, trip.Id)
+
+	if getW.Code != http.StatusOK {
+		t.Fatalf("expected 200 for get trip, got %d", getW.Code)
+	}
+
+	var tripDetails api.TripWithDetails
+	if err := json.NewDecoder(getW.Body).Decode(&tripDetails); err != nil {
+		t.Fatalf("decode trip details: %v", err)
+	}
+
+	if len(tripDetails.Persons) != 1 || len(tripDetails.Persons[0].Packs) != 1 {
+		t.Errorf("expected 1 person with 1 pack")
+	}
+
+	// Remove pack
+	removeReq := httptest.NewRequest(http.MethodDelete, "/api/v1/trips/"+trip.Id.String()+"/persons/"+personID.String()+"/packs/"+packID.String(), nil)
 	removeW := httptest.NewRecorder()
-	h.RemoveTripPack(removeW, removeReq, trip.Id, packID)
+	h.RemoveTripPersonPack(removeW, removeReq, trip.Id, personID, packID)
 
 	if removeW.Code != http.StatusNoContent {
 		t.Fatalf("expected 204 for remove pack, got %d", removeW.Code)
 	}
 
 	// Verify removal
-	listReq2 := httptest.NewRequest(http.MethodGet, "/api/v1/trips/"+trip.Id.String()+"/packs", nil)
-	listW2 := httptest.NewRecorder()
-	h.ListTripPacks(listW2, listReq2, trip.Id)
+	getReq2 := httptest.NewRequest(http.MethodGet, "/api/v1/trips/"+trip.Id.String(), nil)
+	getW2 := httptest.NewRecorder()
+	h.GetTripById(getW2, getReq2, trip.Id)
 
-	if listW2.Code != http.StatusOK {
-		t.Fatalf("expected 200 for list trip packs, got %d", listW2.Code)
+	if getW2.Code != http.StatusOK {
+		t.Fatalf("expected 200 for get trip, got %d", getW2.Code)
 	}
 
-	var packsAfter []api.TripPackWithDetails
-	if err := json.NewDecoder(listW2.Body).Decode(&packsAfter); err != nil {
-		t.Fatalf("decode packs list: %v", err)
+	var tripDetails2 api.TripWithDetails
+	if err := json.NewDecoder(getW2.Body).Decode(&tripDetails2); err != nil {
+		t.Fatalf("decode trip details: %v", err)
 	}
 
-	if len(packsAfter) != 0 {
-		t.Errorf("expected 0 packs after removal, got %d", len(packsAfter))
+	if len(tripDetails2.Persons) != 1 || len(tripDetails2.Persons[0].Packs) != 0 {
+		t.Errorf("expected 1 person with 0 packs after removal")
 	}
 }
 
-func TestTripsHandlerIntegrationTripItems(t *testing.T) {
+func TestTripsHandlerIntegrationTripPersonItems(t *testing.T) {
 	h, dbConn := newContainerizedTripsHandler(t)
 	defer func() { _ = dbConn.Close() }()
 
-	_, _, itemID, _, _ := insertTripTestData(t, dbConn)
+	_, personID, itemID, _, _ := insertTripTestData(t, dbConn)
 	trip := mustCreateTrip(t, h)
 
-	// Add item to trip
+	// Add person to trip
+	addPersonReqBody := api.TripPersonCreate{PersonId: personID}
+	addPersonReqBytes, _ := json.Marshal(addPersonReqBody)
+	addPersonReq := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+trip.Id.String()+"/persons", bytes.NewReader(addPersonReqBytes))
+	addPersonW := httptest.NewRecorder()
+	h.AddTripPerson(addPersonW, addPersonReq, trip.Id)
+
+	if addPersonW.Code != http.StatusCreated {
+		t.Fatalf("expected 201 for add person, got %d: %s", addPersonW.Code, addPersonW.Body.String())
+	}
+
+	// Add item to person
 	notes := "Test item notes"
-	addItemReqBody := api.TripItemCreate{
+	addItemReqBody := api.TripPersonItemCreate{
 		ItemId:      itemID,
-		Quantity:    2.0,
-		CarryStatus: api.TripItemCreateCarryStatusPacked,
+		Quantity:    2,
+		CarryStatus: api.TripPersonItemCreateCarryStatusWorn,
 		Notes:       &notes,
 	}
 	addItemReqBytes, _ := json.Marshal(addItemReqBody)
-	addItemReq := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+trip.Id.String()+"/items", bytes.NewReader(addItemReqBytes))
+	addItemReq := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+trip.Id.String()+"/persons/"+personID.String()+"/items", bytes.NewReader(addItemReqBytes))
 	addItemW := httptest.NewRecorder()
-	h.AddTripItem(addItemW, addItemReq, trip.Id)
+	h.AddTripPersonItem(addItemW, addItemReq, trip.Id, personID)
 
 	if addItemW.Code != http.StatusCreated {
 		t.Fatalf("expected 201 for add item, got %d: %s", addItemW.Code, addItemW.Body.String())
 	}
 
-	// List trip items
-	listReq := httptest.NewRequest(http.MethodGet, "/api/v1/trips/"+trip.Id.String()+"/items", nil)
-	listW := httptest.NewRecorder()
-	h.ListTripItems(listW, listReq, trip.Id)
-
-	if listW.Code != http.StatusOK {
-		t.Fatalf("expected 200 for list trip items, got %d", listW.Code)
+	var itemDetails api.TripPersonItemWithDetails
+	if err := json.NewDecoder(addItemW.Body).Decode(&itemDetails); err != nil {
+		t.Fatalf("decode item details: %v", err)
 	}
 
-	var items []api.TripItemWithDetails
-	if err := json.NewDecoder(listW.Body).Decode(&items); err != nil {
-		t.Fatalf("decode items list: %v", err)
+	if itemDetails.Quantity != 2 {
+		t.Errorf("expected quantity 2, got %d", itemDetails.Quantity)
+	}
+	if itemDetails.CarryStatus != api.Worn {
+		t.Errorf("expected carry status worn, got %s", itemDetails.CarryStatus)
 	}
 
-	if len(items) != 1 {
-		t.Errorf("expected 1 item, got %d", len(items))
-	}
-	if items[0].Quantity != 2.0 {
-		t.Errorf("expected quantity 2, got %f", items[0].Quantity)
-	}
-
-	// Update trip item
-	newQuantity := float32(3.0)
-	updateItemReqBody := api.TripItemUpdate{Quantity: &newQuantity}
+	// Update item
+	newQuantity := 3
+	updateItemReqBody := api.TripPersonItemUpdate{Quantity: &newQuantity}
 	updateItemReqBytes, _ := json.Marshal(updateItemReqBody)
-	updateItemReq := httptest.NewRequest(http.MethodPatch, "/api/v1/trips/"+trip.Id.String()+"/items/"+itemID.String(), bytes.NewReader(updateItemReqBytes))
+	updateItemReq := httptest.NewRequest(http.MethodPatch, "/api/v1/trips/"+trip.Id.String()+"/persons/"+personID.String()+"/items/"+itemDetails.Id.String(), bytes.NewReader(updateItemReqBytes))
 	updateItemW := httptest.NewRecorder()
-	h.UpdateTripItem(updateItemW, updateItemReq, trip.Id, itemID)
+	h.UpdateTripPersonItem(updateItemW, updateItemReq, trip.Id, personID, itemDetails.Id)
 
 	if updateItemW.Code != http.StatusOK {
 		t.Fatalf("expected 200 for update item, got %d: %s", updateItemW.Code, updateItemW.Body.String())
 	}
 
-	var updatedItem api.TripItemWithDetails
+	var updatedItem api.TripPersonItemWithDetails
 	if err := json.NewDecoder(updateItemW.Body).Decode(&updatedItem); err != nil {
 		t.Fatalf("decode updated item: %v", err)
 	}
 
-	if updatedItem.Quantity != newQuantity {
-		t.Errorf("expected quantity %f, got %f", newQuantity, updatedItem.Quantity)
+	if updatedItem.Quantity != 3 {
+		t.Errorf("expected quantity 3, got %d", updatedItem.Quantity)
 	}
 
-	// Remove item from trip
-	removeReq := httptest.NewRequest(http.MethodDelete, "/api/v1/trips/"+trip.Id.String()+"/items/"+itemID.String(), nil)
+	// Remove item
+	removeReq := httptest.NewRequest(http.MethodDelete, "/api/v1/trips/"+trip.Id.String()+"/persons/"+personID.String()+"/items/"+itemDetails.Id.String(), nil)
 	removeW := httptest.NewRecorder()
-	h.RemoveTripItem(removeW, removeReq, trip.Id, itemID)
+	h.RemoveTripPersonItem(removeW, removeReq, trip.Id, personID, itemDetails.Id)
 
 	if removeW.Code != http.StatusNoContent {
 		t.Fatalf("expected 204 for remove item, got %d", removeW.Code)
 	}
 }
 
-func TestTripsHandlerIntegrationTripSets(t *testing.T) {
+func TestTripsHandlerIntegrationTripPersonPackItems(t *testing.T) {
 	h, dbConn := newContainerizedTripsHandler(t)
 	defer func() { _ = dbConn.Close() }()
 
-	_, _, _, setID, _ := insertTripTestData(t, dbConn)
+	_, personID, itemID, _, packID := insertTripTestData(t, dbConn)
 	trip := mustCreateTrip(t, h)
 
-	// Add set to trip
-	addSetReqBody := api.TripSetCreate{SetId: setID}
-	addSetReqBytes, _ := json.Marshal(addSetReqBody)
-	addSetReq := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+trip.Id.String()+"/sets", bytes.NewReader(addSetReqBytes))
-	addSetW := httptest.NewRecorder()
-	h.AddTripSet(addSetW, addSetReq, trip.Id)
+	// Add person and pack
+	addPersonReqBody := api.TripPersonCreate{PersonId: personID}
+	addPersonReqBytes, _ := json.Marshal(addPersonReqBody)
+	addPersonReq := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+trip.Id.String()+"/persons", bytes.NewReader(addPersonReqBytes))
+	addPersonW := httptest.NewRecorder()
+	h.AddTripPerson(addPersonW, addPersonReq, trip.Id)
 
-	if addSetW.Code != http.StatusCreated {
-		t.Fatalf("expected 201 for add set, got %d: %s", addSetW.Code, addSetW.Body.String())
+	if addPersonW.Code != http.StatusCreated {
+		t.Fatalf("expected 201 for add person, got %d", addPersonW.Code)
 	}
 
-	// List trip sets
-	listReq := httptest.NewRequest(http.MethodGet, "/api/v1/trips/"+trip.Id.String()+"/sets", nil)
-	listW := httptest.NewRecorder()
-	h.ListTripSets(listW, listReq, trip.Id)
+	addPackReqBody := api.TripPersonPackCreate{
+		Name:     "Test Pack",
+		TripType: "overnight",
+	}
+	addPackReqBytes, _ := json.Marshal(addPackReqBody)
+	addPackReq := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+trip.Id.String()+"/persons/"+personID.String()+"/packs", bytes.NewReader(addPackReqBytes))
+	addPackW := httptest.NewRecorder()
+	h.AddTripPersonPack(addPackW, addPackReq, trip.Id, personID)
 
-	if listW.Code != http.StatusOK {
-		t.Fatalf("expected 200 for list trip sets, got %d", listW.Code)
+	if addPackW.Code != http.StatusCreated {
+		t.Fatalf("expected 201 for add pack, got %d", addPackW.Code)
 	}
 
-	var sets []api.TripSetWithDetails
-	if err := json.NewDecoder(listW.Body).Decode(&sets); err != nil {
-		t.Fatalf("decode sets list: %v", err)
+	// Add item to pack
+	addItemReqBody := api.PackItemCreate{
+		ItemId:      itemID,
+		Quantity:    2.0,
+		CarryStatus: api.PackItemCreateCarryStatusPacked,
+	}
+	addItemReqBytes, _ := json.Marshal(addItemReqBody)
+	addItemReq := httptest.NewRequest(http.MethodPost, "/api/v1/trips/"+trip.Id.String()+"/persons/"+personID.String()+"/packs/"+packID.String()+"/items", bytes.NewReader(addItemReqBytes))
+	addItemW := httptest.NewRecorder()
+	h.AddTripPersonPackItem(addItemW, addItemReq, trip.Id, personID, packID)
+
+	if addItemW.Code != http.StatusCreated {
+		t.Fatalf("expected 201 for add pack item, got %d: %s", addItemW.Code, addItemW.Body.String())
 	}
 
-	if len(sets) != 1 {
-		t.Errorf("expected 1 set, got %d", len(sets))
+	var itemDetails api.PackItemWithDetails
+	if err := json.NewDecoder(addItemW.Body).Decode(&itemDetails); err != nil {
+		t.Fatalf("decode item details: %v", err)
 	}
 
-	// Remove set from trip
-	removeReq := httptest.NewRequest(http.MethodDelete, "/api/v1/trips/"+trip.Id.String()+"/sets/"+setID.String(), nil)
+	if itemDetails.Quantity != 2.0 {
+		t.Errorf("expected quantity 2, got %f", itemDetails.Quantity)
+	}
+
+	// Update pack item
+	newQuantity := float32(3.0)
+	updateItemReqBody := api.PackItemUpdate{Quantity: &newQuantity}
+	updateItemReqBytes, _ := json.Marshal(updateItemReqBody)
+	updateItemReq := httptest.NewRequest(http.MethodPatch, "/api/v1/trips/"+trip.Id.String()+"/persons/"+personID.String()+"/packs/"+packID.String()+"/items/"+itemID.String(), bytes.NewReader(updateItemReqBytes))
+	updateItemW := httptest.NewRecorder()
+	h.UpdateTripPersonPackItem(updateItemW, updateItemReq, trip.Id, personID, packID, itemID)
+
+	if updateItemW.Code != http.StatusOK {
+		t.Fatalf("expected 200 for update pack item, got %d: %s", updateItemW.Code, updateItemW.Body.String())
+	}
+
+	var updatedItem api.PackItemWithDetails
+	if err := json.NewDecoder(updateItemW.Body).Decode(&updatedItem); err != nil {
+		t.Fatalf("decode updated item: %v", err)
+	}
+
+	if updatedItem.Quantity != 3.0 {
+		t.Errorf("expected quantity 3, got %f", updatedItem.Quantity)
+	}
+
+	// Remove pack item
+	removeReq := httptest.NewRequest(http.MethodDelete, "/api/v1/trips/"+trip.Id.String()+"/persons/"+personID.String()+"/packs/"+packID.String()+"/items/"+itemID.String(), nil)
 	removeW := httptest.NewRecorder()
-	h.RemoveTripSet(removeW, removeReq, trip.Id, setID)
+	h.RemoveTripPersonPackItem(removeW, removeReq, trip.Id, personID, packID, itemID)
 
 	if removeW.Code != http.StatusNoContent {
-		t.Fatalf("expected 204 for remove set, got %d", removeW.Code)
+		t.Fatalf("expected 204 for remove pack item, got %d", removeW.Code)
 	}
 }
 
@@ -481,22 +708,22 @@ func TestTripsHandlerIntegrationTripPersons(t *testing.T) {
 		t.Fatalf("expected 201 for add person, got %d: %s", addPersonW.Code, addPersonW.Body.String())
 	}
 
-	// List trip persons
-	listReq := httptest.NewRequest(http.MethodGet, "/api/v1/trips/"+trip.Id.String()+"/persons", nil)
-	listW := httptest.NewRecorder()
-	h.ListTripPersons(listW, listReq, trip.Id)
+	// Verify person was added by getting full trip details
+	getReq := httptest.NewRequest(http.MethodGet, "/api/v1/trips/"+trip.Id.String(), nil)
+	getW := httptest.NewRecorder()
+	h.GetTripById(getW, getReq, trip.Id)
 
-	if listW.Code != http.StatusOK {
-		t.Fatalf("expected 200 for list trip persons, got %d", listW.Code)
+	if getW.Code != http.StatusOK {
+		t.Fatalf("expected 200 for get trip, got %d", getW.Code)
 	}
 
-	var persons []api.TripPersonWithDetails
-	if err := json.NewDecoder(listW.Body).Decode(&persons); err != nil {
-		t.Fatalf("decode persons list: %v", err)
+	var tripDetails api.TripWithDetails
+	if err := json.NewDecoder(getW.Body).Decode(&tripDetails); err != nil {
+		t.Fatalf("decode trip details: %v", err)
 	}
 
-	if len(persons) != 1 {
-		t.Errorf("expected 1 person, got %d", len(persons))
+	if len(tripDetails.Persons) != 1 {
+		t.Errorf("expected 1 person in trip, got %d", len(tripDetails.Persons))
 	}
 
 	// Remove person from trip

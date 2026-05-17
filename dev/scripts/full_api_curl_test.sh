@@ -325,41 +325,24 @@ log_step "set-item update"
 do_request "PATCH" "/api/v1/sets/${SET_ID}/items/${ITEM_ID}" '{"quantity":3,"notes":"updated note"}'
 assert_status "200" "update set item"
 
-# 11) Packs
-log_step "packs list"
-do_request "GET" "/api/v1/packs"
-assert_status "200" "list packs"
+log_step "set-item delete"
+do_request "DELETE" "/api/v1/sets/${SET_ID}/items/${ITEM_ID}"
+assert_status "204" "delete set item"
 
-log_step "pack create"
-do_request "POST" "/api/v1/packs" "{\"name\":\"API Test Pack\",\"trip_type\":\"multi_day\",\"person_id\":\"${PERSON_ID}\"}"
-assert_status "201" "create pack"
-PACK_ID="$(extract_json '.id')"
+log_step "set-items list after delete"
+do_request "GET" "/api/v1/sets/${SET_ID}/items"
+assert_status "200" "list set items after delete"
+assert_json_expr '. | length == 0' "list set items after delete"
 
-log_step "pack get"
-do_request "GET" "/api/v1/packs/${PACK_ID}"
-assert_status "200" "get pack"
+log_step "set delete"
+do_request "DELETE" "/api/v1/sets/${SET_ID}"
+assert_status "204" "delete set"
 
-log_step "pack update"
-do_request "PATCH" "/api/v1/packs/${PACK_ID}" '{"name":"API Test Pack Updated","trip_type":"overnight"}'
-assert_status "200" "update pack"
+log_step "sets list after delete"
+do_request "GET" "/api/v1/sets"
+assert_status "200" "list sets after delete"
 
-log_step "pack-items list"
-do_request "GET" "/api/v1/packs/${PACK_ID}/items"
-assert_status "200" "list pack items"
-
-log_step "pack-item add"
-do_request "POST" "/api/v1/packs/${PACK_ID}/items" "{\"item_id\":\"${ITEM_ID}\",\"quantity\":1,\"carry_status\":\"packed\"}"
-assert_status "201" "add pack item"
-
-log_step "pack-item update"
-do_request "PATCH" "/api/v1/packs/${PACK_ID}/items/${ITEM_ID}" '{"quantity":2,"carry_status":"worn"}'
-assert_status "200" "update pack item"
-
-log_step "pack-item remove"
-do_request "DELETE" "/api/v1/packs/${PACK_ID}/items/${ITEM_ID}"
-assert_status "204" "remove pack item"
-
-# 12) Trips
+# 11) Trips (Person-Centric Model)
 log_step "trips list"
 do_request "GET" "/api/v1/trips"
 assert_status "200" "list trips"
@@ -369,50 +352,117 @@ do_request "POST" "/api/v1/trips" '{"name":"API Test Trip","trip_type":"overnigh
 assert_status "201" "create trip"
 TRIP_ID="$(extract_json '.id')"
 
-log_step "trip get"
+log_step "trip get by id (nested)"
 do_request "GET" "/api/v1/trips/${TRIP_ID}"
-assert_status "200" "get trip"
+assert_status "200" "get trip by id"
+assert_json_expr '.persons | length == 0' "get trip - no persons initially"
+assert_json_expr '.name == "API Test Trip"' "get trip by id"
 
 log_step "trip update"
 do_request "PATCH" "/api/v1/trips/${TRIP_ID}" '{"name":"Updated Trip Name","total_distance_km":20.0}'
 assert_status "200" "update trip"
-
-log_step "trip-packs list"
-do_request "GET" "/api/v1/trips/${TRIP_ID}/packs"
-assert_status "200" "list trip packs"
-
-log_step "trip-pack add"
-do_request "POST" "/api/v1/trips/${TRIP_ID}/packs" "{\"pack_id\":\"${PACK_ID}\"}"
-assert_status "201" "add pack to trip"
-
-log_step "trip-items list"
-do_request "GET" "/api/v1/trips/${TRIP_ID}/items"
-assert_status "200" "list trip items"
-
-log_step "trip-item add"
-do_request "POST" "/api/v1/trips/${TRIP_ID}/items" "{\"item_id\":\"${ITEM_ID}\",\"quantity\":3,\"carry_status\":\"packed\",\"notes\":\"Test item notes\"}"
-assert_status "201" "add item to trip"
-
-log_step "trip-item update"
-do_request "PATCH" "/api/v1/trips/${TRIP_ID}/items/${ITEM_ID}" '{"quantity":4,"carry_status":"worn"}'
-assert_status "200" "update trip item"
-
-log_step "trip-sets list"
-do_request "GET" "/api/v1/trips/${TRIP_ID}/sets"
-assert_status "200" "list trip sets"
-
-log_step "trip-set add"
-do_request "POST" "/api/v1/trips/${TRIP_ID}/sets" "{\"set_id\":\"${SET_ID}\"}"
-assert_status "201" "add set to trip"
-
-log_step "trip-persons list"
-do_request "GET" "/api/v1/trips/${TRIP_ID}/persons"
-assert_status "200" "list trip persons"
+assert_json_expr '.name == "Updated Trip Name"' "update trip"
+assert_json_expr '.total_distance_km == 20' "update trip"
 
 log_step "trip-person add"
 do_request "POST" "/api/v1/trips/${TRIP_ID}/persons" "{\"person_id\":\"${PERSON_ID}\"}"
 assert_status "201" "add person to trip"
 
+log_step "trip get with person added"
+do_request "GET" "/api/v1/trips/${TRIP_ID}"
+assert_status "200" "get trip with person"
+assert_json_expr '.persons | length == 1' "get trip - 1 person added"
+assert_json_expr '.persons[0].person_id == "'"${PERSON_ID}"'"' "get trip - correct person"
+
+log_step "trip-person-item add"
+do_request "POST" "/api/v1/trips/${TRIP_ID}/persons/${PERSON_ID}/items" "{\"item_id\":\"${ITEM_ID}\",\"quantity\":1,\"carry_status\":\"worn\",\"notes\":\"Worn directly\"}"
+assert_status "201" "add item to person in trip"
+PERSON_ITEM_ID="$(extract_json '.id')"
+
+log_step "trip-person-item update"
+do_request "PATCH" "/api/v1/trips/${TRIP_ID}/persons/${PERSON_ID}/items/${PERSON_ITEM_ID}" '{"quantity":2,"notes":"Updated notes"}'
+assert_status "200" "update person item in trip"
+assert_json_expr '.quantity == 2' "update person item"
+assert_json_expr '.notes == "Updated notes"' "update person item"
+
+log_step "trip get with person item"
+do_request "GET" "/api/v1/trips/${TRIP_ID}"
+assert_status "200" "get trip with person item"
+assert_json_expr '.persons | length == 1' "get trip - verify person"
+assert_json_expr '.persons[0].items | length == 1' "get trip - verify person item"
+assert_json_expr '.persons[0].items[0].quantity == 2' "get trip - verify person item quantity"
+
+log_step "trip-person-item remove"
+do_request "DELETE" "/api/v1/trips/${TRIP_ID}/persons/${PERSON_ID}/items/${PERSON_ITEM_ID}"
+assert_status "204" "remove person item from trip"
+
+log_step "trip get after item removal"
+do_request "GET" "/api/v1/trips/${TRIP_ID}"
+assert_status "200" "get trip after item removal"
+assert_json_expr '.persons[0].items | length == 0' "get trip - person item removed"
+
+log_step "trip-person-pack create"
+do_request "POST" "/api/v1/trips/${TRIP_ID}/persons/${PERSON_ID}/packs" '{"name":"Test Trip Pack","trip_type":"overnight","notes":"Pack for overnight trip"}'
+assert_status "201" "create pack for person in trip"
+PACK_ID="$(extract_json '.pack_id')"
+
+log_step "trip get with pack"
+do_request "GET" "/api/v1/trips/${TRIP_ID}"
+assert_status "200" "get trip with pack"
+assert_json_expr '.persons[0].packs | length == 1' "get trip - verify pack"
+assert_json_expr '.persons[0].packs[0].pack.name == "Test Trip Pack"' "get trip - verify pack name"
+assert_json_expr '.persons[0].packs[0].pack.trip_type == "overnight"' "get trip - verify pack trip_type"
+
+log_step "trip-person-pack-item add"
+do_request "POST" "/api/v1/trips/${TRIP_ID}/persons/${PERSON_ID}/packs/${PACK_ID}/items" "{\"item_id\":\"${ITEM_ID}\",\"quantity\":3,\"carry_status\":\"packed\",\"notes\":\"Packed in pack\"}"
+assert_status "201" "add item to pack in trip"
+
+log_step "trip get with pack item"
+do_request "GET" "/api/v1/trips/${TRIP_ID}"
+assert_status "200" "get trip with pack item"
+assert_json_expr '.persons[0].packs[0].items | length == 1' "get trip - verify pack item"
+assert_json_expr '.persons[0].packs[0].items[0].quantity == 3' "get trip - verify pack item quantity"
+assert_json_expr '.persons[0].packs[0].items[0].carry_status == "packed"' "get trip - verify pack item carry_status"
+
+log_step "trip-person-pack-item update"
+do_request "PATCH" "/api/v1/trips/${TRIP_ID}/persons/${PERSON_ID}/packs/${PACK_ID}/items/${ITEM_ID}" '{"quantity":5,"notes":"Updated pack item notes"}'
+assert_status "200" "update pack item in trip"
+assert_json_expr '.quantity == 5' "update pack item"
+assert_json_expr '.notes == "Updated pack item notes"' "update pack item"
+
+log_step "trip get with updated pack item"
+do_request "GET" "/api/v1/trips/${TRIP_ID}"
+assert_status "200" "get trip with updated pack item"
+assert_json_expr '.persons[0].packs[0].items[0].quantity == 5' "get trip - verify updated pack item quantity"
+
+log_step "trip-person-pack-item remove"
+do_request "DELETE" "/api/v1/trips/${TRIP_ID}/persons/${PERSON_ID}/packs/${PACK_ID}/items/${ITEM_ID}"
+assert_status "204" "remove pack item from trip"
+
+log_step "trip get after pack item removal"
+do_request "GET" "/api/v1/trips/${TRIP_ID}"
+assert_status "200" "get trip after pack item removal"
+assert_json_expr '.persons[0].packs[0].items | length == 0' "get trip - pack item removed"
+
+log_step "trip-person-pack remove"
+do_request "DELETE" "/api/v1/trips/${TRIP_ID}/persons/${PERSON_ID}/packs/${PACK_ID}"
+assert_status "204" "remove pack from person in trip"
+
+log_step "trip get after pack removal"
+do_request "GET" "/api/v1/trips/${TRIP_ID}"
+assert_status "200" "get trip after pack removal"
+assert_json_expr '.persons[0].packs | length == 0' "get trip - pack removed"
+
+log_step "trip-person remove"
+do_request "DELETE" "/api/v1/trips/${TRIP_ID}/persons/${PERSON_ID}"
+assert_status "204" "remove person from trip"
+
+log_step "trip get after person removal"
+do_request "GET" "/api/v1/trips/${TRIP_ID}"
+assert_status "200" "get trip after person removal"
+assert_json_expr '.persons | length == 0' "get trip - person removed"
+
+# 12) Packing Lists
 log_step "trip-packing-lists list"
 do_request "GET" "/api/v1/packing-lists"
 assert_status "200" "list trip packing lists"
@@ -457,27 +507,49 @@ log_step "label delete"
 do_request "DELETE" "/api/v1/labels/${LABEL_ID}"
 assert_status "204" "delete label"
 
-log_step "trip-person remove"
-do_request "DELETE" "/api/v1/trips/${TRIP_ID}/persons/${PERSON_ID}"
-assert_status "204" "remove person from trip"
-
-log_step "trip-set remove"
-do_request "DELETE" "/api/v1/trips/${TRIP_ID}/sets/${SET_ID}"
-assert_status "204" "remove set from trip"
-
-log_step "trip-item remove"
-do_request "DELETE" "/api/v1/trips/${TRIP_ID}/items/${ITEM_ID}"
-assert_status "204" "remove item from trip"
-
-log_step "trip-pack remove"
-do_request "DELETE" "/api/v1/trips/${TRIP_ID}/packs/${PACK_ID}"
-assert_status "204" "remove pack from trip"
-
 log_step "trip delete"
 do_request "DELETE" "/api/v1/trips/${TRIP_ID}"
 assert_status "204" "delete trip"
 
-# 13) Start Fresh (danger zone)
+# 13) Delete operations for cleanup testing
+log_step "item delete (custom item)"
+do_request "DELETE" "/api/v1/items/${CUSTOM_ITEM_ID}"
+assert_status "204" "delete custom item"
+
+log_step "item delete (regular item)"
+do_request "DELETE" "/api/v1/items/${ITEM_ID}"
+assert_status "204" "delete item"
+
+log_step "items list after delete"
+do_request "GET" "/api/v1/items"
+assert_status "200" "list items after delete"
+
+log_step "item-type delete"
+do_request "DELETE" "/api/v1/item-types/${CUSTOM_TYPE_ID}"
+assert_status "204" "delete item type"
+
+log_step "item-types list after delete"
+do_request "GET" "/api/v1/item-types"
+assert_status "200" "list item types after delete"
+assert_json_expr 'all(.[]; .id != "'"${CUSTOM_TYPE_ID}"'")' "custom type deleted"
+
+log_step "manufacturer delete"
+do_request "DELETE" "/api/v1/manufacturers/${MANUFACTURER_ID}"
+assert_status "204" "delete manufacturer"
+
+log_step "manufacturers list after delete"
+do_request "GET" "/api/v1/manufacturers"
+assert_status "200" "list manufacturers after delete"
+
+log_step "person delete"
+do_request "DELETE" "/api/v1/persons/${PERSON_ID}"
+assert_status "204" "delete person"
+
+log_step "persons list after delete"
+do_request "GET" "/api/v1/persons"
+assert_status "200" "list persons after delete"
+
+# 14) Start Fresh (danger zone)
 log_step "start fresh wrong password"
 do_request "POST" "/api/v1/settings/start-fresh" '{"password":"wrong-password"}'
 assert_status "401" "start fresh wrong password"
@@ -506,11 +578,6 @@ do_request "GET" "/api/v1/sets"
 assert_status "200" "list sets after start fresh"
 assert_json_expr 'length == 0' "list sets after start fresh"
 
-log_step "verify packs reset"
-do_request "GET" "/api/v1/packs"
-assert_status "200" "list packs after start fresh"
-assert_json_expr 'length == 0' "list packs after start fresh"
-
 log_step "verify trips reset"
 do_request "GET" "/api/v1/trips"
 assert_status "200" "list trips after start fresh"
@@ -529,7 +596,7 @@ assert_json_expr '.temperature_unit == "c"' "settings defaults"
 assert_json_expr '.volume_unit == "ml"' "settings defaults"
 assert_json_expr '.currency == "eur"' "settings defaults"
 
-# 14) Auth logout
+# 15) Auth logout
 log_step "auth logout"
 do_request "POST" "/api/v1/auth/logout" "" "false"
 assert_status "204" "auth logout"
