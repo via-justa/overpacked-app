@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
+import { iconRegistry } from '../../lib/icons'
 
 withDefaults(defineProps<{
   submitLabel: string
@@ -30,11 +31,13 @@ defineEmits<{
 
 <template>
   <footer data-element="form-actions" class="mt-4 flex flex-wrap items-center gap-2">
-    <Button :data-element="submitDataElement" :label="submitLabel" icon="pi pi-check"
+    <Button :data-element="submitDataElement" :label="submitLabel" :icon="`pi ${iconRegistry.action.confirm}`"
       :disabled="!canSubmit || loading" :loading="loading" @click="$emit('submit')" />
-    <Button v-if="showCancel" :data-element="cancelDataElement" label="Cancel" icon="pi pi-times"
-      severity="secondary" outlined :disabled="loading" @click="$emit('cancel')" />
-    <Button v-if="showDelete" :data-element="deleteDataElement" label="Delete" icon="pi pi-trash"
-      severity="danger" outlined class="ml-auto" :disabled="loading" :loading="isDeleting" @click="$emit('delete')" />
+    <Button v-if="showCancel" :data-element="cancelDataElement" label="Cancel"
+      :icon="`pi ${iconRegistry.action.cancel}`" severity="secondary" outlined :disabled="loading"
+      @click="$emit('cancel')" />
+    <Button v-if="showDelete" :data-element="deleteDataElement" label="Delete"
+      :icon="`pi ${iconRegistry.action.delete}`" severity="danger" outlined class="ml-auto" :disabled="loading"
+      :loading="isDeleting" @click="$emit('delete')" />
   </footer>
 </template>

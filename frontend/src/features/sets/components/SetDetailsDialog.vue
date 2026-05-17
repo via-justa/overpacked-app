@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import Button from 'primevue/button'
+import { iconRegistry } from '../../../lib/icons'
+import { AppIcon } from '../../../components/icons'
 import AppSelect from '../../../components/forms/AppSelect.vue'
 import AppTemplateDialog from '../../../components/dialogs/AppTemplateDialog.vue'
 import AppNotSetValue from '../../../components/display/AppNotSetValue.vue'
@@ -248,8 +250,8 @@ watch(() => props.addItemId, (newItemId) => {
             placeholder="Qty" />
           <input v-model="addItemNotesModel" class="input-shell" type="text" placeholder="Notes (optional)" />
           <Button :label="isEditingExistingItem ? 'Update' : 'Add'"
-            :icon="isEditingExistingItem ? 'pi pi-check' : 'pi pi-plus'" :loading="isAddingItem"
-            :disabled="!addItemIdModel" @click="emit('addItem')" />
+            :icon="`pi ${isEditingExistingItem ? iconRegistry.action.confirm : iconRegistry.action.create}`"
+            :loading="isAddingItem" :disabled="!addItemIdModel" @click="emit('addItem')" />
         </div>
       </section>
 
@@ -295,8 +297,8 @@ watch(() => props.addItemId, (newItemId) => {
               </td>
               <td class="px-3 py-2">
                 <div class="group/note relative inline-flex" v-if="entry.notes">
-                  <i class="pi pi-file-edit text-copy-subtle hover:text-copy cursor-default text-sm"
-                    aria-hidden="true" />
+                  <AppIcon category="action" name="editField" size="sm"
+                    class="text-copy-subtle hover:text-copy cursor-default" />
                   <span
                     class="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 w-max max-w-xs -translate-x-1/2 rounded-lg border border-line-subtle bg-surface-elevated px-3 py-2 text-xs text-copy opacity-0 shadow-panel transition-opacity group-hover/note:opacity-100">
                     {{ entry.notes }}
@@ -310,13 +312,12 @@ watch(() => props.addItemId, (newItemId) => {
                     class="text-copy-muted hover:text-copy inline-flex h-8 w-8 items-center justify-center rounded-full transition"
                     :aria-label="`Edit ${entry.item.name}`"
                     @click="emit('editSetItem', { itemId: entry.item_id, quantity: entry.quantity, notes: entry.notes ?? '' })">
-                    <i class="pi pi-pencil text-sm" aria-hidden="true" />
+                    <AppIcon category="action" name="edit" size="sm" />
                   </button>
-                  <button type="button"
-                    class="inline-flex h-8 w-8 items-center justify-center rounded-full text-red-700 transition hover:text-red-900"
-                    :aria-label="`Remove ${entry.item.name} from set`"
+                  <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-full transition"
+                    :style="{ color: 'var(--color-danger-500)' }" :aria-label="`Remove ${entry.item.name} from set`"
                     @click="emit('requestRemoveSetItem', { itemId: entry.item_id, itemName: entry.item.name })">
-                    <i class="pi pi-trash text-sm" aria-hidden="true" />
+                    <AppIcon category="action" name="delete" size="sm" />
                   </button>
                 </div>
               </td>

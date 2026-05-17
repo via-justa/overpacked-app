@@ -47,7 +47,7 @@ const backgroundColor = computed(() => {
 
 const textColorClass = computed(() => {
   const contrast = getContrastColor(props.label.color)
-  return contrast === 'light' ? 'text-white' : 'text-gray-900'
+  return contrast === 'light' ? 'text-ink-inverse' : 'text-ink'
 })
 
 const borderColor = computed(() => {
@@ -59,15 +59,13 @@ const borderColor = computed(() => {
 </script>
 
 <template>
-  <span data-component="item-label" class="inline-flex items-center gap-1 rounded-full font-medium transition-all"
-    :class="[sizeClass, textColorClass]" :style="{
+  <component :is="removable ? 'button' : 'span'" data-component="item-label"
+    class="inline-flex items-center gap-1 rounded-full font-medium transition-all"
+    :class="[sizeClass, textColorClass, removable ? 'hover:opacity-80 cursor-pointer' : '']"
+    :type="removable ? 'button' : undefined" :aria-label="removable ? `Remove ${label.name} label` : undefined" :style="{
       backgroundColor: backgroundColor,
       border: `1px solid ${borderColor}`
-    }">
+    }" @click="removable ? emit('remove') : undefined">
     <span class="truncate">{{ label.name }}</span>
-    <button v-if="removable" type="button" class="hover:opacity-70 transition-opacity -mr-0.5"
-      :class="size === 'sm' ? 'p-0.5' : 'p-1'" aria-label="Remove label" @click.stop="emit('remove')">
-      <i class="pi pi-times" :class="size === 'sm' ? 'text-[10px]' : 'text-xs'" />
-    </button>
-  </span>
+  </component>
 </template>

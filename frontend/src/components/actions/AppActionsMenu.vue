@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { iconRegistry } from '../../lib/icons'
+import { AppIcon } from '../icons'
 
 export type ActionTarget = 'add-item' | 'add-set' | 'add-person' | 'add-packing-list' | 'manage-manufacturers' | 'manage-categories' | 'import-csv' | 'settings' | 'logout' | 'dashboard' | 'planner' | 'sets' | 'lists' | 'gear' | 'persons'
 
@@ -26,29 +28,29 @@ const focusedIndex = ref(0)
 const actionsExpanded = ref(false)
 
 const actionOptions: ActionOption[] = [
-  { value: 'add-item', label: 'Add Item', description: 'Create a new gear item.', icon: 'pi pi-box' },
-  { value: 'add-set', label: 'Add Set', description: 'Create a new gear set.', icon: 'pi pi-sitemap' },
-  { value: 'add-person', label: 'Add Person', description: 'Create a new person.', icon: 'pi pi-user' },
-  { value: 'add-packing-list', label: 'Add Packing List', description: 'Create a new packing list.', icon: 'pi pi-check-square' },
-  { value: 'manage-manufacturers', label: 'Manage Manufacturers', description: 'Create and edit manufacturers.', icon: 'pi pi-building' },
-  { value: 'manage-categories', label: 'Manage Categories', description: 'Create and edit custom categories.', icon: 'pi pi-tag' },
-  { value: 'import-csv', label: 'Import from CSV', description: 'Preview and import gear from CSV.', icon: 'pi pi-upload' },
-  { value: 'settings', label: 'Settings', description: 'Configure app preferences.', icon: 'pi pi-cog' },
-  { value: 'logout', label: 'Logout', description: 'Sign out of your account.', icon: 'pi pi-sign-out' },
+  { value: 'add-item', label: 'Add Item', description: 'Create a new gear item.', icon: `pi ${iconRegistry.navigation.gear}` },
+  { value: 'add-set', label: 'Add Set', description: 'Create a new gear set.', icon: `pi ${iconRegistry.navigation.sets}` },
+  { value: 'add-person', label: 'Add Person', description: 'Create a new person.', icon: `pi ${iconRegistry.navigation.person}` },
+  { value: 'add-packing-list', label: 'Add Packing List', description: 'Create a new packing list.', icon: `pi ${iconRegistry.navigation.planner}` },
+  { value: 'manage-manufacturers', label: 'Manage Manufacturers', description: 'Create and edit manufacturers.', icon: `pi ${iconRegistry.content.building}` },
+  { value: 'manage-categories', label: 'Manage Categories', description: 'Create and edit custom categories.', icon: `pi ${iconRegistry.content.tag}` },
+  { value: 'import-csv', label: 'Import from CSV', description: 'Preview and import gear from CSV.', icon: `pi ${iconRegistry.action.upload}` },
+  { value: 'settings', label: 'Settings', description: 'Configure app preferences.', icon: `pi ${iconRegistry.navigation.settings}` },
+  { value: 'logout', label: 'Logout', description: 'Sign out of your account.', icon: `pi ${iconRegistry.navigation.logout}` },
 ]
 
 const desktopNavigationOptions: ActionOption[] = [
-  { value: 'dashboard' as ActionTarget, label: 'Dashboard', description: 'View your dashboard.', icon: 'pi pi-home' },
-  { value: 'planner' as ActionTarget, label: 'Planner', description: 'Sets, lists, and persons.', icon: 'pi pi-list-check' },
-  { value: 'gear' as ActionTarget, label: 'Gear', description: 'Manage your gear items.', icon: 'pi pi-box' },
+  { value: 'dashboard' as ActionTarget, label: 'Dashboard', description: 'View your dashboard.', icon: `pi ${iconRegistry.navigation.dashboard}` },
+  { value: 'planner' as ActionTarget, label: 'Planner', description: 'Sets, lists, and persons.', icon: `pi ${iconRegistry.navigation.planner}` },
+  { value: 'gear' as ActionTarget, label: 'Gear', description: 'Manage your gear items.', icon: `pi ${iconRegistry.navigation.gear}` },
 ]
 
 const mobileNavigationOptions: ActionOption[] = [
-  { value: 'dashboard' as ActionTarget, label: 'Dashboard', description: 'View your dashboard.', icon: 'pi pi-home' },
-  { value: 'sets' as ActionTarget, label: 'Sets', description: 'Manage your gear sets.', icon: 'pi pi-sitemap' },
-  { value: 'lists' as ActionTarget, label: 'Packing Lists', description: 'Trip checklist templates.', icon: 'pi pi-check-square' },
-  { value: 'persons' as ActionTarget, label: 'Persons', description: 'Manage persons.', icon: 'pi pi-users' },
-  { value: 'gear' as ActionTarget, label: 'Gear', description: 'Manage your gear items.', icon: 'pi pi-box' },
+  { value: 'dashboard' as ActionTarget, label: 'Dashboard', description: 'View your dashboard.', icon: `pi ${iconRegistry.navigation.dashboard}` },
+  { value: 'sets' as ActionTarget, label: 'Sets', description: 'Manage your gear sets.', icon: `pi ${iconRegistry.navigation.sets}` },
+  { value: 'lists' as ActionTarget, label: 'Packing Lists', description: 'Trip checklist templates.', icon: `pi ${iconRegistry.navigation.planner}` },
+  { value: 'persons' as ActionTarget, label: 'Persons', description: 'Manage persons.', icon: `pi ${iconRegistry.navigation.persons}` },
+  { value: 'gear' as ActionTarget, label: 'Gear', description: 'Manage your gear items.', icon: `pi ${iconRegistry.navigation.gear}` },
 ]
 
 const isMobile = ref(false)
@@ -233,8 +235,7 @@ onUnmounted(() => {
                 class="text-copy-subtle hover:text-copy flex items-center justify-between px-1 pb-1 pt-2 text-xs font-semibold uppercase tracking-[0.08em] transition"
                 @click="actionsExpanded = !actionsExpanded">
                 <span>Actions</span>
-                <i :class="actionsExpanded ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" class="text-xs"
-                  aria-hidden="true"></i>
+                <AppIcon category="directional" :name="actionsExpanded ? 'chevronUp' : 'chevronDown'" size="xs" />
               </button>
               <!-- Mobile: separator after collapsed Actions header -->
               <div v-if="isMobile && !actionsExpanded && index === mobileNavigationOptions.length"

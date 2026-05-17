@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import Button from 'primevue/button'
+import { iconRegistry } from '../../../lib/icons'
 import AppSelect from '../../../components/forms/AppSelect.vue'
 import AppToggleGroup from '../../../components/forms/AppToggleGroup.vue'
 import ItemLabelsSelector from './ItemLabelsSelector.vue'
@@ -368,8 +369,9 @@ defineExpose({
               <input data-element="item-image-upload"
                 class="text-copy text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-surface-soft file:px-3 file:py-2 file:text-sm file:font-medium file:text-copy hover:file:bg-surface-muted"
                 type="file" accept="image/*" @change="onImageChange" />
-              <Button v-if="imagePreviewSrc" data-element="item-image-clear" label="Remove" icon="pi pi-trash"
-                severity="secondary" outlined size="small" @click="clearImage" />
+              <Button v-if="imagePreviewSrc" data-element="item-image-clear" label="Remove"
+                :icon="`pi ${iconRegistry.action.delete}`" severity="secondary" outlined size="small"
+                @click="clearImage" />
             </div>
 
             <div v-if="imagePreviewSrc"
@@ -465,7 +467,7 @@ defineExpose({
               <template v-for="field in dynamicFields" :key="field.field_key">
                 <div v-if="field.data_type === 'enum'" class="grid gap-1">
                   <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">{{ field.field_label
-                  }}</span>
+                    }}</span>
                   <AppSelect :data-element="`item-attribute-${field.field_key}`"
                     :model-value="getAttributeStringValue(field.field_key)"
                     :invalid="Boolean(getDynamicFieldError(field.field_key))"
@@ -480,7 +482,7 @@ defineExpose({
 
                 <label v-else-if="field.data_type === 'string'" class="grid gap-1">
                   <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">{{ field.field_label
-                  }}</span>
+                    }}</span>
                   <input :data-element="`item-attribute-${field.field_key}`" class="input-shell"
                     :value="getAttributeStringValue(field.field_key)" type="text"
                     @input="updateAttributeValue(field.field_key, ($event.target as HTMLInputElement).value)" />
@@ -492,7 +494,7 @@ defineExpose({
 
                 <label v-else-if="field.data_type === 'number'" class="grid gap-1">
                   <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">{{ field.field_label
-                  }}</span>
+                    }}</span>
                   <input :data-element="`item-attribute-${field.field_key}`" class="input-shell"
                     :value="getAttributeStringValue(field.field_key)" inputmode="decimal" type="text"
                     @input="updateAttributeValue(field.field_key, ($event.target as HTMLInputElement).value)" />
@@ -504,7 +506,7 @@ defineExpose({
 
                 <label v-else-if="field.data_type === 'integer'" class="grid gap-1">
                   <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">{{ field.field_label
-                  }}</span>
+                    }}</span>
                   <input :data-element="`item-attribute-${field.field_key}`" class="input-shell"
                     :value="getAttributeStringValue(field.field_key)" inputmode="numeric" type="text"
                     @input="updateAttributeValue(field.field_key, ($event.target as HTMLInputElement).value)" />
@@ -516,7 +518,7 @@ defineExpose({
 
                 <div v-else class="grid gap-1">
                   <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">{{ field.field_label
-                  }}</span>
+                    }}</span>
                   <AppToggleGroup :name="`item-attribute-${field.field_key}`"
                     :data-element="`item-attribute-${field.field_key}`"
                     :model-value="getAttributeBooleanValue(field.field_key) ? 'yes' : 'no'" :options="yesNoOptions"
@@ -537,11 +539,12 @@ defineExpose({
 
     <footer v-if="!bare && showButtons !== false" data-element="item-form-actions"
       class="mt-4 flex shrink-0 flex-wrap items-center gap-2">
-      <Button data-element="item-form-submit" :label="submitLabel" icon="pi pi-check"
+      <Button data-element="item-form-submit" :label="submitLabel" :icon="`pi ${iconRegistry.action.confirm}`"
         :disabled="!canSubmit || loading || Object.keys(validationErrors).length > 0" :loading="loading"
         @click="onSubmit" />
-      <Button v-if="showCancel" data-element="item-form-cancel" label="Cancel" icon="pi pi-times" severity="secondary"
-        outlined :disabled="loading" @click="onCancel" />
+      <Button v-if="showCancel" data-element="item-form-cancel" label="Cancel"
+        :icon="`pi ${iconRegistry.action.cancel}`" severity="secondary" outlined :disabled="loading"
+        @click="onCancel" />
     </footer>
   </section>
 </template>

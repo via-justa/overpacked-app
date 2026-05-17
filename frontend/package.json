@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "lint:css": "stylelint \"src/**/*.{css,vue}\"",
     "lint:css:fix": "stylelint \"src/**/*.{css,vue}\" --fix",
-    "lint:theme": "node scripts/check-no-raw-palette-classes.mjs"
+    "lint:theme": "node scripts/check-no-raw-palette-classes.mjs",
+    "lint:icons": "node scripts/check-no-direct-primeicons.mjs"
   },
   "dependencies": {
     "@primeuix/themes": "^2.0.3",

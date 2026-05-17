@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ItemLabel from './ItemLabel.vue'
+import { AppIcon } from '../../../components/icons'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import type { Item, Label } from '../types'
 
@@ -34,7 +35,7 @@ const formatType = (value: string) => {
         class="border-line bg-surface-elevated flex flex-col items-center gap-2 rounded-2xl border px-5 py-4 shadow-soft">
         <span
           class="border-line text-copy-subtle bg-surface-base flex h-10 w-10 items-center justify-center rounded-full border">
-          <i class="pi pi-image text-base" />
+          <AppIcon category="content" name="image" size="md" />
         </span>
         <span class="text-copy-subtle text-xs font-semibold uppercase tracking-[0.12em]">No Image</span>
       </div>

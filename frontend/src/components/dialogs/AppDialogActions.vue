@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import Button from 'primevue/button'
+import { iconRegistry } from '../../lib/icons'
 
 // Reusable dialog action buttons (submit/cancel/delete) with loading states
 const props = withDefaults(defineProps<{
@@ -27,6 +28,7 @@ const props = withDefaults(defineProps<{
 })
 
 const submitText = computed(() => props.submitLabel ?? (props.mode === 'create' ? 'Create' : 'Save'))
+const loading = computed(() => props.isPending || props.isCreating || props.isUpdating || props.isDeleting)
 
 defineEmits<{
   submit: []
@@ -38,12 +40,13 @@ defineEmits<{
 <template>
   <div data-element="dialog-actions" class="mt-4 flex shrink-0 items-center justify-between gap-3">
     <div class="flex flex-wrap items-center gap-2">
-      <Button :data-element="submitDataElement" :label="submitText" icon="pi pi-check"
-        :disabled="!canSubmit || isPending" :loading="isCreating || isUpdating" @click="$emit('submit')" />
-      <Button :data-element="cancelDataElement" label="Cancel" icon="pi pi-times" severity="secondary" outlined
-        :disabled="isPending" @click="$emit('cancel')" />
+      <Button :data-element="submitDataElement" :label="submitText" :icon="`pi ${iconRegistry.action.confirm}`"
+        :disabled="!canSubmit || loading" :loading="loading" @click="$emit('submit')" />
+      <Button :data-element="cancelDataElement" label="Cancel" :icon="`pi ${iconRegistry.action.cancel}`"
+        severity="secondary" outlined :disabled="loading" @click="$emit('cancel')" />
     </div>
-    <Button v-if="mode === 'edit' && showDelete" :data-element="deleteDataElement" label="Delete" icon="pi pi-trash"
-      severity="danger" outlined class="ml-auto" :disabled="isPending" :loading="isDeleting" @click="$emit('delete')" />
+    <Button v-if="mode === 'edit' && showDelete" :data-element="deleteDataElement" label="Delete"
+      :icon="`pi ${iconRegistry.action.delete}`" severity="danger" outlined class="ml-auto" :disabled="isPending"
+      :loading="isDeleting" @click="$emit('delete')" />
   </div>
 </template>

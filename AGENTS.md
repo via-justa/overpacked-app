@@ -154,3 +154,24 @@ Only these are mandatory for items:
 - Shared display components (`ItemCard`, `ItemsListView`, `ItemsTypeTable`) are imported by multiple features (items, sets, packs)
 - Feature-specific form/dialog components stay within the feature folder and are not widely reused (e.g., `ItemFormCard` is items-specific)
 - Pass all formatted/calculated values as props to components; avoid components doing domain logic
+
+## Icon Management (Required)
+
+### Icon System Architecture
+- **Icon Registry**: Single source of truth at `frontend/src/lib/icons/registry.ts` with 6 semantic categories
+- **AppIcon Component**: Standardized component at `frontend/src/components/icons/AppIcon.vue` with automatic accessibility
+- **Enforcement**: Custom lint rule prevents direct PrimeIcons usage (`npm run lint:icons`)
+
+### Linting & Enforcement
+- Run `npm run lint:icons` before committing icon-related changes
+- Script scans all `.vue`, `.ts`, `.js` files for direct PrimeIcons usage patterns
+- Violations must be fixed before merging - enforces iconRegistry/AppIcon usage
+- See `frontend/src/lib/icons/README.md` for complete migration guide
+
+### Icon Registry Categories
+- **action**: create, delete, edit, cancel, confirm, upload, etc.
+- **navigation**: dashboard, gear, sets, persons, settings, login, logout
+- **status**: success, error, warning, info, active, inactive
+- **content**: image, tag, externalLink, file, folder, building
+- **directional**: chevronUp, chevronDown, chevronLeft, chevronRight, arrowUp, etc.
+- **feedback**: spinner, loading, info

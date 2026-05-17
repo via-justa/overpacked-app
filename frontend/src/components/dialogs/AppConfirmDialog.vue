@@ -48,8 +48,10 @@ const onConfirm = () => {
           {{ cancelLabel }}
         </button>
         <button type="button" class="rounded-md px-3 py-1.5 text-sm font-semibold" :class="confirmTone === 'danger'
-          ? 'border border-red-200 text-red-700 hover:bg-red-50'
-          : 'bg-brand-600 text-white hover:bg-brand-700'" @click="onConfirm">
+          ? 'border hover:bg-[color-mix(in_srgb,var(--color-danger-500)_22%,var(--color-surface-elevated))]'
+          : 'bg-brand-600 text-ink-inverse hover:bg-brand-700'"
+          :style="confirmTone === 'danger' ? { borderColor: 'color-mix(in srgb, var(--color-danger-500) 55%, var(--color-line-subtle))', color: 'var(--color-danger-500)' } : undefined"
+          @click="onConfirm">
           {{ confirmLabel }}
         </button>
       </div>

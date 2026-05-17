@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
+import { iconRegistry } from '../../../lib/icons'
 import AppConfirmDialog from '../../../components/dialogs/AppConfirmDialog.vue'
 import AppSelect from '../../../components/forms/AppSelect.vue'
 import AppFormCreateDialog from '../../../components/dialogs/AppFormCreateDialog.vue'
@@ -184,10 +185,10 @@ const onDelete = async () => {
     @update:open="(v: boolean) => { emit('update:open', v); if (!v) close() }"
     @submit="mode === 'create' ? onCreate() : onUpdate()" @cancel="close" @delete="onDeleteRequest">
     <div class="mt-3 grid grid-cols-2 gap-2">
-      <Button data-element="manufacturer-mode-create" label="Create" icon="pi pi-plus"
+      <Button data-element="manufacturer-mode-create" label="Create" :icon="`pi ${iconRegistry.action.create}`"
         :severity="mode === 'create' ? undefined : 'secondary'" :outlined="mode !== 'create'"
         class="w-full justify-center" @click="setMode('create')" />
-      <Button data-element="manufacturer-mode-edit" label="Edit" icon="pi pi-pencil"
+      <Button data-element="manufacturer-mode-edit" label="Edit" :icon="`pi ${iconRegistry.action.edit}`"
         :severity="mode === 'edit' ? undefined : 'secondary'" :outlined="mode !== 'edit'" class="w-full justify-center"
         @click="setMode('edit')" />
     </div>

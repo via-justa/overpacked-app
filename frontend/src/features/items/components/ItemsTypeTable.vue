@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import AppToggleGroup from '../../../components/forms/AppToggleGroup.vue'
 import AppBooleanValue from '../../../components/display/AppBooleanValue.vue'
 import AppItemTableRowContent from '../../../components/display/AppItemTableRowContent.vue'
+import { AppIcon } from '../../../components/icons'
 import { useRowActionsMenu } from '../../../composables/useRowActionsMenu'
 import type { Item, Label } from '../types'
 
@@ -171,7 +172,8 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
               Clear default
             </button>
             <button type="button"
-              class="rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50"
+              class="rounded-md border px-2 py-1 text-xs font-medium hover:bg-[color-mix(in_srgb,var(--color-danger-500)_22%,var(--color-surface-elevated))]"
+              :style="{ borderColor: 'color-mix(in srgb, var(--color-danger-500) 55%, var(--color-line-subtle))', color: 'var(--color-danger-500)' }"
               :disabled="selectedItemIds.length === 0" @click="emit('bulk:delete')">
               Delete selected
             </button>
@@ -233,7 +235,7 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
                   <button type="button"
                     class="text-copy-muted hover:text-copy hover:bg-surface-soft inline-flex h-7 w-7 items-center justify-center rounded-full transition"
                     :aria-label="`Open actions for ${item.name}`" @click="(event) => toggleRowActions(item.id, event)">
-                    <i class="pi pi-ellipsis-h text-xs" aria-hidden="true" />
+                    <AppIcon category="action" name="menu" size="xs" />
                   </button>
                 </div>
               </td>
@@ -251,7 +253,7 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
                       <a v-if="field.href" :href="field.href" target="_blank" rel="noreferrer"
                         class="text-brand-500 inline-flex items-center"
                         :aria-label="`Open ${field.label} for ${item.name}`">
-                        <i class="pi pi-external-link" aria-hidden="true"></i>
+                        <AppIcon category="content" name="externalLink" size="sm" />
                         <span class="sr-only">Open {{ field.label }}</span>
                       </a>
                       <AppBooleanValue v-else-if="typeof field.booleanValue === 'boolean'" :value="field.booleanValue"
@@ -296,8 +298,9 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
         @click="emit('row:toggleDefault', activeMenuItem); closeRowActions()">
         {{ activeMenuItem.is_default ? 'Unset default' : 'Set default' }}
       </button>
-      <button type="button" class="block w-full px-3 py-2 text-left text-xs font-medium text-red-700 hover:bg-red-50"
-        @click="emit('row:delete', activeMenuItem); closeRowActions()">
+      <button type="button"
+        class="block w-full px-3 py-2 text-left text-xs font-medium hover:bg-[color-mix(in_srgb,var(--color-danger-500)_22%,var(--color-surface-elevated))]"
+        :style="{ color: 'var(--color-danger-500)' }" @click="emit('row:delete', activeMenuItem); closeRowActions()">
         Delete
       </button>
     </div>

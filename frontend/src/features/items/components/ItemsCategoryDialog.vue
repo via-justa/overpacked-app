@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
+import { iconRegistry } from '../../../lib/icons'
 import AppConfirmDialog from '../../../components/dialogs/AppConfirmDialog.vue'
 import AppSelect from '../../../components/forms/AppSelect.vue'
 import AppFormCreateDialog from '../../../components/dialogs/AppFormCreateDialog.vue'
@@ -326,10 +327,10 @@ const onDelete = async () => {
     @update:open="(v: boolean) => { emit('update:open', v); if (!v) close() }"
     @submit="mode === 'create' ? onCreate() : onUpdate()" @cancel="close" @delete="onDeleteRequest">
     <div class="mt-3 grid grid-cols-2 gap-2">
-      <Button data-element="category-mode-create" label="Create" icon="pi pi-plus"
+      <Button data-element="category-mode-create" label="Create" :icon="`pi ${iconRegistry.action.create}`"
         :severity="mode === 'create' ? undefined : 'secondary'" :outlined="mode !== 'create'"
         class="w-full justify-center" @click="void setMode('create')" />
-      <Button data-element="category-mode-edit" label="Edit" icon="pi pi-pencil"
+      <Button data-element="category-mode-edit" label="Edit" :icon="`pi ${iconRegistry.action.edit}`"
         :severity="mode === 'edit' ? undefined : 'secondary'" :outlined="mode !== 'edit'" class="w-full justify-center"
         @click="void setMode('edit')" />
     </div>
@@ -367,15 +368,15 @@ const onDelete = async () => {
                   {{ option.label }}
                 </option>
               </AppSelect>
-              <Button :data-element="`category-field-remove-${index}`" icon="pi pi-trash" severity="secondary" outlined
-                :disabled="fieldValues.length <= 1" @click="removeField(index)" />
+              <Button :data-element="`category-field-remove-${index}`" :icon="`pi ${iconRegistry.action.delete}`"
+                severity="secondary" outlined :disabled="fieldValues.length <= 1" @click="removeField(index)" />
             </div>
             <input v-if="field.type === 'select'" :data-element="`category-field-options-${index}`" class="input-shell"
               :value="field.selectOptions" type="text" placeholder="Select options (comma separated)"
               @input="updateField(index, { ...field, selectOptions: ($event.target as HTMLInputElement).value })" />
           </div>
-          <Button data-element="category-field-add" label="Add field" icon="pi pi-plus" severity="secondary" outlined
-            @click="addField" />
+          <Button data-element="category-field-add" label="Add field" :icon="`pi ${iconRegistry.action.create}`"
+            severity="secondary" outlined @click="addField" />
         </div>
 
         <label class="grid gap-1">

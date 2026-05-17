@@ -3,6 +3,8 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import { useToast } from 'primevue/usetoast'
+import { iconRegistry } from '../../../lib/icons'
+import { AppIcon } from '../../../components/icons'
 import AppToggleGroup from '../../../components/forms/AppToggleGroup.vue'
 import AppConfirmDialog from '../../../components/dialogs/AppConfirmDialog.vue'
 import AppQueryError from '../../../components/feedback/AppQueryError.vue'
@@ -565,10 +567,10 @@ const itemTypeFilterOptions = computed<Array<{ value: ItemTypeFilter; label: str
 })
 
 const createTargetOptions: Array<{ value: CreateTarget; label: string; description: string; icon: string }> = [
-  { value: 'item', label: 'Create', description: 'Add a new gear item.', icon: 'pi pi-box' },
-  { value: 'manufacturer', label: 'Manage Manufacturers', description: 'Create and edit manufacturers.', icon: 'pi pi-building' },
-  { value: 'category', label: 'Manage Categories', description: 'Create and edit custom categories.', icon: 'pi pi-tag' },
-  { value: 'import', label: 'Import CSV', description: 'Preview and import gear from CSV.', icon: 'pi pi-upload' },
+  { value: 'item', label: 'Create', description: 'Add a new gear item.', icon: `pi ${iconRegistry.navigation.gear}` },
+  { value: 'manufacturer', label: 'Manage Manufacturers', description: 'Create and edit manufacturers.', icon: `pi ${iconRegistry.content.building}` },
+  { value: 'category', label: 'Manage Categories', description: 'Create and edit custom categories.', icon: `pi ${iconRegistry.content.tag}` },
+  { value: 'import', label: 'Import CSV', description: 'Preview and import gear from CSV.', icon: `pi ${iconRegistry.action.upload}` },
 ]
 
 const itemFormTypeOptions = computed<Array<{ label: string; value: string }>>(() => {
@@ -1476,7 +1478,7 @@ onBeforeUnmount(() => {
             <button type="button"
               class="text-copy-muted hover:text-copy hover:bg-surface-soft inline-flex h-9 w-9 items-center justify-center rounded-full transition"
               aria-label="View settings" @click="toggleSettingsMenu">
-              <i class="pi pi-cog text-sm" aria-hidden="true" />
+              <AppIcon category="navigation" name="settings" size="sm" />
             </button>
 
             <div v-if="isSettingsMenuOpen"

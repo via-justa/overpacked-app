@@ -7,6 +7,7 @@ import { useToast } from 'primevue/usetoast'
 import { useForm } from 'vee-validate'
 import { useMutation } from '@tanstack/vue-query'
 import { z } from 'zod'
+import { iconRegistry } from '../lib/icons'
 import { loginAuth } from '../lib/api/auth'
 import { buildTypedSchema } from '../lib/validation/schema'
 import { useAuthStore } from '../stores/auth'
@@ -111,7 +112,8 @@ const onSubmit = handleSubmit(async (values) => {
             class="input-shell w-full" type="text" name="username" autocomplete="username"
             :aria-invalid="Boolean(errors.username)"
             :aria-describedby="errors.username ? 'username-error' : undefined" />
-          <p v-if="errors.username" id="username-error" class="text-danger-500 mt-1 text-xs font-medium">{{ errors.username }}</p>
+          <p v-if="errors.username" id="username-error" class="text-danger-500 mt-1 text-xs font-medium">{{
+            errors.username }}</p>
         </div>
 
         <div>
@@ -120,14 +122,15 @@ const onSubmit = handleSubmit(async (values) => {
             class="input-shell w-full" type="password" name="password" autocomplete="current-password"
             :aria-invalid="Boolean(errors.password)"
             :aria-describedby="errors.password ? 'password-error' : undefined" />
-          <p v-if="errors.password" id="password-error" class="text-danger-500 mt-1 text-xs font-medium">{{ errors.password }}</p>
+          <p v-if="errors.password" id="password-error" class="text-danger-500 mt-1 text-xs font-medium">{{
+            errors.password }}</p>
         </div>
       </div>
 
       <p v-if="submitError" class="text-danger-500 mt-3 text-sm font-medium">{{ submitError }}</p>
 
-      <Button type="submit" data-element="login-submit" class="mt-6 w-full" label="Sign in" icon="pi pi-sign-in"
-        :disabled="!meta.valid || isSubmitting" :loading="isSubmitting" />
+      <Button type="submit" data-element="login-submit" class="mt-6 w-full" label="Sign in"
+        :icon="`pi ${iconRegistry.navigation.login}`" :disabled="!meta.valid || isSubmitting" :loading="isSubmitting" />
     </form>
   </main>
 </template>

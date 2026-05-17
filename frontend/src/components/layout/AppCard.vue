@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { AppIcon } from '../icons'
 /**
  * Generic card component for person/item/set cards.
  * Provides consistent styling with slots for image, content, and actions.
@@ -30,7 +31,7 @@ withDefaults(defineProps<Props>(), {
         <span
           class="border-line text-copy-subtle bg-surface-base flex h-10 w-10 items-center justify-center rounded-full border">
           <slot name="placeholder-icon">
-            <i class="pi pi-image text-base" />
+            <AppIcon category="content" name="image" size="md" />
           </slot>
         </span>
         <span class="text-copy-subtle text-xs font-semibold uppercase tracking-[0.12em]">

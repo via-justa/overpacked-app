@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import Button from 'primevue/button'
+import { iconRegistry } from '../../../lib/icons'
 import AppTemplateDialog from '../../../components/dialogs/AppTemplateDialog.vue'
 import SettingsSectionCard from './SettingsSectionCard.vue'
 
@@ -61,8 +62,8 @@ const submit = () => {
         </p>
       </div>
 
-      <Button data-element="settings-start-fresh" label="Start Fresh" icon="pi pi-trash" severity="danger" outlined
-        :disabled="isPending" @click="openDialog" />
+      <Button data-element="settings-start-fresh" label="Start Fresh" :icon="`pi ${iconRegistry.action.delete}`"
+        severity="danger" outlined :disabled="isPending" @click="openDialog" />
     </div>
   </SettingsSectionCard>
 
@@ -84,10 +85,11 @@ const submit = () => {
       </label>
 
       <footer class="mt-5 flex justify-end gap-2">
-        <Button data-element="settings-start-fresh-cancel" label="Cancel" icon="pi pi-times" severity="secondary"
-          outlined :disabled="isPending" @click="closeDialog" />
-        <Button data-element="settings-start-fresh-confirm" label="Delete All Data" icon="pi pi-trash" severity="danger"
-          :disabled="!canSubmit || isPending" :loading="isPending" @click="submit" />
+        <Button data-element="settings-start-fresh-cancel" label="Cancel" :icon="`pi ${iconRegistry.action.cancel}`"
+          severity="secondary" outlined :disabled="isPending" @click="closeDialog" />
+        <Button data-element="settings-start-fresh-confirm" label="Delete All Data"
+          :icon="`pi ${iconRegistry.action.delete}`" severity="danger" :disabled="!canSubmit || isPending"
+          :loading="isPending" @click="submit" />
       </footer>
     </article>
   </AppTemplateDialog>

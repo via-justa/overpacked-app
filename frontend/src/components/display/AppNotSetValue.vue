@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppIcon from '../icons/AppIcon.vue'
+
 defineProps<{
   label?: string
 }>()
@@ -7,7 +9,7 @@ defineProps<{
 <template>
   <span class="text-copy-muted inline-flex items-center opacity-70" :aria-label="label ?? 'Not set'"
     :title="label ?? 'Not set'">
-    <i class="pi pi-minus-circle" aria-hidden="true"></i>
+    <AppIcon category="status" name="notSet" />
     <span class="sr-only">{{ label ?? 'Not set' }}</span>
   </span>
 </template>

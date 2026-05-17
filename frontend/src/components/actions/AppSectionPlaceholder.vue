@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppIcon from '../icons/AppIcon.vue'
+
 defineProps<{
   title: string
   description: string
@@ -12,7 +14,7 @@ defineProps<{
     <p class="text-copy-muted mt-3 max-w-3xl text-base sm:text-lg">{{ description }}</p>
     <div data-element="placeholder-ready-banner"
       class="border-brand-200 bg-brand-50 text-brand-800 mt-8 flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-medium">
-      <i class="pi pi-check-circle" aria-hidden="true"></i>
+      <AppIcon category="status" name="success" />
       <span>Page scaffolded and ready for feature implementation.</span>
     </div>
   </section>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { AppIcon } from '../../../components/icons'
 import ItemLabel from './ItemLabel.vue'
 import type { Label } from '../types'
 
@@ -114,7 +115,7 @@ const removeLabel = (labelId: string) => {
         <button v-if="showCreateOption" type="button"
           class="text-copy-subtle hover:bg-surface-soft flex w-full items-center gap-2 border-t border-line-subtle px-3 py-2 text-left text-sm font-medium transition"
           @click="createLabel">
-          <i class="pi pi-plus text-xs" aria-hidden="true" />
+          <AppIcon category="action" name="create" size="xs" />
           <span>Create "{{ searchInput }}"</span>
         </button>
       </div>

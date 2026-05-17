@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
+import { iconRegistry } from '../../lib/icons'
 
 const props = withDefaults(defineProps<{
   visible?: boolean
@@ -11,7 +12,7 @@ const props = withDefaults(defineProps<{
 }>(), {
   visible: true,
   label: 'Create',
-  icon: 'pi pi-plus',
+  icon: `pi ${iconRegistry.action.create}`,
   size: 'small',
   reserveSpace: true,
   dataElement: 'app-create-button',

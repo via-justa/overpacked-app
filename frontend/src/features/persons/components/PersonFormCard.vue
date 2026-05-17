@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import Button from 'primevue/button'
 import DatePicker from 'primevue/datepicker'
+import { iconRegistry } from '../../../lib/icons'
 import AppSelect from '../../../components/forms/AppSelect.vue'
 import AppToggleGroup from '../../../components/forms/AppToggleGroup.vue'
 import type { PersonFormValues } from '../types'
@@ -147,10 +148,11 @@ const onCancel = () => {
 
     <footer v-if="!bare && showButtons !== false" data-element="person-form-actions"
       class="mt-4 flex flex-wrap items-center gap-2">
-      <Button data-element="person-form-submit" :label="submitLabel" icon="pi pi-check"
+      <Button data-element="person-form-submit" :label="submitLabel" :icon="`pi ${iconRegistry.action.confirm}`"
         :disabled="!canSubmit || loading" :loading="loading" @click="onSubmit" />
-      <Button v-if="showCancel" data-element="person-form-cancel" label="Cancel" icon="pi pi-times" severity="secondary"
-        outlined :disabled="loading" @click="onCancel" />
+      <Button v-if="showCancel" data-element="person-form-cancel" label="Cancel"
+        :icon="`pi ${iconRegistry.action.cancel}`" severity="secondary" outlined :disabled="loading"
+        @click="onCancel" />
     </footer>
   </section>
 </template>

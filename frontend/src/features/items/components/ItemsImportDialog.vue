@@ -5,6 +5,7 @@ import Papa from 'papaparse'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
 import { useToast } from 'primevue/usetoast'
+import { iconRegistry } from '../../../lib/icons'
 import AppSelect from '../../../components/forms/AppSelect.vue'
 import AppTemplateDialog from '../../../components/dialogs/AppTemplateDialog.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
@@ -613,11 +614,12 @@ const onConfirmImport = async () => {
       </div>
 
       <div class="mt-4 flex shrink-0 items-center gap-2">
-        <Button data-element="items-import-confirm" label="Import" icon="pi pi-upload"
+        <Button data-element="items-import-confirm" label="Import" :icon="`pi ${iconRegistry.action.upload}`"
           :disabled="importDraftRows.length === 0 || importItemsMutation.isPending.value || importMissingRequiredMappings.length > 0"
           :loading="importItemsMutation.isPending.value" @click="void onConfirmImport()" />
-        <Button data-element="items-import-cancel" label="Cancel" icon="pi pi-times" severity="secondary" outlined
-          :disabled="importItemsMutation.isPending.value" @click="emit('update:open', false)" />
+        <Button data-element="items-import-cancel" label="Cancel" :icon="`pi ${iconRegistry.action.cancel}`"
+          severity="secondary" outlined :disabled="importItemsMutation.isPending.value"
+          @click="emit('update:open', false)" />
       </div>
     </section>
   </AppTemplateDialog>

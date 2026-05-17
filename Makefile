@@ -71,7 +71,7 @@ test-api-curl-compose:
 	./dev/scripts/run_full_api_curl_test_with_compose.sh
 
 test-frontend:
-	cd frontend && npx vue-tsc -b
+	cd frontend && npx vue-tsc -b && npm run lint:theme && npm run lint:icons
 
 gen-api-go:
 	cd backend && go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -generate models,std-http -package api -o internal/api/api.gen.go ../dev/openapi.yaml

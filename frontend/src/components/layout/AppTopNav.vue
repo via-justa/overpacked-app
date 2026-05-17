@@ -2,11 +2,14 @@
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import AppActionsMenu, { type ActionTarget } from '../actions/AppActionsMenu.vue'
+import { AppIcon } from '../icons'
+import type { IconCategory } from '../../lib/icons'
 
 type NavItem = {
   to: string
   label: string
-  icon: string
+  iconCategory: IconCategory
+  iconName: string
 }
 
 const props = defineProps<{
@@ -93,7 +96,7 @@ const primaryNavItems = props.navItems.filter((item) => item.to !== '/settings')
         <button ref="actionsButtonRef" type="button" data-element="nav-menu-button"
           class="text-copy hover:bg-surface-soft hover:text-ink inline-flex h-8 w-8 items-center justify-center rounded-lg transition"
           aria-label="Menu" @click="openActionsMenu">
-          <i class="pi pi-bars" aria-hidden="true"></i>
+          <AppIcon category="navigation" name="menu" size="sm" />
         </button>
         <p class="text-brand-500 text-xs font-semibold uppercase tracking-[0.18em]">Overpacked</p>
       </div>
@@ -105,7 +108,7 @@ const primaryNavItems = props.navItems.filter((item) => item.to !== '/settings')
           class="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition" :class="currentPath.startsWith(item.to)
             ? 'bg-surface-inverse text-ink-inverse'
             : 'text-copy hover:bg-surface-soft hover:text-ink'">
-          <i :class="item.icon" aria-hidden="true"></i>
+          <AppIcon :category="item.iconCategory" :name="item.iconName" size="sm" />
           <span>{{ item.label }}</span>
         </RouterLink>
       </nav>

@@ -3,6 +3,8 @@ import Button from 'primevue/button'
 import AppBooleanValue from '../../../components/display/AppBooleanValue.vue'
 import AppFormViewDialog from '../../../components/dialogs/AppFormViewDialog.vue'
 import AppNotSetValue from '../../../components/display/AppNotSetValue.vue'
+import { AppIcon } from '../../../components/icons'
+import { iconRegistry } from '../../../lib/icons'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import type { Item } from '../types'
 
@@ -54,8 +56,8 @@ defineEmits<{
           </p>
         </div>
 
-        <Button v-if="showEditAction !== false" data-element="item-details-edit" label="Edit" icon="pi pi-pencil"
-          outlined @click="$emit('edit', selectedItem)" />
+        <Button v-if="showEditAction !== false" data-element="item-details-edit" label="Edit"
+          :icon="`pi ${iconRegistry.action.edit}`" outlined @click="$emit('edit', selectedItem)" />
       </div>
 
       <div class="mt-5 grid gap-3 sm:grid-cols-2">
@@ -64,7 +66,7 @@ defineEmits<{
           <p class="text-copy-subtle text-xs font-semibold uppercase tracking-[0.06em]">{{ entry.label }}</p>
           <a v-if="entry.href" :href="entry.href" target="_blank" rel="noreferrer"
             class="text-brand-500 mt-1 inline-flex items-center gap-1 text-sm" :aria-label="`Open ${entry.label}`">
-            <i class="pi pi-external-link" aria-hidden="true"></i>
+            <AppIcon category="content" name="externalLink" size="sm" />
             <span class="sr-only">Open {{ entry.label }}</span>
           </a>
           <p v-else-if="typeof entry.booleanValue === 'boolean'" class="mt-1 text-sm">
@@ -78,8 +80,8 @@ defineEmits<{
       </div>
 
       <div v-if="showDeleteAction !== false" class="mt-5 flex flex-wrap items-center gap-2">
-        <Button data-element="item-details-delete" label="Delete" icon="pi pi-trash" severity="danger" outlined
-          :loading="isDeleteLoading" @click="$emit('delete', selectedItem.id)" />
+        <Button data-element="item-details-delete" label="Delete" :icon="`pi ${iconRegistry.action.delete}`"
+          severity="danger" outlined :loading="isDeleteLoading" @click="$emit('delete', selectedItem.id)" />
       </div>
     </article>
   </AppFormViewDialog>
