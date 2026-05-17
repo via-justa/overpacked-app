@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { normalizeTitleWords } from '../../../lib/text/normalize'
-import type { Item, Label } from '../../items/types'
+import type { Label } from '../../items/types'
 import type { ItemSet, SetItemWithDetails } from '../types'
 
 type SetStats = {
@@ -24,7 +24,6 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   openDetails: [set: ItemSet]
-  openItemDetails: [item: Item]
   startEdit: [set: ItemSet]
 }>()
 

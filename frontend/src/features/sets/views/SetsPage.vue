@@ -8,7 +8,6 @@ import AppQueryError from '../../../components/feedback/AppQueryError.vue'
 import AppLoadingState from '../../../components/feedback/AppLoadingState.vue'
 import AppEmptyState from '../../../components/feedback/AppEmptyState.vue'
 import type { AppItemTableField } from '../../../components/display/AppItemTableRowContent.vue'
-import ItemDetailsDialog from '../../items/components/ItemDetailsDialog.vue'
 import SetDetailsDialog from '../components/SetDetailsDialog.vue'
 import SetFormDialog from '../components/SetFormDialog.vue'
 import SetsCollectionView from '../components/SetsCollectionView.vue'
@@ -130,10 +129,8 @@ const itemLabelsMap = computed(() => {
 
 const isFormDialogOpen = ref(false)
 const isDetailsDialogOpen = ref(false)
-const isItemDetailsDialogOpen = ref(false)
 const editingSetId = ref<string | null>(null)
 const activeSetId = ref<string | null>(null)
-const selectedItemDetailId = ref<string | null>(null)
 const setNameInput = ref('')
 const setCategoryInput = ref('')
 const addItemId = ref('')
@@ -191,40 +188,6 @@ const formatVolume = (value?: number | null) => {
   }
 
   return `${toRoundedString(value)} ml`
-}
-
-const getItemImageSrc = (item: Item) => {
-  if (!item.image_blob) {
-    return ''
-  }
-
-  return `data:${item.image_mime_type ?? 'image/*'};base64,${item.image_blob}`
-}
-
-type DetailEntry = {
-  label: string
-  value: string
-  href?: string
-  booleanValue?: boolean | null
-}
-
-const getItemDetailedEntries = (item: Item): DetailEntry[] => {
-  return [
-    { label: 'Type', value: formatType(item.type) },
-    { label: 'Manufacturer', value: manufacturersById.value.get(item.manufacturer_id) ?? item.manufacturer_id },
-    { label: 'Active', value: '', booleanValue: item.is_active },
-    { label: 'Default carry', value: formatCarryStatus(item.default_carry_status) },
-    { label: 'Default quantity', value: formatNumber(item.default_quantity, toRoundedString) },
-    { label: 'Is default', value: '', booleanValue: item.is_default },
-    {
-      label: 'Weight',
-      value: typeof item.weight_grams === 'number' ? formatWeight(item.weight_grams) : 'Not set',
-    },
-    { label: 'Volume', value: formatVolume(item.volume_ml) },
-    { label: 'Value', value: formatValue(item.value, currency.value, toRoundedString) },
-    { label: 'Description', value: formatText(item.description) },
-    { label: 'URL', value: item.source_url?.trim() ? 'URL' : 'Not set', href: item.source_url ?? undefined },
-  ]
 }
 
 const itemTableFields = computed<AppItemTableField[]>(() => {
@@ -301,14 +264,6 @@ const activeSet = computed<ItemSet | null>(() => {
   }
 
   return allSets.value.find((set) => set.id === activeSetId.value) ?? null
-})
-
-const selectedItemDetail = computed<Item | null>(() => {
-  if (!selectedItemDetailId.value) {
-    return null
-  }
-
-  return (itemsQuery.data.value ?? []).find((item) => item.id === selectedItemDetailId.value) ?? null
 })
 
 const activeSetItems = computed<SetItemWithDetails[]>(() => {
@@ -514,11 +469,6 @@ const openSetDetailsDialog = async (set: ItemSet) => {
 const onStartEdit = openSetDetailsDialog
 const onOpenDetails = openSetDetailsDialog
 
-const onOpenItemDetails = (item: Item) => {
-  selectedItemDetailId.value = item.id
-  isItemDetailsDialogOpen.value = true
-}
-
 const closeDetailsDialog = () => {
   isDetailsDialogOpen.value = false
   activeSetId.value = null
@@ -527,11 +477,6 @@ const closeDetailsDialog = () => {
   addItemNotes.value = ''
   setNameInput.value = ''
   setCategoryInput.value = ''
-}
-
-const closeItemDetailsDialog = () => {
-  isItemDetailsDialogOpen.value = false
-  selectedItemDetailId.value = null
 }
 
 const consumeCreateQuery = async () => {
@@ -928,12 +873,6 @@ const onAddItem = async () => {
       @update:add-item-notes="(value) => { addItemNotes = value }" @add-item="onAddTempItem"
       @remove-item="onRemoveTempItem" @edit-item="onEditTempItem" @submit="onSubmitSet" />
 
-    <ItemDetailsDialog :open="isItemDetailsDialogOpen" :selected-item="selectedItemDetail"
-      :get-image-src="getItemImageSrc" :get-detailed-entries="getItemDetailedEntries" :format-type="formatType"
-      :manufacturers-by-id="manufacturersById" :is-delete-loading="false" :show-edit-action="false"
-      :show-delete-action="false" @update:open="(value) => { if (!value) closeItemDetailsDialog() }"
-      @edit="closeItemDetailsDialog" @delete="closeItemDetailsDialog" />
-
     <SetDetailsDialog :model-value="isDetailsDialogOpen" :active-set="activeSet" :active-set-items="activeSetItems"
       :active-set-stats="activeSetStats"
       :set-items-loading="activeSet ? (setItemsLoadingBySetId[activeSet.id] ?? false) : false"
@@ -969,8 +908,7 @@ const onAddItem = async () => {
       <SetsCollectionView :sets="allSets" :set-stats-by-id="setStatsById" :set-items-by-set-id="setItemsBySetId"
         :item-table-fields="itemTableFields" :get-item-type-label="getItemTypeLabel"
         :format-display-weight="formatWeight" :format-value="formatSetValue" :format-date="formatDate"
-        :get-set-labels="getSetLabels" @open-details="onOpenDetails" @open-item-details="onOpenItemDetails"
-        @start-edit="onStartEdit" />
+        :get-set-labels="getSetLabels" @open-details="onOpenDetails" @start-edit="onStartEdit" />
     </div>
   </section>
 </template>

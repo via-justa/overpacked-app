@@ -739,7 +739,7 @@ apiClient.use({
       return response
     }
 
-    if (isRefreshing && refreshPromise) {
+    if (isRefreshing && refreshPromise !== null) {
       const tokenFromQueue = await refreshPromise
       if (!tokenFromQueue) {
         authFailureHandler?.('session_expired')
