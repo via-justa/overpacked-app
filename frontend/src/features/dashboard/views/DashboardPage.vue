@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppSectionPlaceholder from '../../../components/AppSectionPlaceholder.vue'
+import AppSectionPlaceholder from '../../../components/actions/AppSectionPlaceholder.vue'
 </script>
 
 <template>

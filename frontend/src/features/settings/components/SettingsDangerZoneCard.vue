@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import Button from 'primevue/button'
-import AppTemplateDialog from '../../../components/AppTemplateDialog.vue'
+import AppTemplateDialog from '../../../components/dialogs/AppTemplateDialog.vue'
 import SettingsSectionCard from './SettingsSectionCard.vue'
 
 const props = defineProps<{

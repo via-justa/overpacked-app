@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import Button from 'primevue/button'
 
+// Reusable dialog action buttons (submit/cancel/delete) with loading states
 const props = withDefaults(defineProps<{
   mode: 'create' | 'edit'
   submitLabel?: string

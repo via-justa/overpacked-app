@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
 import Button from 'primevue/button'
-import AppSelect from '../../../components/AppSelect.vue'
-import AppFormCreateDialog from '../../../components/AppFormCreateDialog.vue'
-import AppNotSetValue from '../../../components/AppNotSetValue.vue'
+import AppSelect from '../../../components/forms/AppSelect.vue'
+import AppFormCreateDialog from '../../../components/dialogs/AppFormCreateDialog.vue'
+import AppNotSetValue from '../../../components/display/AppNotSetValue.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import type { Item, ItemTypeEntity } from '../../items/types'
 
@@ -200,11 +200,11 @@ watch(() => props.addItemId, (newItemId) => {
           <tr v-for="entry in tempItems" :key="entry.tempItem.itemId">
             <td class="px-3 py-2">
               <span class="text-copy font-medium">{{ entry.item ? normalizeTitleWords(entry.item.name) : 'Unknown'
-              }}</span>
+                }}</span>
             </td>
             <td class="px-3 py-2">
               <span class="text-copy-subtle text-xs">{{ entry.item ? getManufacturerName(entry.item) : 'Unknown'
-              }}</span>
+                }}</span>
             </td>
             <td class="px-3 py-2">
               <span class="text-copy-subtle text-xs">{{ entry.item ? getItemWeight(entry.item) : 'Not set' }}</span>

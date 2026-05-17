@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import Message from 'primevue/message'
-import AppDialogActions from '../../../components/AppDialogActions.vue'
-import AppTemplateDialog from '../../../components/AppTemplateDialog.vue'
+import AppDialogActions from '../../../components/dialogs/AppDialogActions.vue'
+import AppTemplateDialog from '../../../components/dialogs/AppTemplateDialog.vue'
 import ItemLabel from '../../items/components/ItemLabel.vue'
 import type { PackingList, Label } from '../types'
 

@@ -2,7 +2,7 @@
 import { computed, ref, watchEffect } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
-import AppQueryState from '../../../components/AppQueryState.vue'
+import AppQueryState from '../../../components/feedback/AppQueryState.vue'
 import { listSets, listSetItems } from '../../sets/api/setsApi'
 import { listItemTypes, listItemLabels } from '../../items/api/itemsApi'
 import { useSettings } from '../../../composables/useSettings'

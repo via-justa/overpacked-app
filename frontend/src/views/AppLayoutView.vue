@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterView, useRoute, useRouter } from 'vue-router'
-import AppTopNav from '../components/AppTopNav.vue'
+import AppTopNav from '../components/layout/AppTopNav.vue'
 import { logoutAuth } from '../lib/api/auth'
 import { useAuthStore } from '../stores/auth'
 

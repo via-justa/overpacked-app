@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/vue-query'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
 import AppConfirmDialog from '../../../components/AppConfirmDialog.vue'
-import AppSelect from '../../../components/AppSelect.vue'
+import AppSelect from '../../../components/forms/AppSelect.vue'
 import AppFormCreateDialog from '../../../components/AppFormCreateDialog.vue'
 import AppFormEditDialog from '../../../components/AppFormEditDialog.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
@@ -318,9 +318,9 @@ const onDelete = async () => {
 </script>
 
 <template>
-  <component :is="mode === 'edit' ? AppFormEditDialog : AppFormCreateDialog"
-    :open="open" data-element="category-create-dialog" width="min(30rem, calc(100vw - 2rem))"
-    :title="dialogTitle" :can-submit="canSubmit && !isFieldsLoading"
+  <component :is="mode === 'edit' ? AppFormEditDialog : AppFormCreateDialog" :open="open"
+    data-element="category-create-dialog" width="min(30rem, calc(100vw - 2rem))" :title="dialogTitle"
+    :can-submit="canSubmit && !isFieldsLoading"
     :is-submitting="createMutation.isPending.value || updateMutation.isPending.value"
     :is-deleting="deleteMutation.isPending.value"
     @update:open="(v: boolean) => { emit('update:open', v); if (!v) close() }"
@@ -330,8 +330,8 @@ const onDelete = async () => {
         :severity="mode === 'create' ? undefined : 'secondary'" :outlined="mode !== 'create'"
         class="w-full justify-center" @click="void setMode('create')" />
       <Button data-element="category-mode-edit" label="Edit" icon="pi pi-pencil"
-        :severity="mode === 'edit' ? undefined : 'secondary'" :outlined="mode !== 'edit'"
-        class="w-full justify-center" @click="void setMode('edit')" />
+        :severity="mode === 'edit' ? undefined : 'secondary'" :outlined="mode !== 'edit'" class="w-full justify-center"
+        @click="void setMode('edit')" />
     </div>
 
     <div class="mt-4 overflow-y-auto pr-1">
@@ -358,8 +358,8 @@ const onDelete = async () => {
           <div v-for="(field, index) in fieldValues" :key="`field-${index}`"
             class="border-line-subtle bg-surface-muted grid gap-2 rounded-lg border p-2">
             <div class="grid gap-2 sm:grid-cols-[1fr,12rem,auto]">
-              <input :data-element="`category-field-name-${index}`" class="input-shell" :value="field.name"
-                type="text" placeholder="Property name"
+              <input :data-element="`category-field-name-${index}`" class="input-shell" :value="field.name" type="text"
+                placeholder="Property name"
                 @input="updateField(index, { ...field, name: ($event.target as HTMLInputElement).value })" />
               <AppSelect :data-element="`category-field-type-${index}`" :model-value="field.type"
                 @update:model-value="(value) => updateField(index, { ...field, type: value as CategoryFieldType, selectOptions: value === 'select' ? field.selectOptions : '' })">
@@ -367,12 +367,11 @@ const onDelete = async () => {
                   {{ option.label }}
                 </option>
               </AppSelect>
-              <Button :data-element="`category-field-remove-${index}`" icon="pi pi-trash" severity="secondary"
-                outlined :disabled="fieldValues.length <= 1" @click="removeField(index)" />
+              <Button :data-element="`category-field-remove-${index}`" icon="pi pi-trash" severity="secondary" outlined
+                :disabled="fieldValues.length <= 1" @click="removeField(index)" />
             </div>
-            <input v-if="field.type === 'select'" :data-element="`category-field-options-${index}`"
-              class="input-shell" :value="field.selectOptions" type="text"
-              placeholder="Select options (comma separated)"
+            <input v-if="field.type === 'select'" :data-element="`category-field-options-${index}`" class="input-shell"
+              :value="field.selectOptions" type="text" placeholder="Select options (comma separated)"
               @input="updateField(index, { ...field, selectOptions: ($event.target as HTMLInputElement).value })" />
           </div>
           <Button data-element="category-field-add" label="Add field" icon="pi pi-plus" severity="secondary" outlined
@@ -381,8 +380,7 @@ const onDelete = async () => {
 
         <label class="grid gap-1">
           <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Description</span>
-          <textarea data-element="category-description" class="input-shell min-h-4.5rem"
-            :value="formValues.description"
+          <textarea data-element="category-description" class="input-shell min-h-4.5rem" :value="formValues.description"
             @input="formValues.description = ($event.target as HTMLTextAreaElement).value" />
         </label>
       </div>
@@ -394,6 +392,6 @@ const onDelete = async () => {
   </component>
 
   <AppConfirmDialog :open="isDeleteConfirmOpen" title="Delete Category"
-    message="Delete selected category? This action cannot be undone." confirm-label="Delete"
-    confirm-tone="danger" @update:open="isDeleteConfirmOpen = $event" @confirm="onDelete" />
+    message="Delete selected category? This action cannot be undone." confirm-label="Delete" confirm-tone="danger"
+    @update:open="isDeleteConfirmOpen = $event" @confirm="onDelete" />
 </template>

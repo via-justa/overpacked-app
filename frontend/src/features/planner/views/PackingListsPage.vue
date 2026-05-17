@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
-import AppSectionPlaceholder from '../../../components/AppSectionPlaceholder.vue'
+import AppSectionPlaceholder from '../../../components/actions/AppSectionPlaceholder.vue'
 </script>
 
 <template>

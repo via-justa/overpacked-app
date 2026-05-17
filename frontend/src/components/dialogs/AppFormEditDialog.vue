@@ -21,16 +21,16 @@ defineEmits<{
 </script>
 
 <template>
-  <AppTemplateDialog :model-value="open" :width="width ?? 'min(36rem, calc(100vw - 2rem))'"
-    :data-element="dataElement" @update:model-value="$emit('update:open', $event)">
+  <AppTemplateDialog :model-value="open" :width="width ?? 'min(36rem, calc(100vw - 2rem))'" :data-element="dataElement"
+    @update:model-value="$emit('update:open', $event)">
     <article class="surface-panel p-4 flex flex-col">
       <h2 class="text-ink text-lg font-semibold shrink-0">{{ title }}</h2>
       <div class="flex-1 mt-4">
         <slot />
       </div>
 
-      <AppDialogActions mode="edit" :can-submit="canSubmit" :is-updating="isSubmitting"
-        :is-deleting="isDeleting" @submit="$emit('submit')" @cancel="$emit('cancel')" @delete="$emit('delete')" />
+      <AppDialogActions mode="edit" :can-submit="canSubmit" :is-updating="isSubmitting" :is-deleting="isDeleting"
+        @submit="$emit('submit')" @cancel="$emit('cancel')" @delete="$emit('delete')" />
     </article>
   </AppTemplateDialog>
 </template>

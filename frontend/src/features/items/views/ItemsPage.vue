@@ -3,13 +3,13 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import { useToast } from 'primevue/usetoast'
-import AppToggleGroup from '../../../components/AppToggleGroup.vue'
-import AppConfirmDialog from '../../../components/AppConfirmDialog.vue'
-import AppQueryError from '../../../components/AppQueryError.vue'
-import AppLoadingState from '../../../components/AppLoadingState.vue'
-import AppEmptyState from '../../../components/AppEmptyState.vue'
-import AppCategoryFilter from '../../../components/AppCategoryFilter.vue'
-import AppSummaryCard from '../../../components/AppSummaryCard.vue'
+import AppToggleGroup from '../../../components/forms/AppToggleGroup.vue'
+import AppConfirmDialog from '../../../components/dialogs/AppConfirmDialog.vue'
+import AppQueryError from '../../../components/feedback/AppQueryError.vue'
+import AppLoadingState from '../../../components/feedback/AppLoadingState.vue'
+import AppEmptyState from '../../../components/feedback/AppEmptyState.vue'
+import AppCategoryFilter from '../../../components/actions/AppCategoryFilter.vue'
+import AppSummaryCard from '../../../components/layout/AppSummaryCard.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { queryClient } from '../../../lib/query/client'
 import { getStoredValue, setStoredValue } from '../../../lib/storage/localStorage'
@@ -1493,11 +1493,11 @@ onBeforeUnmount(() => {
             </div>
           </div>
         </div>
-        <AppCategoryFilter v-model="itemTypeFilter" :options="itemTypeFilterOptions" label="Item type filter"
-          data-element="items-type-filter" />
-
-
       </div>
+      <!-- item type filter -->
+      <AppCategoryFilter v-model="itemTypeFilter" :options="itemTypeFilterOptions" label="Item type filter"
+        data-element="items-type-filter" />
+
 
       <div v-if="!hasFilteredItems" data-element="items-filter-empty-state"
         class="border-line-subtle bg-surface-elevated text-copy-muted rounded-2xl border px-5 py-6 text-sm">

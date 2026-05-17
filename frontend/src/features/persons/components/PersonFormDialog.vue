@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import AppFormCreateDialog from '../../../components/AppFormCreateDialog.vue'
-import AppFormEditDialog from '../../../components/AppFormEditDialog.vue'
+import AppFormCreateDialog from '../../../components/dialogs/AppFormCreateDialog.vue'
+import AppFormEditDialog from '../../../components/dialogs/AppFormEditDialog.vue'
 import PersonFormCard from './PersonFormCard.vue'
 import type { PersonFormValues } from '../types'
 

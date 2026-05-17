@@ -53,6 +53,7 @@ const mobileNavigationOptions: ActionOption[] = [
 
 const isMobile = ref(false)
 
+// Detect mobile viewport for responsive menu options
 const updateMobile = () => {
   isMobile.value = globalThis.window?.innerWidth < 768
 }
@@ -70,6 +71,7 @@ onUnmounted(() => {
   }
 })
 
+// Compute visible menu options based on viewport and mobile expansion state
 const allOptions = computed(() => {
   const navigationItems = isMobile.value ? mobileNavigationOptions : desktopNavigationOptions
   if (isMobile.value) {
@@ -94,6 +96,7 @@ const handleMouseEnter = (index: number) => {
   focusButton(index)
 }
 
+// Handle keyboard navigation (arrow keys, Home/End, Enter, Escape)
 const handleKeyDown = (event: KeyboardEvent) => {
   if (!props.open) return
 
@@ -132,12 +135,14 @@ const handleKeyDown = (event: KeyboardEvent) => {
   }
 }
 
+// Move keyboard focus to the button at the given index
 const focusButton = (index: number) => {
   if (!menuRef.value) return
   const buttons = menuRef.value.querySelectorAll<HTMLButtonElement>('[data-action-option]')
   buttons[index]?.focus()
 }
 
+// Initialize menu state when opened: prevent scroll, reset mobile expansion, focus current page option
 watch(() => props.open, async (isOpen) => {
   // Prevent body scroll when menu is open
   if (globalThis.document?.body) {
@@ -220,10 +225,10 @@ onUnmounted(() => {
         <div class="flex-1 overflow-y-auto px-3 pb-3" style="overscroll-behavior: contain;">
           <div class="grid gap-2 pb-32">
             <template v-for="(option, index) in allOptions" :key="option.value">
-              <!-- Separator after navigation items on mobile -->
+              <!-- Mobile: visual separator after navigation items -->
               <div v-if="isMobile && index === mobileNavigationOptions.length" class="border-line-subtle my-1 border-t">
               </div>
-              <!-- Actions section header on mobile -->
+              <!-- Mobile: collapsible Actions section toggle -->
               <button v-if="isMobile && index === mobileNavigationOptions.length" type="button"
                 class="text-copy-subtle hover:text-copy flex items-center justify-between px-1 pb-1 pt-2 text-xs font-semibold uppercase tracking-[0.08em] transition"
                 @click="actionsExpanded = !actionsExpanded">
@@ -231,10 +236,10 @@ onUnmounted(() => {
                 <i :class="actionsExpanded ? 'pi pi-chevron-up' : 'pi pi-chevron-down'" class="text-xs"
                   aria-hidden="true"></i>
               </button>
-              <!-- Separator after collapsed Actions header -->
+              <!-- Mobile: separator after collapsed Actions header -->
               <div v-if="isMobile && !actionsExpanded && index === mobileNavigationOptions.length"
                 class="border-line-subtle my-1 border-t"></div>
-              <!-- Separator before settings (after import-csv or last action option) -->
+              <!-- Separator before settings/logout section -->
               <div v-if="index === allOptions.length - 2 && (!isMobile || actionsExpanded)"
                 class="border-line-subtle my-1 border-t"></div>
               <button type="button" role="menuitem" :data-action-option="option.value"

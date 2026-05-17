@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import AppFormCreateDialog from '../../../components/AppFormCreateDialog.vue'
-import AppFormEditDialog from '../../../components/AppFormEditDialog.vue'
+import AppFormCreateDialog from '../../../components/dialogs/AppFormCreateDialog.vue'
+import AppFormEditDialog from '../../../components/dialogs/AppFormEditDialog.vue'
 import ItemFormCard from './ItemFormCard.vue'
 import type { ItemFormValues, ItemTypeField, Label, Manufacturer } from '../types'
 

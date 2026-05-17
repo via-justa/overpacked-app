@@ -2,10 +2,10 @@
 import { computed, ref, watch } from 'vue'
 import Button from 'primevue/button'
 import Message from 'primevue/message'
-import AppConfirmDialog from '../../../components/AppConfirmDialog.vue'
-import AppSelect from '../../../components/AppSelect.vue'
-import AppFormCreateDialog from '../../../components/AppFormCreateDialog.vue'
-import AppFormEditDialog from '../../../components/AppFormEditDialog.vue'
+import AppConfirmDialog from '../../../components/dialogs/AppConfirmDialog.vue'
+import AppSelect from '../../../components/forms/AppSelect.vue'
+import AppFormCreateDialog from '../../../components/dialogs/AppFormCreateDialog.vue'
+import AppFormEditDialog from '../../../components/dialogs/AppFormEditDialog.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { useMutationWithToast } from '../../../composables/useMutationWithToast'
 import { createManufacturer, removeManufacturer, updateManufacturer } from '../api/itemsApi'
@@ -177,9 +177,9 @@ const onDelete = async () => {
 </script>
 
 <template>
-  <component :is="mode === 'edit' ? AppFormEditDialog : AppFormCreateDialog"
-    :open="open" data-element="manufacturer-create-dialog" width="min(30rem, calc(100vw - 2rem))"
-    :title="dialogTitle" :can-submit="canSubmit" :is-submitting="createMutation.isPending.value || updateMutation.isPending.value"
+  <component :is="mode === 'edit' ? AppFormEditDialog : AppFormCreateDialog" :open="open"
+    data-element="manufacturer-create-dialog" width="min(30rem, calc(100vw - 2rem))" :title="dialogTitle"
+    :can-submit="canSubmit" :is-submitting="createMutation.isPending.value || updateMutation.isPending.value"
     :is-deleting="deleteMutation.isPending.value"
     @update:open="(v: boolean) => { emit('update:open', v); if (!v) close() }"
     @submit="mode === 'create' ? onCreate() : onUpdate()" @cancel="close" @delete="onDeleteRequest">
@@ -188,8 +188,8 @@ const onDelete = async () => {
         :severity="mode === 'create' ? undefined : 'secondary'" :outlined="mode !== 'create'"
         class="w-full justify-center" @click="setMode('create')" />
       <Button data-element="manufacturer-mode-edit" label="Edit" icon="pi pi-pencil"
-        :severity="mode === 'edit' ? undefined : 'secondary'" :outlined="mode !== 'edit'"
-        class="w-full justify-center" @click="setMode('edit')" />
+        :severity="mode === 'edit' ? undefined : 'secondary'" :outlined="mode !== 'edit'" class="w-full justify-center"
+        @click="setMode('edit')" />
     </div>
 
     <div class="mt-4 overflow-y-auto pr-1">
@@ -224,6 +224,6 @@ const onDelete = async () => {
   </component>
 
   <AppConfirmDialog :open="isDeleteConfirmOpen" title="Delete Manufacturer"
-    message="Delete selected manufacturer? This action cannot be undone." confirm-label="Delete"
-    confirm-tone="danger" @update:open="isDeleteConfirmOpen = $event" @confirm="onDelete" />
+    message="Delete selected manufacturer? This action cannot be undone." confirm-label="Delete" confirm-tone="danger"
+    @update:open="isDeleteConfirmOpen = $event" @confirm="onDelete" />
 </template>

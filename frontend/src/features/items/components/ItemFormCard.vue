@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import Button from 'primevue/button'
-import AppSelect from '../../../components/AppSelect.vue'
-import AppToggleGroup from '../../../components/AppToggleGroup.vue'
+import AppSelect from '../../../components/forms/AppSelect.vue'
+import AppToggleGroup from '../../../components/forms/AppToggleGroup.vue'
 import ItemLabelsSelector from './ItemLabelsSelector.vue'
 import type {
   DefaultCarryStatus,

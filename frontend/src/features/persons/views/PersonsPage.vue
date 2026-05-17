@@ -4,9 +4,9 @@ import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { useMutationWithToast } from '../../../composables/useMutationWithToast'
-import AppQueryError from '../../../components/AppQueryError.vue'
-import AppLoadingState from '../../../components/AppLoadingState.vue'
-import AppEmptyState from '../../../components/AppEmptyState.vue'
+import AppQueryError from '../../../components/feedback/AppQueryError.vue'
+import AppLoadingState from '../../../components/feedback/AppLoadingState.vue'
+import AppEmptyState from '../../../components/feedback/AppEmptyState.vue'
 import {
   createPerson,
   listPersons,

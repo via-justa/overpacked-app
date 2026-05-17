@@ -6,13 +6,13 @@ const props = withDefaults(defineProps<{
   modelValue: boolean
   width?: string
   modal?: boolean
-  dismissableMask?: boolean
+  dismissibleMask?: boolean
   draggable?: boolean
   dataElement?: string
 }>(), {
   width: 'min(36rem, calc(100vw - 2rem))',
   modal: true,
-  dismissableMask: true,
+  dismissibleMask: true,
   draggable: false,
   dataElement: 'template-dialog',
 })
@@ -33,7 +33,7 @@ const onHide = () => {
 </script>
 
 <template>
-  <Dialog v-model:visible="visible" :data-element="dataElement" :modal="modal" :dismissable-mask="dismissableMask"
+  <Dialog v-model:visible="visible" :data-element="dataElement" :modal="modal" :dismissible-mask="dismissibleMask"
     :show-header="false" :draggable="draggable" :closable="false" :style="{ width }" :pt="{
       root: { class: '!bg-transparent !shadow-none !border-0' },
       content: { class: '!bg-transparent !p-0' },

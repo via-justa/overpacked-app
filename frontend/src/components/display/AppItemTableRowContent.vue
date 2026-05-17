@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import AppBooleanValue from './AppBooleanValue.vue'
 import AppNotSetValue from './AppNotSetValue.vue'
-import { normalizeTitleWords } from '../lib/text/normalize'
-import type { Item, Label } from '../features/items/types'
+import { normalizeTitleWords } from '../../lib/text/normalize'
+import type { Item, Label } from '../../features/items/types'
 
 export type AppItemTableField = {
   key: string
@@ -26,6 +26,7 @@ const emit = defineEmits<{
   edit: [item: Item]
 }>()
 
+// Determine if text should be light or dark based on background color luminance
 const getContrastColor = (color?: string | null): 'light' | 'dark' => {
   if (!color) {
     return 'light'

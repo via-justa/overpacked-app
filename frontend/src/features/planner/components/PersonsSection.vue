@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
-import AppQueryState from '../../../components/AppQueryState.vue'
+import AppQueryState from '../../../components/feedback/AppQueryState.vue'
 import { listPersons } from '../../persons/api/personsApi'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { useSettings } from '../../../composables/useSettings'

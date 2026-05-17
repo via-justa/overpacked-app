@@ -3,7 +3,7 @@
  * Generic card component for person/item/set cards.
  * Provides consistent styling with slots for image, content, and actions.
  */
-import { normalizeTitleWords } from '../lib/text/normalize'
+import { normalizeTitleWords } from '../../lib/text/normalize'
 
 interface Props {
   title: string

@@ -40,6 +40,7 @@ type ParsedSelectOption = {
   disabled?: boolean
 }
 
+// Extract text content from VNode children recursively
 const toOptionLabel = (children: VNode['children']): string => {
   if (typeof children === 'string') {
     return children
@@ -64,6 +65,7 @@ const toOptionLabel = (children: VNode['children']): string => {
     .join('')
 }
 
+// Parse <option> VNodes from slot into structured option objects
 const parseOptionNodes = (nodes: VNode[]): ParsedSelectOption[] => {
   const parsed: ParsedSelectOption[] = []
 

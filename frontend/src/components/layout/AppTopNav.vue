@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import AppActionsMenu, { type ActionTarget } from './AppActionsMenu.vue'
+import AppActionsMenu, { type ActionTarget } from '../actions/AppActionsMenu.vue'
 
 type NavItem = {
   to: string
@@ -27,6 +27,7 @@ const router = useRouter()
 const isActionsMenuOpen = ref(false)
 const actionsMenuPosition = ref<{ top: number; left: number }>({ top: 84, left: 16 })
 
+// Position actions menu relative to trigger button, responsive to viewport
 const openActionsMenu = (event: Event) => {
   const trigger = event.currentTarget
   if (!(trigger instanceof HTMLElement)) {

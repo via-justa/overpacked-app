@@ -2,8 +2,8 @@
 import { computed } from 'vue'
 import Button from 'primevue/button'
 import DatePicker from 'primevue/datepicker'
-import AppSelect from '../../../components/AppSelect.vue'
-import AppToggleGroup from '../../../components/AppToggleGroup.vue'
+import AppSelect from '../../../components/forms/AppSelect.vue'
+import AppToggleGroup from '../../../components/forms/AppToggleGroup.vue'
 import type { PersonFormValues } from '../types'
 
 const props = defineProps<{
@@ -145,7 +145,8 @@ const onCancel = () => {
       </div>
     </div>
 
-    <footer v-if="!bare && showButtons !== false" data-element="person-form-actions" class="mt-4 flex flex-wrap items-center gap-2">
+    <footer v-if="!bare && showButtons !== false" data-element="person-form-actions"
+      class="mt-4 flex flex-wrap items-center gap-2">
       <Button data-element="person-form-submit" :label="submitLabel" icon="pi pi-check"
         :disabled="!canSubmit || loading" :loading="loading" @click="onSubmit" />
       <Button v-if="showCancel" data-element="person-form-cancel" label="Cancel" icon="pi pi-times" severity="secondary"

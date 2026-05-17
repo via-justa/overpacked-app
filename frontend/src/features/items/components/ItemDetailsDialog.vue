@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import Button from 'primevue/button'
-import AppBooleanValue from '../../../components/AppBooleanValue.vue'
-import AppFormViewDialog from '../../../components/AppFormViewDialog.vue'
-import AppNotSetValue from '../../../components/AppNotSetValue.vue'
+import AppBooleanValue from '../../../components/display/AppBooleanValue.vue'
+import AppFormViewDialog from '../../../components/dialogs/AppFormViewDialog.vue'
+import AppNotSetValue from '../../../components/display/AppNotSetValue.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import type { Item } from '../types'
 

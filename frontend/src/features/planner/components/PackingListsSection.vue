@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { RouterLink } from 'vue-router'
-import AppQueryState from '../../../components/AppQueryState.vue'
+import AppQueryState from '../../../components/feedback/AppQueryState.vue'
 import { listPackingLists } from '../../lists/api/listsApi'
 
 const packingListsQuery = useQuery({

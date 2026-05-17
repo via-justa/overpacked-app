@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import type { UseQueryReturnType } from '@tanstack/vue-query'
-import AppQueryError from './AppQueryError.vue'
-import AppLoadingState from './AppLoadingState.vue'
-import AppEmptyState from './AppEmptyState.vue'
+import AppQueryError from '../feedback/AppQueryError.vue'
+import AppLoadingState from '../feedback/AppLoadingState.vue'
+import AppEmptyState from '../feedback/AppEmptyState.vue'
 
 interface Props {
   query: UseQueryReturnType<unknown, Error>
@@ -25,16 +25,16 @@ const showEmpty = () => {
   if (props.query.isPending.value || props.query.isError.value) {
     return false
   }
-  
+
   const data = props.query.data.value
   if (data === null || data === undefined) {
     return true
   }
-  
+
   if (Array.isArray(data) && data.length === 0) {
     return true
   }
-  
+
   return false
 }
 </script>

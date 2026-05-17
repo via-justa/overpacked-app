@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import Button from 'primevue/button'
-import AppSelect from '../../../components/AppSelect.vue'
-import AppTemplateDialog from '../../../components/AppTemplateDialog.vue'
-import AppNotSetValue from '../../../components/AppNotSetValue.vue'
+import AppSelect from '../../../components/forms/AppSelect.vue'
+import AppTemplateDialog from '../../../components/dialogs/AppTemplateDialog.vue'
+import AppNotSetValue from '../../../components/display/AppNotSetValue.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import type { Item, ItemTypeEntity } from '../../items/types'
 import type { ItemSet, SetItemWithDetails } from '../types'

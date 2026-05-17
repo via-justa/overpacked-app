@@ -16,6 +16,10 @@ export interface UseRowActionsMenuReturn {
   toggleActions: (id: string, event: MouseEvent) => void
 }
 
+/**
+ * Composable for table/list row action menus with smart positioning.
+ * Handles menu open/close state, viewport-aware positioning, and document click handling.
+ */
 export function useRowActionsMenu(options: UseRowActionsMenuOptions): UseRowActionsMenuReturn {
   const { menuWidth = 176, menuHeight = 188, gap = 6, dataElement } = options
 
@@ -38,6 +42,7 @@ export function useRowActionsMenu(options: UseRowActionsMenuOptions): UseRowActi
       return
     }
 
+    // Calculate menu position: align right, flip upward if too close to bottom
     const rect = trigger.getBoundingClientRect()
     const left = Math.max(8, rect.right - menuWidth)
     const openUpward = rect.bottom + gap + menuHeight > window.innerHeight - 8

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AppToggleGroup from '../../../components/AppToggleGroup.vue'
+import AppToggleGroup from '../../../components/forms/AppToggleGroup.vue'
 
 type Option = {
   label: string

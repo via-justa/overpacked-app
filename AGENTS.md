@@ -108,6 +108,12 @@ Only these are mandatory for items:
 - **localStorage utilities pattern**: Use `frontend/src/lib/storage/localStorage.ts` utilities (`getStoredValue`, `setStoredValue`) for SSR-safe localStorage access with type guards. Sonar prefers `typeof window === 'undefined'` over `typeof globalThis.window === 'undefined'`, and regular function declarations over arrow functions for exports.
 - **Row actions composable**: For table/list row actions menus with positioning logic, use `frontend/src/composables/useRowActionsMenu.ts` composable instead of duplicating menu positioning, document click handling, and lifecycle cleanup across components.
 
+### Code Comments
+- **Components and Composables**: Add minimal (1-2 line) comments above functions, computed properties, and template sections that are not self-explanatory
+- **Focus areas**: Non-obvious logic, complex computed properties, keyboard navigation handlers, responsive behavior, state management patterns, position calculation algorithms
+- **Avoid**: Commenting obvious code, restating what the code already says clearly, excessive documentation
+- **Examples**: "// Detect mobile viewport for responsive menu options", "// Recursively extract option data from VNode tree", "// Calculate menu position: align right, flip upward if too close to bottom"
+
 ### Accessibility
 - **HTML title**: Use descriptive page title in `index.html` (e.g., "Overpacked - Backpacking Gear Manager" not "frontend")
 - **aria-current**: Add `aria-current="page"` to active navigation links for screen reader navigation context

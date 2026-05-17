@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import AppToggleGroup from '../../../components/AppToggleGroup.vue'
-import AppBooleanValue from '../../../components/AppBooleanValue.vue'
-import AppItemTableRowContent from '../../../components/AppItemTableRowContent.vue'
+import AppToggleGroup from '../../../components/forms/AppToggleGroup.vue'
+import AppBooleanValue from '../../../components/display/AppBooleanValue.vue'
+import AppItemTableRowContent from '../../../components/display/AppItemTableRowContent.vue'
 import { useRowActionsMenu } from '../../../composables/useRowActionsMenu'
 import type { Item, Label } from '../types'
 
