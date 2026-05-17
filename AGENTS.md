@@ -114,6 +114,11 @@ Only these are mandatory for items:
 - **Avoid**: Commenting obvious code, restating what the code already says clearly, excessive documentation
 - **Examples**: "// Detect mobile viewport for responsive menu options", "// Recursively extract option data from VNode tree", "// Calculate menu position: align right, flip upward if too close to bottom"
 
+### Code Complexity
+- **Cognitive Complexity Threshold**: Keep functions below 15 cognitive complexity (Sonar threshold)
+- **Refactoring strategies**: Extract helper functions, use early returns, simplify nested conditionals, break complex logic into smaller focused functions
+- **Examples**: Extract path mapping logic into `getOptionValueFromPath()`, extract scroll lock logic into `setBodyScrollLock()`
+
 ### Accessibility
 - **HTML title**: Use descriptive page title in `index.html` (e.g., "Overpacked - Backpacking Gear Manager" not "frontend")
 - **aria-current**: Add `aria-current="page"` to active navigation links for screen reader navigation context

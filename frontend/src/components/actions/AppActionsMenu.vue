@@ -142,53 +142,53 @@ const focusButton = (index: number) => {
   buttons[index]?.focus()
 }
 
+// Helper to manage body scroll lock state
+const setBodyScrollLock = (locked: boolean) => {
+  if (globalThis.document?.body) {
+    globalThis.document.body.style.overflow = locked ? 'hidden' : ''
+  }
+}
+
+// Helper to map current path to menu option value
+const getOptionValueFromPath = (path: string): string => {
+  const pathSegment = path.split('/')[1] || 'dashboard'
+
+  if (pathSegment === 'gear') return 'gear'
+  if (pathSegment === '' || pathSegment === 'dashboard') return 'dashboard'
+
+  // On desktop, sets/lists/persons should highlight planner
+  const isPlannerSection = ['sets', 'lists', 'persons'].includes(pathSegment)
+  if (!isMobile.value && isPlannerSection) return 'planner'
+
+  return pathSegment
+}
+
 // Initialize menu state when opened: prevent scroll, reset mobile expansion, focus current page option
 watch(() => props.open, async (isOpen) => {
-  // Prevent body scroll when menu is open
-  if (globalThis.document?.body) {
-    if (isOpen) {
-      globalThis.document.body.style.overflow = 'hidden'
-    } else {
-      globalThis.document.body.style.overflow = ''
+  setBodyScrollLock(isOpen)
+
+  if (!isOpen) return
+
+  // Reset actions expanded state on mobile
+  if (isMobile.value) {
+    actionsExpanded.value = false
+  }
+
+  // Find current page in menu and focus it, otherwise focus first item
+  const currentPath = props.currentPath ?? ''
+  let targetIndex = 0
+
+  if (currentPath) {
+    const optionValue = getOptionValueFromPath(currentPath)
+    const index = allOptions.value.findIndex(opt => opt.value === optionValue)
+    if (index !== -1) {
+      targetIndex = index
     }
   }
 
-  if (isOpen) {
-    // Reset actions expanded state on mobile
-    if (isMobile.value) {
-      actionsExpanded.value = false
-    }
-
-    // Find current page in menu and focus it, otherwise focus first item
-    const currentPath = props.currentPath ?? ''
-    let targetIndex = 0
-
-    if (currentPath) {
-      const pathSegment = currentPath.split('/')[1] || 'dashboard'
-
-      // Map path segments to option values
-      let optionValue = pathSegment
-
-      // Special mappings
-      if (pathSegment === 'gear') {
-        optionValue = 'gear'
-      } else if (pathSegment === '' || pathSegment === 'dashboard') {
-        optionValue = 'dashboard'
-      } else if (!isMobile.value && (pathSegment === 'sets' || pathSegment === 'lists' || pathSegment === 'persons')) {
-        // On desktop, sets/lists/persons should highlight planner
-        optionValue = 'planner'
-      }
-
-      const index = allOptions.value.findIndex(opt => opt.value === optionValue)
-      if (index !== -1) {
-        targetIndex = index
-      }
-    }
-
-    focusedIndex.value = targetIndex
-    await nextTick()
-    focusButton(targetIndex)
-  }
+  focusedIndex.value = targetIndex
+  await nextTick()
+  focusButton(targetIndex)
 })
 
 onMounted(() => {
