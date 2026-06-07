@@ -338,10 +338,40 @@ const consumeCreateQuery = async () => {
   })
 }
 
+// Handle ?open=<id> query parameter to open a specific list for editing
+const consumeOpenQuery = async () => {
+  const openId = route.query.open
+  if (typeof openId !== 'string' || !openId) {
+    return
+  }
+
+  const list = packingListsQuery.data.value?.find((entry) => entry.id === openId)
+  if (!list) {
+    return
+  }
+
+  const nextQuery = { ...route.query }
+  delete nextQuery.open
+  await router.replace({
+    path: route.path,
+    query: nextQuery,
+  })
+
+  await openEditDialog(list)
+}
+
 watch(
   () => route.query.create,
   () => {
     void consumeCreateQuery()
+  },
+  { immediate: true },
+)
+
+watch(
+  [() => route.query.open, () => packingListsQuery.data.value],
+  () => {
+    void consumeOpenQuery()
   },
   { immediate: true },
 )

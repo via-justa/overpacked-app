@@ -493,10 +493,39 @@ const consumeCreateQuery = async () => {
   })
 }
 
+const consumeOpenQuery = async () => {
+  const openId = route.query.open
+  if (typeof openId !== 'string' || !openId) {
+    return
+  }
+
+  const set = setsQuery.data.value?.find((entry) => entry.id === openId)
+  if (!set) {
+    return
+  }
+
+  const nextQuery = { ...route.query }
+  delete nextQuery.open
+  await router.replace({
+    path: route.path,
+    query: nextQuery,
+  })
+
+  await openSetDetailsDialog(set)
+}
+
 watch(
   () => route.query.create,
   () => {
     void consumeCreateQuery()
+  },
+  { immediate: true },
+)
+
+watch(
+  [() => route.query.open, () => setsQuery.data.value],
+  () => {
+    void consumeOpenQuery()
   },
   { immediate: true },
 )

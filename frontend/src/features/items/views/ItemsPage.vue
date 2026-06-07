@@ -487,6 +487,15 @@ const editingItemId = ref<string | null>(null)
 const editValues = ref<ItemFormValues>(emptyFormValues())
 const isFormDialogOpen = ref(false)
 const itemsViewMode = ref<ItemsViewMode>(readStoredItemsViewMode())
+const isMobileViewport = ref(false)
+
+// Detect mobile viewport: table view and the cards/table selector are desktop/tablet only
+const updateIsMobileViewport = () => {
+  isMobileViewport.value = (globalThis.window?.innerWidth ?? 1024) < 768
+}
+
+// On mobile, only the cards view is available regardless of stored preference
+const effectiveViewMode = computed<ItemsViewMode>(() => (isMobileViewport.value ? 'cards' : itemsViewMode.value))
 const itemsTableDetailModeByType = ref<Record<string, ItemsTableDetailMode>>(readStoredItemsTableDetailModeByType())
 const itemsTableSelectionModeByType = ref<Record<string, boolean>>({})
 const selectedTableItemIdsByType = ref<Record<string, string[]>>({})
@@ -1166,12 +1175,21 @@ watch(isFormDialogOpen, (value) => {
 })
 
 onMounted(() => {
+  if (globalThis.window) {
+    updateIsMobileViewport()
+    globalThis.window.addEventListener('resize', updateIsMobileViewport)
+  }
+
   if (globalThis.document) {
     globalThis.document.addEventListener('click', onDocumentClickSettings)
   }
 })
 
 onBeforeUnmount(() => {
+  if (globalThis.window) {
+    globalThis.window.removeEventListener('resize', updateIsMobileViewport)
+  }
+
   if (globalThis.document) {
     globalThis.document.removeEventListener('click', onDocumentClickSettings)
   }
@@ -1467,9 +1485,9 @@ onBeforeUnmount(() => {
 
       <!-- Click-outside backdrop -->
       <div class="flex flex-wrap items-center gap-4">
-        <!-- View Mode Toggle -->
-        <AppToggleGroup name="items-view-mode" data-element="items-view-mode" :model-value="itemsViewMode"
-          :options="itemViewOptions" fit-content
+        <!-- View Mode Toggle: hidden on mobile (cards view only) -->
+        <AppToggleGroup v-if="!isMobileViewport" name="items-view-mode" data-element="items-view-mode"
+          :model-value="itemsViewMode" :options="itemViewOptions" fit-content
           @update:model-value="(value) => { itemsViewMode = value as ItemsViewMode }" />
 
         <!-- Settings Button -->
@@ -1506,7 +1524,7 @@ onBeforeUnmount(() => {
         No gear matches the selected type filter.
       </div>
 
-      <ItemsListView v-else :view-mode="itemsViewMode" :items="filteredItems" :table-sections="itemTableSections"
+      <ItemsListView v-else :view-mode="effectiveViewMode" :items="filteredItems" :table-sections="itemTableSections"
         :get-image-src="getItemImageSrc" :item-labels-map="itemLabelsMap"
         @update:table-detail-mode="(type, mode) => updateTableDetailMode(type, mode)"
         @update:table-selection-mode="(type, value) => updateTableSelectionMode(type, value)"

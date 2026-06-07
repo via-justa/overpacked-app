@@ -190,7 +190,7 @@ const formatDate = (date: string): string => {
       empty-message="Nothing sorted yet. Peak entropy achieved. Time to start creating some sets to organize your items!"
       error-fallback="Unable to load sets.">
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <RouterLink v-for="set in displaySets" :key="set.id" :to="`/sets`"
+        <RouterLink v-for="set in displaySets" :key="set.id" :to="{ path: '/sets', query: { open: set.id } }"
           class="border-line-subtle bg-surface-elevated hover:border-brand-300 block rounded-xl border p-4 transition">
           <h3 class="text-copy text-base font-semibold">{{ normalizeTitleWords(set.name) }}</h3>
           <p class="text-copy-muted mt-2 text-sm">

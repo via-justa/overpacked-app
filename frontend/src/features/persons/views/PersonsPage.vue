@@ -248,6 +248,27 @@ const consumeCreateQuery = async () => {
   })
 }
 
+const consumeOpenQuery = async () => {
+  const openId = route.query.open
+  if (typeof openId !== 'string' || !openId) {
+    return
+  }
+
+  const person = personsQuery.data.value?.find((entry) => entry.id === openId)
+  if (!person) {
+    return
+  }
+
+  const nextQuery = { ...route.query }
+  delete nextQuery.open
+  await router.replace({
+    path: route.path,
+    query: nextQuery,
+  })
+
+  onStartEdit(person)
+}
+
 watch(
   () => route.query.create,
   () => {
@@ -266,6 +287,14 @@ const onStartEdit = (person: Person) => {
   editValues.value = toFormValues(person)
   isFormDialogOpen.value = true
 }
+
+watch(
+  [() => route.query.open, () => personsQuery.data.value],
+  () => {
+    void consumeOpenQuery()
+  },
+  { immediate: true },
+)
 
 const onCancelEdit = () => {
   isFormDialogOpen.value = false

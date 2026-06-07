@@ -96,7 +96,8 @@ const formatRecommendedMaxWeight = (person: Person): string => {
       empty-message="Current crew count: 0. Morale remains surprisingly high. Time to recruit some people for your adventure!"
       error-fallback="Unable to load persons.">
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <RouterLink v-for="person in displayPersons" :key="person.id" :to="`/persons`"
+        <RouterLink v-for="person in displayPersons" :key="person.id"
+          :to="{ path: '/persons', query: { open: person.id } }"
           class="border-line-subtle bg-surface-elevated hover:border-brand-300 block rounded-xl border p-4 transition">
           <h3 class="text-copy text-base font-semibold">{{ normalizeTitleWords(person.name) }}</h3>
           <div class="text-copy-muted mt-2 space-y-1 text-xs">
