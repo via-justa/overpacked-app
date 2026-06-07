@@ -94,8 +94,13 @@ const onSubmit = handleSubmit(async (values) => {
 </script>
 
 <template>
-  <main data-component="login-view" class="app-shell-gradient-soft grid min-h-screen place-items-center px-5 py-10">
-    <form data-element="login-form" class="surface-panel w-full max-w-md p-7" @submit.prevent="onSubmit">
+  <main data-component="login-view"
+    class="relative grid min-h-screen place-items-center bg-cover bg-center bg-no-repeat px-5 py-10"
+    style="background-image: url('/login.jpg')">
+    <!-- Dark overlay to keep the form readable over the photo -->
+    <div class="absolute inset-0 bg-black/40" aria-hidden="true"></div>
+
+    <form data-element="login-form" class="surface-panel relative z-10 w-full max-w-md p-7" @submit.prevent="onSubmit">
       <p class="text-brand-500 text-xs font-semibold uppercase tracking-[0.2em]">Packing List</p>
       <h1 class="text-ink mt-2 text-3xl font-bold">Sign in</h1>
       <p class="text-copy-muted mt-2 text-sm">Authenticate with the backend username and password configured in
@@ -132,5 +137,11 @@ const onSubmit = handleSubmit(async (values) => {
       <Button type="submit" data-element="login-submit" class="mt-6 w-full" label="Sign in"
         :icon="`pi ${iconRegistry.navigation.login}`" :disabled="!meta.valid || isSubmitting" :loading="isSubmitting" />
     </form>
+
+    <!-- Photo credit watermark -->
+    <a href="https://unsplash.com/@francescafrann" target="_blank" rel="noopener noreferrer"
+      class="text-ink-inverse/70 hover:text-ink-inverse absolute bottom-3 right-3 z-10 text-xs">
+      Photo by Francesca Pieleanu @ Unsplash
+    </a>
   </main>
 </template>
