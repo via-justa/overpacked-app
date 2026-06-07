@@ -404,6 +404,55 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /api/v1/search:
+    get:
+      tags:
+        - search
+      summary: Global fuzzy search across entities
+      operationId: searchGlobal
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query (minimum 2 characters)
+          schema:
+            type: string
+            minLength: 2
+        - name: types
+          in: query
+          required: false
+          description: Restrict results to the given entity types. Repeat the parameter to request multiple types.
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/SearchEntityType'
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of results to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
   /api/v1/items:
     get:
       tags:
@@ -2002,6 +2051,37 @@ components:
           type: string
         expires_in:
           type: integer
+
+    SearchEntityType:
+      type: string
+      enum:
+        - item
+        - set
+        - packing_list
+        - person
+        - manufacturer
+        - trip
+
+    SearchResult:
+      type: object
+      required:
+        - entity_type
+        - id
+        - title
+        - score
+      properties:
+        entity_type:
+          $ref: '#/components/schemas/SearchEntityType'
+        id:
+          type: string
+        title:
+          type: string
+        subtitle:
+          type: string
+          nullable: true
+        score:
+          type: number
+          format: double
 
     Settings:
       type: object

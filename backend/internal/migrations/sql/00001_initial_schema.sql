@@ -1,6 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 
 CREATE TABLE settings (
     id INT PRIMARY KEY CHECK (id = 1),
@@ -273,10 +274,33 @@ CREATE INDEX idx_labels_name ON labels(name);
 CREATE INDEX idx_packing_list_labels_packing_list_id ON packing_list_labels(packing_list_id);
 CREATE INDEX idx_packing_list_labels_label_id ON packing_list_labels(label_id);
 CREATE INDEX idx_packing_lists_name ON packing_lists(name);
+
+-- Trigram indexes for fuzzy global search
+CREATE INDEX idx_items_name_trgm ON items USING gin (name gin_trgm_ops);
+CREATE INDEX idx_items_description_trgm ON items USING gin (description gin_trgm_ops);
+CREATE INDEX idx_item_sets_name_trgm ON item_sets USING gin (name gin_trgm_ops);
+CREATE INDEX idx_item_sets_description_trgm ON item_sets USING gin (description gin_trgm_ops);
+CREATE INDEX idx_packing_lists_name_trgm ON packing_lists USING gin (name gin_trgm_ops);
+CREATE INDEX idx_packing_lists_description_trgm ON packing_lists USING gin (description gin_trgm_ops);
+CREATE INDEX idx_persons_name_trgm ON persons USING gin (name gin_trgm_ops);
+CREATE INDEX idx_manufacturers_name_trgm ON manufacturers USING gin (name gin_trgm_ops);
+CREATE INDEX idx_trips_name_trgm ON trips USING gin (name gin_trgm_ops);
+CREATE INDEX idx_trips_notes_trgm ON trips USING gin (notes gin_trgm_ops);
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
+DROP INDEX IF EXISTS idx_trips_notes_trgm;
+DROP INDEX IF EXISTS idx_trips_name_trgm;
+DROP INDEX IF EXISTS idx_manufacturers_name_trgm;
+DROP INDEX IF EXISTS idx_persons_name_trgm;
+DROP INDEX IF EXISTS idx_packing_lists_description_trgm;
+DROP INDEX IF EXISTS idx_packing_lists_name_trgm;
+DROP INDEX IF EXISTS idx_item_sets_description_trgm;
+DROP INDEX IF EXISTS idx_item_sets_name_trgm;
+DROP INDEX IF EXISTS idx_items_description_trgm;
+DROP INDEX IF EXISTS idx_items_name_trgm;
+
 DROP INDEX IF EXISTS idx_packing_lists_name;
 DROP INDEX IF EXISTS idx_packing_list_labels_label_id;
 DROP INDEX IF EXISTS idx_packing_list_labels_packing_list_id;
@@ -315,4 +339,6 @@ DROP TABLE IF EXISTS manufacturers;
 DROP TABLE IF EXISTS item_types;
 DROP TABLE IF EXISTS persons;
 DROP TABLE IF EXISTS settings;
+
+DROP EXTENSION IF EXISTS "pg_trgm";
 -- +goose StatementEnd

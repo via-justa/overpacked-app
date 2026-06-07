@@ -184,6 +184,24 @@ do_request "GET" "/api/v1/items"
 assert_status "200" "list items after update"
 assert_json_expr 'any(.[]; .id == "'"${ITEM_ID}"'" and .type == "consumable" and .name == "API Test Item Updated")' "list items after update"
 
+# 7b) Global Search
+log_step "global search query too short"
+do_request "GET" "/api/v1/search?q=a"
+assert_status "400" "global search query too short"
+
+log_step "global search across entities"
+do_request "GET" "/api/v1/search?q=API%20Test"
+assert_status "200" "global search across entities"
+assert_json_expr 'length > 0' "global search across entities"
+assert_json_expr 'any(.[]; .id == "'"${ITEM_ID}"'" and .entity_type == "item")' "global search finds item"
+
+log_step "global search filtered by type"
+do_request "GET" "/api/v1/search?q=API%20Test&types=person"
+assert_status "200" "global search filtered by type"
+assert_json_expr 'length > 0' "global search filtered by type"
+assert_json_expr 'all(.[]; .entity_type == "person")' "global search filtered returns only persons"
+assert_json_expr 'any(.[]; .id == "'"${PERSON_ID}"'")' "global search filtered finds person"
+
 # 8) Labels + Item Labels
 log_step "labels list"
 do_request "GET" "/api/v1/labels"

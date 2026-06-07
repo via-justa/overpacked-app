@@ -7,6 +7,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -415,6 +416,36 @@ func (e PersonUpdateGender) Valid() bool {
 	case Male:
 		return true
 	case Other:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SearchEntityType.
+const (
+	SearchEntityTypeItem         SearchEntityType = "item"
+	SearchEntityTypeManufacturer SearchEntityType = "manufacturer"
+	SearchEntityTypePackingList  SearchEntityType = "packing_list"
+	SearchEntityTypePerson       SearchEntityType = "person"
+	SearchEntityTypeSet          SearchEntityType = "set"
+	SearchEntityTypeTrip         SearchEntityType = "trip"
+)
+
+// Valid indicates whether the value is a known member of the SearchEntityType enum.
+func (e SearchEntityType) Valid() bool {
+	switch e {
+	case SearchEntityTypeItem:
+		return true
+	case SearchEntityTypeManufacturer:
+		return true
+	case SearchEntityTypePackingList:
+		return true
+	case SearchEntityTypePerson:
+		return true
+	case SearchEntityTypeSet:
+		return true
+	case SearchEntityTypeTrip:
 		return true
 	default:
 		return false
@@ -1144,6 +1175,18 @@ type RefreshRequest struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
+// SearchEntityType defines model for SearchEntityType.
+type SearchEntityType string
+
+// SearchResult defines model for SearchResult.
+type SearchResult struct {
+	EntityType SearchEntityType `json:"entity_type"`
+	Id         string           `json:"id"`
+	Score      float64          `json:"score"`
+	Subtitle   *string          `json:"subtitle,omitempty"`
+	Title      string           `json:"title"`
+}
+
 // SetItemCreate defines model for SetItemCreate.
 type SetItemCreate struct {
 	ItemId    openapi_types.UUID `json:"item_id"`
@@ -1412,6 +1455,18 @@ type Unauthorized struct {
 // bearerAuthContextKey is the context key for bearerAuth security scheme
 type bearerAuthContextKey string
 
+// SearchGlobalParams defines parameters for SearchGlobal.
+type SearchGlobalParams struct {
+	// Q Search query (minimum 2 characters)
+	Q string `form:"q" json:"q"`
+
+	// Types Restrict results to the given entity types. Repeat the parameter to request multiple types.
+	Types *[]SearchEntityType `form:"types,omitempty" json:"types,omitempty"`
+
+	// Limit Maximum number of results to return
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
 // AuthLoginJSONRequestBody defines body for AuthLogin for application/json ContentType.
 type AuthLoginJSONRequestBody = LoginRequest
 
@@ -1630,6 +1685,9 @@ type ServerInterface interface {
 	// Update person
 	// (PATCH /api/v1/persons/{personId})
 	UpdatePerson(w http.ResponseWriter, r *http.Request, personId openapi_types.UUID)
+	// Global fuzzy search across entities
+	// (GET /api/v1/search)
+	SearchGlobal(w http.ResponseWriter, r *http.Request, params SearchGlobalParams)
 	// List all item sets
 	// (GET /api/v1/sets)
 	ListSets(w http.ResponseWriter, r *http.Request)
@@ -2863,6 +2921,71 @@ func (siw *ServerInterfaceWrapper) UpdatePerson(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r)
 }
 
+// SearchGlobal operation middleware
+func (siw *ServerInterfaceWrapper) SearchGlobal(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SearchGlobalParams
+
+	// ------------- Required query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "types" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "types", r.URL.Query(), &params.Types, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "types"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "types", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SearchGlobal(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListSets operation middleware
 func (siw *ServerInterfaceWrapper) ListSets(w http.ResponseWriter, r *http.Request) {
 
@@ -3989,6 +4112,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/persons/{personId}", wrapper.DeletePerson)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/persons/{personId}", wrapper.GetPerson)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/persons/{personId}", wrapper.UpdatePerson)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/search", wrapper.SearchGlobal)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/sets", wrapper.ListSets)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/sets", wrapper.CreateSet)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/sets/{setId}", wrapper.DeleteSet)

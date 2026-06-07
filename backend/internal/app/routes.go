@@ -28,6 +28,7 @@ type apiServer struct {
 	sets          *handlers.SetsHandler
 	packingLists  *handlers.PackingListsHandler
 	trips         *handlers.TripsHandler
+	search        *handlers.SearchHandler
 }
 
 func (s *apiServer) AuthLogin(w http.ResponseWriter, r *http.Request)   { s.auth.Login(w, r) }
@@ -248,6 +249,10 @@ func (s *apiServer) StartFresh(w http.ResponseWriter, r *http.Request) {
 	s.settings.StartFresh(w, r)
 }
 
+func (s *apiServer) SearchGlobal(w http.ResponseWriter, r *http.Request, params api.SearchGlobalParams) {
+	s.search.SearchGlobal(w, r, params)
+}
+
 func NewRouter(authHandler *handlers.AuthHandler, st *store.Store, appPassword string) chi.Router {
 	r := chi.NewRouter()
 
@@ -262,6 +267,7 @@ func NewRouter(authHandler *handlers.AuthHandler, st *store.Store, appPassword s
 		sets:          handlers.NewSetsHandler(st),
 		packingLists:  handlers.NewPackingListsHandler(st.PackingLists, st.Labels),
 		trips:         handlers.NewTripsHandler(st),
+		search:        handlers.NewSearchHandler(st),
 	}, api.StdHTTPServerOptions{
 		ErrorHandlerFunc: handleOpenAPIError,
 	})
