@@ -87,7 +87,7 @@ const formatRecommendedMaxWeight = (person: Person): string => {
           {{ totalPersons }}
         </span>
       </div>
-      <RouterLink v-if="canShowContent" to="/persons" class="text-brand-500 hover:text-brand-600 text-sm font-medium">
+      <RouterLink to="/persons" class="text-brand-500 hover:text-brand-600 text-sm font-medium">
         View All →
       </RouterLink>
     </div>
@@ -95,6 +95,14 @@ const formatRecommendedMaxWeight = (person: Person): string => {
     <AppQueryState :query="personsQuery" loading-message="Loading persons..."
       empty-message="Current crew count: 0. Morale remains surprisingly high. Time to recruit some people for your adventure!"
       error-fallback="Unable to load persons.">
+      <template #empty>
+        <div class="border-line-subtle bg-surface-elevated text-copy-muted rounded-2xl border px-5 py-6 text-sm">
+          Current crew count: 0. Morale remains surprisingly high. Time to recruit some people for your adventure!
+          <RouterLink to="/persons?create=1" class="text-brand-500 hover:text-brand-600 font-medium">
+            Create your first
+          </RouterLink>
+        </div>
+      </template>
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <RouterLink v-for="person in displayPersons" :key="person.id"
           :to="{ path: '/persons', query: { open: person.id } }"

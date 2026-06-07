@@ -181,7 +181,7 @@ const formatDate = (date: string): string => {
           {{ totalSets }}
         </span>
       </div>
-      <RouterLink v-if="canShowContent" to="/sets" class="text-brand-500 hover:text-brand-600 text-sm font-medium">
+      <RouterLink to="/sets" class="text-brand-500 hover:text-brand-600 text-sm font-medium">
         View All →
       </RouterLink>
     </div>
@@ -189,6 +189,14 @@ const formatDate = (date: string): string => {
     <AppQueryState :query="setsQuery" loading-message="Loading sets..."
       empty-message="Nothing sorted yet. Peak entropy achieved. Time to start creating some sets to organize your items!"
       error-fallback="Unable to load sets.">
+      <template #empty>
+        <div class="border-line-subtle bg-surface-elevated text-copy-muted rounded-2xl border px-5 py-6 text-sm">
+          Nothing sorted yet. Peak entropy achieved. Time to start creating some sets to organize your items!
+          <RouterLink to="/sets?create=1" class="text-brand-500 hover:text-brand-600 font-medium">
+            Create your first
+          </RouterLink>
+        </div>
+      </template>
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <RouterLink v-for="set in displaySets" :key="set.id" :to="{ path: '/sets', query: { open: set.id } }"
           class="border-line-subtle bg-surface-elevated hover:border-brand-300 block rounded-xl border p-4 transition">

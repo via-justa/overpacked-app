@@ -45,7 +45,11 @@ const showEmpty = () => {
 
     <AppLoadingState v-if="query.isPending.value" :message="loadingMessage" />
 
-    <AppEmptyState v-else-if="showEmpty()" :message="emptyMessage" />
+    <template v-else-if="showEmpty()">
+      <slot name="empty">
+        <AppEmptyState :message="emptyMessage" />
+      </slot>
+    </template>
 
     <slot v-else />
   </div>
