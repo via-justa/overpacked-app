@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import AppActionsMenu, { type ActionTarget } from '../actions/AppActionsMenu.vue'
+import AppGlobalSearch from './AppGlobalSearch.vue'
 import { AppIcon } from '../icons'
 import type { IconCategory } from '../../lib/icons'
 
@@ -113,8 +114,10 @@ const primaryNavItems = props.navItems.filter((item) => item.to !== '/settings')
         </RouterLink>
       </nav>
 
-      <!-- Spacer to balance the left side and keep nav centered on desktop -->
-      <div class="hidden md:block" aria-hidden="true"></div>
+      <!-- Global search sits on the right on desktop and wraps to full width on mobile -->
+      <div data-element="top-nav-search" class="flex w-full justify-end md:w-auto md:max-w-md md:flex-1">
+        <AppGlobalSearch />
+      </div>
     </div>
 
     <AppActionsMenu :open="isActionsMenuOpen" :position="actionsMenuPosition" :current-path="props.currentPath"

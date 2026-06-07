@@ -156,6 +156,24 @@ type ApiPaths = {
       }
     }
   }
+  '/api/v1/search': {
+    get: {
+      parameters: {
+        query: {
+          q: string
+          types?: string[]
+          limit?: number
+        }
+      }
+      responses: {
+        200: {
+          content: {
+            'application/json': Array<Record<string, unknown>>
+          }
+        }
+      }
+    }
+  }
   '/api/v1/items': {
     get: {
       responses: {

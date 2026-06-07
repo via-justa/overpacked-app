@@ -1264,6 +1264,36 @@ const onCancelEdit = () => {
   editSelectedLabels.value = []
 }
 
+// Open an item edit dialog when navigated to with ?open=<itemId> (e.g. from global search)
+const consumeOpenQuery = async () => {
+  const openId = route.query.open
+  if (typeof openId !== 'string' || !openId) {
+    return
+  }
+
+  const item = itemsQuery.data.value?.find((entry) => entry.id === openId)
+  if (!item) {
+    return
+  }
+
+  const nextQuery = { ...route.query }
+  delete nextQuery.open
+  await router.replace({
+    path: route.path,
+    query: nextQuery,
+  })
+
+  await onStartEdit(item)
+}
+
+watch(
+  [() => route.query.open, () => itemsQuery.data.value],
+  () => {
+    void consumeOpenQuery()
+  },
+  { immediate: true },
+)
+
 const onSaveEdit = async () => {
   if (!editingItemId.value) {
     return

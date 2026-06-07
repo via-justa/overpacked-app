@@ -26,6 +26,7 @@ export const actionIcons = {
   duplicate: 'pi-file-edit',
   menu: 'pi-ellipsis-h',
   menuBars: 'pi-bars',
+  search: 'pi-search',
 } as const
 
 /**
