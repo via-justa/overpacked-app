@@ -101,10 +101,7 @@ const onSubmit = handleSubmit(async (values) => {
     <div class="absolute inset-0 bg-black/40" aria-hidden="true"></div>
 
     <form data-element="login-form" class="surface-panel relative z-10 w-full max-w-md p-7" @submit.prevent="onSubmit">
-      <p class="text-brand-500 text-xs font-semibold uppercase tracking-[0.2em]">Packing List</p>
       <h1 class="text-ink mt-2 text-3xl font-bold">Sign in</h1>
-      <p class="text-copy-muted mt-2 text-sm">Authenticate with the backend username and password configured in
-        environment variables.</p>
 
       <Message v-if="authNoticeMessage" severity="warn" class="mt-4" :closable="false">
         {{ authNoticeMessage }}
