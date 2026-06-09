@@ -182,7 +182,7 @@ database:
     # PostgreSQL application password.
     password: change-me-db-password
     # PostgreSQL database name.
-    database: packing_light
+    database: overpacked
   superuser:
     # CloudNativePG superuser name.
     username: postgres

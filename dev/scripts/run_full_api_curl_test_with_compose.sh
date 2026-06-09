@@ -45,14 +45,14 @@ trap cleanup EXIT
 if [[ ! -f "${ROOT_ENV_FILE}" ]]; then
   echo "==> .env not found, creating temporary defaults for compose run"
   cat >"${ROOT_ENV_FILE}" <<EOF
-DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-packing_light}?sslmode=disable
+DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-overpacked}?sslmode=disable
 SERVER_ADDR=0.0.0.0:8000
 APP_USERNAME=${APP_USERNAME:-admin}
 APP_PASSWORD=${APP_PASSWORD:-pw123}
 JWT_SECRET=${JWT_SECRET:-test-secret}
 POSTGRES_USER=${POSTGRES_USER:-postgres}
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
-POSTGRES_DB=${POSTGRES_DB:-packing_light}
+POSTGRES_DB=${POSTGRES_DB:-overpacked}
 EOF
   TEMP_ENV_CREATED="true"
 fi

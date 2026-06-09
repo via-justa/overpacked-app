@@ -1,9 +1,9 @@
-.PHONY: help install install-backend install-frontend up down logs backend frontend build build-backend build-frontend test test-backend test-backend-container test-api-curl-compose test-frontend gen-api gen-api-go clean-frontend seed seed-compose
+.PHONY: help install install-backend install-frontend up down logs backend frontend build build-backend build-frontend test test-backend test-backend-container test-api-curl-compose test-frontend gen-api gen-api-go clean-frontend seed seed-compose test-data
 
 COMPOSE ?= docker compose -f dev/docker-compose.yml
 
 help:
-	@echo "Packing Light - available targets"
+	@echo "Overpacked - available targets"
 	@echo "  make install           		Install backend and frontend dependencies"
 	@echo "  make up                		Start visual testing stack (frontend, backend, db)"
 	@echo "  make down              		Stop full dev stack"
@@ -22,6 +22,7 @@ help:
 	@echo "  make gen-api           		Regenerate frontend OpenAPI types"
 	@echo "  make seed              		Run database seeds (local)"
 	@echo "  make seed-compose      		Run database seeds (docker-compose)"
+	@echo "  make test-data         		Load dev test data (runs seeds first, docker-compose)"
 	@echo "  make clean-frontend    		Remove frontend dist output"
 
 install: install-backend install-frontend
@@ -84,6 +85,9 @@ seed:
 
 seed-compose:
 	$(COMPOSE) run --rm seed
+
+test-data:
+	$(COMPOSE) run --rm test-data
 
 clean-frontend:
 	rm -rf frontend/dist && rm -rf frontend/node_modules

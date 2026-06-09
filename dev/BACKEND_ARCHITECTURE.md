@@ -94,7 +94,7 @@ Load from environment variables:
 
 Example:
 ```bash
-export DATABASE_URL="postgres://user:pass@localhost:5432/packing_light"
+export DATABASE_URL="postgres://user:pass@localhost:5432/overpacked"
 export SERVER_ADDR="localhost:8000"
 export APP_USERNAME="admin"
 export APP_PASSWORD="secret123"

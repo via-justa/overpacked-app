@@ -75,7 +75,7 @@ database:
   auth:
     username: app
     password: change-me-db-password
-    database: packing_light
+    database: overpacked
   superuser:
     username: postgres
     password: change-me-superuser-password

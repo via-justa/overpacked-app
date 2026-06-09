@@ -9,7 +9,7 @@ Migrations are managed with [goose](https://github.com/pressly/goose) and embedd
 - `DATABASE_URL` environment variable set
 
 ```sh
-export DATABASE_URL="postgres://user:password@localhost:5432/packing_light?sslmode=disable"
+export DATABASE_URL="postgres://user:password@localhost:5432/overpacked?sslmode=disable"
 ```
 
 ## Running Migrations

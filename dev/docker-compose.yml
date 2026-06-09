@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-packing_light}
+      POSTGRES_DB: ${POSTGRES_DB:-overpacked}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -14,7 +14,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - packing_light_db_data:/var/lib/postgresql/data
+      - overpacked_db_data:/var/lib/postgresql/data
 
   seed:
     image: golang:1.26-alpine
@@ -23,7 +23,7 @@ services:
         condition: service_healthy
     working_dir: /workspace/backend
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-packing_light}?sslmode=disable
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-overpacked}?sslmode=disable
       APP_USERNAME: ${APP_USERNAME:-admin}
       APP_PASSWORD: ${APP_PASSWORD:-pw123}
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
@@ -43,6 +43,29 @@ services:
     profiles:
       - seed
 
+  test-data:
+    image: postgres:16-alpine
+    depends_on:
+      db:
+        condition: service_healthy
+      seed:
+        condition: service_completed_successfully
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - ./test-data.sql:/test-data.sql:ro
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        echo "Applying dev test data..."
+        psql -h db -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-overpacked} -v ON_ERROR_STOP=1 -f /test-data.sql
+        echo "Test data applied."
+    profiles:
+      - seed
+      - test-data
+
   backend:
     image: golang:1.26-alpine
     depends_on:
@@ -50,7 +73,7 @@ services:
         condition: service_healthy
     working_dir: /workspace/backend
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-packing_light}?sslmode=disable
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-overpacked}?sslmode=disable
       APP_USERNAME: ${APP_USERNAME:-admin}
       APP_PASSWORD: ${APP_PASSWORD:-pw123}
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
@@ -79,7 +102,7 @@ services:
       VITE_DEV_PROXY_TARGET: ${VITE_DEV_PROXY_TARGET:-http://backend:8000}
     volumes:
       - ../:/workspace
-      - packing_light_frontend_node_modules:/workspace/frontend/node_modules
+      - overpacked_frontend_node_modules:/workspace/frontend/node_modules
     ports:
       - "5173:5173"
     command:
@@ -91,5 +114,5 @@ services:
         npm run dev -- --host 0.0.0.0 --port 5173
 
 volumes:
-  packing_light_db_data:
-  packing_light_frontend_node_modules:
+  overpacked_db_data:
+  overpacked_frontend_node_modules:
