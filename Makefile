@@ -1,4 +1,4 @@
-.PHONY: help install install-backend install-frontend up down logs backend frontend build build-backend build-frontend test test-backend test-backend-container test-api-curl-compose test-frontend check-api-gen gen-api gen-api-go clean-frontend seed seed-compose test-data
+.PHONY: help install install-backend install-frontend up down logs backend frontend build build-backend build-frontend test test-backend test-backend-container test-api-curl-compose test-frontend check-api-gen check-api-gen-go gen-api gen-api-go clean-frontend seed seed-compose test-data
 
 COMPOSE ?= docker compose -f dev/docker-compose.yml
 
@@ -14,7 +14,8 @@ help:
 	@echo "  make build-backend     		Build backend binaries"
 	@echo "  make build-frontend    		Type-check and build frontend"
 	@echo "  make test              		Run backend and frontend checks"
-	@echo "  make test-backend      		Run backend Go tests"
+	@echo "  make test-backend      		Run backend Go tests (incl. API-gen drift check)"
+	@echo "  make check-api-gen-go  		Fail if backend Go API types are stale vs the spec"
 	@echo "  make test-backend-container 	Run backend Go tests against containerized Postgres"
 	@echo "  make test-api-curl-compose 	Run full endpoint curl test against docker-compose backend"
 	@echo "  make test-frontend     		Run frontend type-check (incl. API-gen drift check)"
@@ -62,8 +63,19 @@ build-frontend:
 
 test: test-backend test-frontend
 
-test-backend:
+test-backend: check-api-gen-go
 	cd backend && go test ./...
+
+# Fails if the generated Go API types drift from dev/openapi.yaml.
+# Regenerates in place, then fails if the file is modified or not committed.
+check-api-gen-go:
+	$(MAKE) gen-api-go
+	@if [ -n "$$(git status --porcelain -- backend/internal/api/api.gen.go)" ]; then \
+		echo "✗ backend Go API types are out of date or uncommitted."; \
+		echo "  Run 'make gen-api-go' and commit backend/internal/api/api.gen.go."; \
+		git status --porcelain -- backend/internal/api/api.gen.go; \
+		exit 1; \
+	fi
 
 test-backend-container:
 	$(COMPOSE) up -d db
