@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "gen:api": "openapi-typescript ../dev/openapi.yaml -o src/lib/api/schema.ts",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "lint:css": "stylelint \"src/**/*.{css,vue}\"",

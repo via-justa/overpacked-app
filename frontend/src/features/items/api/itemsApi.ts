@@ -51,7 +51,7 @@ export const listItems = async (): Promise<Item[]> => {
     throw new Error(getErrorMessage(error, 'Unable to load items'))
   }
 
-  return data as Item[]
+  return data
 }
 
 export const createItem = async (payload: ItemCreate): Promise<Item> => {
@@ -63,7 +63,7 @@ export const createItem = async (payload: ItemCreate): Promise<Item> => {
     throw new Error(getErrorMessage(error, 'Unable to create item'))
   }
 
-  return data as Item
+  return data
 }
 
 export const updateItem = async (itemId: string, payload: ItemUpdate): Promise<Item> => {
@@ -78,7 +78,7 @@ export const updateItem = async (itemId: string, payload: ItemUpdate): Promise<I
     throw new Error(getErrorMessage(error, 'Unable to update item'))
   }
 
-  return data as Item
+  return data
 }
 
 export const removeItem = async (itemId: string): Promise<void> => {
@@ -100,7 +100,7 @@ export const listManufacturers = async (): Promise<Manufacturer[]> => {
     throw new Error(getErrorMessage(error, 'Unable to load manufacturers'))
   }
 
-  return data as Manufacturer[]
+  return data
 }
 
 export const createManufacturer = async (payload: ManufacturerCreate): Promise<Manufacturer> => {
@@ -112,7 +112,7 @@ export const createManufacturer = async (payload: ManufacturerCreate): Promise<M
     throw new Error(getErrorMessage(error, 'Unable to create manufacturer'))
   }
 
-  return data as Manufacturer
+  return data
 }
 
 export const updateManufacturer = async (manufacturerId: string, payload: ManufacturerUpdate): Promise<Manufacturer> => {
@@ -127,7 +127,7 @@ export const updateManufacturer = async (manufacturerId: string, payload: Manufa
     throw new Error(getErrorMessage(error, 'Unable to update manufacturer'))
   }
 
-  return data as Manufacturer
+  return data
 }
 
 export const removeManufacturer = async (manufacturerId: string): Promise<void> => {
@@ -161,7 +161,7 @@ export const listItemTypes = async (): Promise<ItemTypeEntity[]> => {
     throw new Error(getErrorMessage(error, 'Unable to load categories'))
   }
 
-  return data as ItemTypeEntity[]
+  return data
 }
 
 export const updateItemType = async (typeId: string, payload: ItemTypeUpdate): Promise<ItemTypeEntity> => {
@@ -176,7 +176,7 @@ export const updateItemType = async (typeId: string, payload: ItemTypeUpdate): P
     throw new Error(getErrorMessage(error, 'Unable to update category'))
   }
 
-  return data as ItemTypeEntity
+  return data
 }
 
 export const removeItemType = async (typeId: string): Promise<void> => {
@@ -217,7 +217,7 @@ export const listItemTypeFields = async (typeId: string): Promise<ItemTypeField[
     throw new Error(getErrorMessage(error, 'Unable to load category fields'))
   }
 
-  return data as ItemTypeField[]
+  return data
 }
 
 export const listLabels = async (): Promise<Label[]> => {
@@ -227,7 +227,7 @@ export const listLabels = async (): Promise<Label[]> => {
     throw new Error(getErrorMessage(error, 'Unable to load labels'))
   }
 
-  return data as Label[]
+  return data
 }
 
 export const createLabel = async (payload: LabelCreate): Promise<Label> => {
@@ -239,7 +239,7 @@ export const createLabel = async (payload: LabelCreate): Promise<Label> => {
     throw new Error(getErrorMessage(error, 'Unable to create label'))
   }
 
-  return data as Label
+  return data
 }
 
 export const listItemLabels = async (itemId: string): Promise<Label[]> => {
@@ -253,7 +253,7 @@ export const listItemLabels = async (itemId: string): Promise<Label[]> => {
     throw new Error(getErrorMessage(error, 'Unable to load item labels'))
   }
 
-  return data as Label[]
+  return data
 }
 
 export const addItemLabel = async (itemId: string, payload: ItemLabelAdd): Promise<Label> => {
@@ -268,7 +268,7 @@ export const addItemLabel = async (itemId: string, payload: ItemLabelAdd): Promi
     throw new Error(getErrorMessage(error, 'Unable to add label to item'))
   }
 
-  return data as Label
+  return data
 }
 
 export const removeItemLabel = async (itemId: string, labelId: string): Promise<void> => {

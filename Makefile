@@ -1,4 +1,4 @@
-.PHONY: help install install-backend install-frontend up down logs backend frontend build build-backend build-frontend test test-backend test-backend-container test-api-curl-compose test-frontend gen-api gen-api-go clean-frontend seed seed-compose test-data
+.PHONY: help install install-backend install-frontend up down logs backend frontend build build-backend build-frontend test test-backend test-backend-container test-api-curl-compose test-frontend check-api-gen gen-api gen-api-go clean-frontend seed seed-compose test-data
 
 COMPOSE ?= docker compose -f dev/docker-compose.yml
 
@@ -17,7 +17,8 @@ help:
 	@echo "  make test-backend      		Run backend Go tests"
 	@echo "  make test-backend-container 	Run backend Go tests against containerized Postgres"
 	@echo "  make test-api-curl-compose 	Run full endpoint curl test against docker-compose backend"
-	@echo "  make test-frontend     		Run frontend type-check"
+	@echo "  make test-frontend     		Run frontend type-check (incl. API-gen drift check)"
+	@echo "  make check-api-gen     		Fail if frontend OpenAPI types are stale vs the spec"
 	@echo "  make gen-api-go        		Regenerate Go API types from OpenAPI spec"
 	@echo "  make gen-api           		Regenerate frontend OpenAPI types"
 	@echo "  make seed              		Run database seeds (local)"
@@ -71,8 +72,19 @@ test-backend-container:
 test-api-curl-compose:
 	./dev/scripts/run_full_api_curl_test_with_compose.sh
 
-test-frontend:
+test-frontend: check-api-gen
 	cd frontend && npx vue-tsc -b && npm run lint:theme && npm run lint:icons
+
+# Fails if the generated OpenAPI types drift from dev/openapi.yaml.
+# Regenerates in place, then fails if the file is modified or not committed.
+check-api-gen:
+	cd frontend && npm run gen:api
+	@if [ -n "$$(git status --porcelain -- frontend/src/lib/api/schema.ts)" ]; then \
+		echo "✗ frontend OpenAPI types are out of date or uncommitted."; \
+		echo "  Run 'make gen-api' and commit frontend/src/lib/api/schema.ts."; \
+		git status --porcelain -- frontend/src/lib/api/schema.ts; \
+		exit 1; \
+	fi
 
 gen-api-go:
 	cd backend && go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -generate models,std-http -package api -o internal/api/api.gen.go ../dev/openapi.yaml

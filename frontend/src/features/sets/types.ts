@@ -1,40 +1,9 @@
-import type { Item } from '../items/types'
+import type { components } from '../../lib/api/schema'
 
-export type ItemSet = {
-  id: string
-  name: string
-  set_category: string
-  created_at: string
-  updated_at: string
-}
-
-export type ItemSetCreate = {
-  name: string
-  set_category: string
-}
-
-export type ItemSetUpdate = {
-  name?: string
-  set_category: string
-}
-
-export type SetItemCreate = {
-  item_id: string
-  quantity: number
-  notes?: string
-  sort_order?: number
-}
-
-export type SetItemUpdate = {
-  quantity?: number
-  notes?: string
-  sort_order?: number
-}
-
-export type SetItemWithDetails = {
-  item_id: string
-  quantity: number
-  notes?: string | null
-  sort_order?: number | null
-  item: Item
-}
+// Server types are sourced from the generated OpenAPI schema (single source of truth).
+export type ItemSet = components['schemas']['ItemSet']
+export type ItemSetCreate = components['schemas']['ItemSetCreate']
+export type ItemSetUpdate = components['schemas']['ItemSetUpdate']
+export type SetItemCreate = components['schemas']['SetItemCreate']
+export type SetItemUpdate = components['schemas']['SetItemUpdate']
+export type SetItemWithDetails = components['schemas']['SetItemWithDetails']

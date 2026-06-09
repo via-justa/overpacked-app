@@ -19,7 +19,7 @@ export const listPersons = async (): Promise<Person[]> => {
     throw new Error(getErrorMessage(error, 'Unable to load persons'))
   }
 
-  return data as Person[]
+  return data
 }
 
 export const createPerson = async (payload: PersonCreate): Promise<Person> => {
@@ -31,7 +31,7 @@ export const createPerson = async (payload: PersonCreate): Promise<Person> => {
     throw new Error(getErrorMessage(error, 'Unable to create person'))
   }
 
-  return data as Person
+  return data
 }
 
 export const updatePerson = async (
@@ -49,7 +49,7 @@ export const updatePerson = async (
     throw new Error(getErrorMessage(error, 'Unable to update person'))
   }
 
-  return data as Person
+  return data
 }
 
 export const removePerson = async (personId: string): Promise<void> => {

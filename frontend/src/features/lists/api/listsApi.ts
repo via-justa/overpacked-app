@@ -51,7 +51,7 @@ export const listPackingLists = async (): Promise<PackingList[]> => {
     throw new Error(getErrorMessage(error, 'Unable to load packing lists'))
   }
 
-  return data as PackingList[]
+  return data
 }
 
 export const getPackingList = async (listId: string): Promise<PackingList> => {
@@ -65,7 +65,7 @@ export const getPackingList = async (listId: string): Promise<PackingList> => {
     throw new Error(getErrorMessage(error, 'Unable to load packing list'))
   }
 
-  return data as PackingList
+  return data
 }
 
 export const createPackingList = async (payload: PackingListCreate): Promise<PackingList> => {
@@ -77,7 +77,7 @@ export const createPackingList = async (payload: PackingListCreate): Promise<Pac
     throw new Error(getErrorMessage(error, 'Unable to create packing list'))
   }
 
-  return data as PackingList
+  return data
 }
 
 export const updatePackingList = async (listId: string, payload: PackingListUpdate): Promise<PackingList> => {
@@ -92,7 +92,7 @@ export const updatePackingList = async (listId: string, payload: PackingListUpda
     throw new Error(getErrorMessage(error, 'Unable to update packing list'))
   }
 
-  return data as PackingList
+  return data
 }
 
 export const removePackingList = async (listId: string): Promise<void> => {
@@ -118,7 +118,7 @@ export const listPackingListLabels = async (listId: string): Promise<Label[]> =>
     throw new Error(getErrorMessage(error, 'Unable to load packing list labels'))
   }
 
-  return data as Label[]
+  return data
 }
 
 export const addPackingListLabel = async (listId: string, payload: PackingListLabelAdd): Promise<Label> => {
@@ -133,7 +133,7 @@ export const addPackingListLabel = async (listId: string, payload: PackingListLa
     throw new Error(getErrorMessage(error, 'Unable to add label to packing list'))
   }
 
-  return data as Label
+  return data
 }
 
 export const removePackingListLabel = async (listId: string, labelId: string): Promise<void> => {

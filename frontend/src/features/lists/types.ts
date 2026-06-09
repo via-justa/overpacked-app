@@ -1,34 +1,9 @@
-export type PackingList = {
-  id: string
-  name: string
-  description?: string | null
-  created_at: string
-  updated_at: string
-}
+import type { components } from '../../lib/api/schema'
 
-export type PackingListCreate = {
-  name: string
-  description?: string
-}
-
-export type PackingListUpdate = {
-  name?: string
-  description?: string
-}
-
-export type Label = {
-  id: string
-  name: string
-  color?: string | null
-  created_at: string
-  updated_at: string
-}
-
-export type LabelCreate = {
-  name: string
-  color?: string
-}
-
-export type PackingListLabelAdd = {
-  label_id: string
-}
+// Server types are sourced from the generated OpenAPI schema (single source of truth).
+export type PackingList = components['schemas']['PackingList']
+export type PackingListCreate = components['schemas']['PackingListCreate']
+export type PackingListUpdate = components['schemas']['PackingListUpdate']
+export type Label = components['schemas']['Label']
+export type LabelCreate = components['schemas']['LabelCreate']
+export type PackingListLabelAdd = components['schemas']['PackingListLabelAdd']

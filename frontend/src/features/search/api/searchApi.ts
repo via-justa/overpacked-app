@@ -1,14 +1,9 @@
 import { apiClient } from '../../../lib/api/client'
+import type { components } from '../../../lib/api/schema'
 
-export type SearchEntityType = 'item' | 'set' | 'packing_list' | 'person' | 'manufacturer' | 'trip'
-
-export interface SearchResult {
-    entity_type: SearchEntityType
-    id: string
-    title: string
-    subtitle?: string | null
-    score: number
-}
+// Server types are sourced from the generated OpenAPI schema (single source of truth).
+export type SearchEntityType = components['schemas']['SearchEntityType']
+export type SearchResult = components['schemas']['SearchResult']
 
 const SEARCH_ERROR_FALLBACK = 'Unable to perform search'
 
@@ -28,7 +23,7 @@ export async function globalSearch(
     types?: SearchEntityType[],
     limit?: number,
 ): Promise<SearchResult[]> {
-    const query: { q: string; types?: string[]; limit?: number } = { q }
+    const query: { q: string; types?: SearchEntityType[]; limit?: number } = { q }
     if (types && types.length > 0) {
         query.types = types
     }
@@ -44,5 +39,5 @@ export async function globalSearch(
         throw new Error(getErrorMessage(error, SEARCH_ERROR_FALLBACK))
     }
 
-    return data as unknown as SearchResult[]
+    return data
 }

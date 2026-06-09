@@ -40,7 +40,7 @@ export const listSets = async (): Promise<ItemSet[]> => {
     throw new Error(getErrorMessage(error, 'Unable to load sets'))
   }
 
-  return data as ItemSet[]
+  return data
 }
 
 export const createSet = async (payload: ItemSetCreate): Promise<ItemSet> => {
@@ -52,7 +52,7 @@ export const createSet = async (payload: ItemSetCreate): Promise<ItemSet> => {
     throw new Error(getErrorMessage(error, 'Unable to create set'))
   }
 
-  return data as ItemSet
+  return data
 }
 
 export const updateSet = async (setId: string, payload: ItemSetUpdate): Promise<ItemSet> => {
@@ -67,7 +67,7 @@ export const updateSet = async (setId: string, payload: ItemSetUpdate): Promise<
     throw new Error(getErrorMessage(error, 'Unable to update set'))
   }
 
-  return data as ItemSet
+  return data
 }
 
 export const removeSet = async (setId: string): Promise<void> => {
@@ -93,7 +93,7 @@ export const listSetItems = async (setId: string): Promise<SetItemWithDetails[]>
     throw new Error(getErrorMessage(error, 'Unable to load set items'))
   }
 
-  return data as SetItemWithDetails[]
+  return data
 }
 
 export const addSetItem = async (setId: string, payload: SetItemCreate): Promise<SetItemWithDetails> => {
@@ -108,7 +108,7 @@ export const addSetItem = async (setId: string, payload: SetItemCreate): Promise
     throw new Error(getErrorMessage(error, 'Unable to add item to set'))
   }
 
-  return data as SetItemWithDetails
+  return data
 }
 
 export const updateSetItem = async (setId: string, itemId: string, payload: SetItemUpdate): Promise<SetItemWithDetails> => {
@@ -123,7 +123,7 @@ export const updateSetItem = async (setId: string, itemId: string, payload: SetI
     throw new Error(getErrorMessage(error, 'Unable to update set item'))
   }
 
-  return data as SetItemWithDetails
+  return data
 }
 
 export const removeSetItem = async (setId: string, itemId: string): Promise<void> => {

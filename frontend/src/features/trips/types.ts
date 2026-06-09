@@ -1,118 +1,28 @@
+import type { components } from '../../lib/api/schema'
 import type { Item } from '../items/types'
 import type { Person } from '../persons/types'
 
-export type TripType = 'day_hike' | 'overnight' | 'multi_day' | 'thru_hike'
+// Server types are sourced from the generated OpenAPI schema (single source of truth).
+export type Trip = components['schemas']['Trip']
+export type TripCreate = components['schemas']['TripCreate']
+export type TripUpdate = components['schemas']['TripUpdate']
+export type TripWithDetails = components['schemas']['TripWithDetails']
+export type TripPersonDetails = components['schemas']['TripPersonDetailsNested']
+export type TripPersonPack = components['schemas']['TripPersonPackDetailsNested']
+// The create-pack endpoint returns the pack record without its (still-empty) items.
+export type TripPersonPackCreated = components['schemas']['TripPersonPackWithDetails']
+export type TripPersonPackItem = components['schemas']['PackItemWithDetails']
+export type TripPersonItem = components['schemas']['TripPersonItemWithDetails']
+export type TripPersonCreate = components['schemas']['TripPersonCreate']
+export type TripPersonPackCreate = components['schemas']['TripPersonPackCreate']
+export type TripPersonPackItemCreate = components['schemas']['PackItemCreate']
+export type TripPersonItemCreate = components['schemas']['TripPersonItemCreate']
+export type TripRoutePreview = components['schemas']['TripRoutePreview']
 
-export type CarryStatus = 'packed' | 'worn'
-
-export type RouteService = 'komoot' | 'strava' | 'wanderer' | 'unknown'
-
-export type Trip = {
-    id: string
-    name: string
-    trip_type: TripType
-    duration?: string | null
-    notes?: string | null
-    trip_komoot_url?: string | null
-    trip_strava_url?: string | null
-    trip_wanderer_url?: string | null
-    total_distance_km?: number | null
-    created_at: string
-    updated_at: string
-}
-
-export type TripCreate = {
-    name: string
-    trip_type: TripType
-    duration?: string
-    notes?: string
-    trip_komoot_url?: string
-    trip_strava_url?: string
-    trip_wanderer_url?: string
-    total_distance_km?: number
-}
-
-export type TripUpdate = Partial<TripCreate>
-
-export type TripPersonPackItem = {
-    id: string
-    item_id: string
-    quantity: number
-    carry_status: CarryStatus
-    notes?: string | null
-    item: Item
-}
-
-export type TripPersonPack = {
-    id: string
-    trip_person_id: string
-    pack_id: string
-    pack: {
-        id: string
-        name: string
-        trip_type: TripType
-        person_id?: string | null
-        created_at: string
-        updated_at: string
-    }
-    items: TripPersonPackItem[]
-    created_at: string
-    updated_at: string
-}
-
-export type TripPersonItem = {
-    id: string
-    trip_person_id: string
-    item_id: string
-    quantity: number
-    carry_status: CarryStatus
-    notes?: string | null
-    item: Item
-    created_at: string
-    updated_at: string
-}
-
-export type TripPersonDetails = {
-    trip_person_id: string
-    person_id: string
-    person: Person
-    packs: TripPersonPack[]
-    items: TripPersonItem[]
-}
-
-export type TripWithDetails = Trip & {
-    persons: TripPersonDetails[]
-}
-
-export type TripPersonCreate = {
-    person_id: string
-}
-
-export type TripPersonPackCreate = {
-    name: string
-    trip_type: TripType
-    notes?: string | null
-}
-
-export type TripPersonPackItemCreate = {
-    item_id: string
-    quantity: number
-    carry_status: CarryStatus
-    notes?: string | null
-}
-
-export type TripPersonItemCreate = {
-    item_id: string
-    quantity: number
-    carry_status: CarryStatus
-    notes?: string
-}
-
-export type TripRoutePreview = {
-    service: RouteService
-    image_url?: string | null
-    title?: string | null
-}
+// Named enums derived from the schema for use in forms/selects.
+export type TripType = Trip['trip_type']
+export type CarryStatus = TripPersonItem['carry_status']
+export type RouteService = TripRoutePreview['service']
 
 // ─── Aggregated stats used by cards ──────────────────────────────────────────
 

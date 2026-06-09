@@ -1,159 +1,31 @@
+import type { components } from '../../lib/api/schema'
+
+// Server types are sourced from the generated OpenAPI schema (single source of truth).
+export type Item = components['schemas']['Item']
+export type ItemCreate = components['schemas']['ItemCreate']
+export type ItemUpdate = components['schemas']['ItemUpdate']
+export type Manufacturer = components['schemas']['Manufacturer']
+export type ManufacturerCreate = components['schemas']['ManufacturerCreate']
+export type ManufacturerUpdate = components['schemas']['ManufacturerUpdate']
+export type ItemTypeCreate = components['schemas']['ItemTypeCreate']
+export type ItemTypeUpdate = components['schemas']['ItemTypeUpdate']
+export type ItemTypeEntity = components['schemas']['ItemType']
+export type ItemTypeFieldInput = components['schemas']['ItemTypeFieldInput']
+export type ItemTypeField = components['schemas']['ItemTypeField']
+export type Label = components['schemas']['Label']
+export type LabelCreate = components['schemas']['LabelCreate']
+export type LabelUpdate = components['schemas']['LabelUpdate']
+export type ItemLabelAdd = components['schemas']['ItemLabelAdd']
+
+// Named enums derived from the schema for use in forms/selects.
+export type DefaultCarryStatus = NonNullable<Item['default_carry_status']>
+export type ItemTypeCreateBaseProfile = NonNullable<ItemTypeCreate['base_profile']>
+export type ItemTypeFieldDataType = ItemTypeField['data_type']
+
+// UI-only: a curated subset of item types; the server `type` field is a free-form string.
 export type KnownItemType = 'consumable' | 'wearable' | 'shelter' | 'sleep' | 'electronics'
-export type DefaultCarryStatus = 'packed' | 'worn'
 
-export type Item = {
-  id: string
-  name: string
-  type: string
-  is_active: boolean
-  manufacturer_id: string
-  description?: string | null
-  source_url?: string | null
-  value?: number | null
-  weight_grams?: number | null
-  volume_ml?: number | null
-  default_quantity?: number | null
-  default_carry_status?: DefaultCarryStatus | null
-  is_default?: boolean | null
-  image_blob?: string | null
-  image_mime_type?: string | null
-  image_size_bytes?: number | null
-  image_width_px?: number | null
-  image_height_px?: number | null
-  attributes?: Record<string, unknown> | null
-  created_at: string
-  updated_at: string
-}
-
-export type ItemCreate = {
-  name: string
-  type: string
-  is_active: boolean
-  manufacturer_id: string
-  description?: string
-  source_url?: string
-  value?: number
-  weight_grams?: number
-  volume_ml?: number
-  default_quantity?: number
-  default_carry_status?: DefaultCarryStatus
-  is_default?: boolean
-  image_blob?: string
-  image_mime_type?: string
-  image_size_bytes?: number
-  attributes?: Record<string, unknown>
-}
-
-export type ItemUpdate = {
-  name?: string
-  type?: string
-  is_active?: boolean
-  manufacturer_id?: string
-  description?: string
-  source_url?: string
-  value?: number
-  weight_grams?: number
-  volume_ml?: number
-  default_quantity?: number
-  default_carry_status?: DefaultCarryStatus
-  is_default?: boolean
-  image_blob?: string
-  image_mime_type?: string
-  image_size_bytes?: number
-  attributes?: Record<string, unknown>
-}
-
-export type Manufacturer = {
-  id: string
-  name: string
-  website?: string | null
-  created_at: string
-  updated_at: string
-}
-
-export type ManufacturerCreate = {
-  name: string
-  website?: string
-}
-
-export type ManufacturerUpdate = {
-  name?: string
-  website?: string
-}
-
-export type ItemTypeCreateBaseProfile = 'consumable' | 'wearable' | 'shelter' | 'sleep' | 'electronics'
-
-export type ItemTypeCreate = {
-  id: string
-  name: string
-  description?: string
-  base_profile?: ItemTypeCreateBaseProfile
-}
-
-export type ItemTypeUpdate = {
-  name?: string
-  description?: string
-  base_profile?: ItemTypeCreateBaseProfile
-}
-
-export type ItemTypeEntity = {
-  id: string
-  name: string
-  description?: string | null
-  base_profile?: ItemTypeCreateBaseProfile | null
-  is_system: boolean
-}
-
-export type ItemTypeFieldDataType = 'string' | 'integer' | 'number' | 'boolean' | 'enum'
-
-export type ItemTypeFieldInput = {
-  field_key: string
-  field_label: string
-  data_type: ItemTypeFieldDataType
-  is_required?: boolean
-  enum_options?: string[]
-  min_value?: number
-  max_value?: number
-  unit?: string
-  sort_order?: number
-}
-
-export type ItemTypeField = {
-  id: string
-  item_type_id: string
-  field_key: string
-  field_label: string
-  data_type: ItemTypeFieldDataType
-  is_required: boolean
-  enum_options?: string[] | null
-  min_value?: number | null
-  max_value?: number | null
-  unit?: string | null
-  sort_order: number
-}
-
-export type Label = {
-  id: string
-  name: string
-  color?: string | null
-  created_at: string
-  updated_at: string
-}
-
-export type LabelCreate = {
-  name: string
-  color?: string | null
-}
-
-export type LabelUpdate = {
-  name?: string
-  color?: string | null
-}
-
-export type ItemLabelAdd = {
-  label_id: string
-}
-
+// UI-only form state — no server/spec equivalent.
 export type ItemFormValues = {
   name: string
   type: string

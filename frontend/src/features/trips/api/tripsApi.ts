@@ -8,7 +8,7 @@ import type {
     TripPersonCreate,
     TripPersonItem,
     TripPersonItemCreate,
-    TripPersonPack,
+    TripPersonPackCreated,
     TripPersonPackCreate,
     TripPersonPackItem,
     TripPersonPackItemCreate,
@@ -52,7 +52,7 @@ export const listTrips = async (): Promise<Trip[]> => {
         throw new Error(getErrorMessage(error, 'Unable to load trips'))
     }
 
-    return data as Trip[]
+    return data
 }
 
 export const getTrip = async (tripId: string): Promise<TripWithDetails> => {
@@ -64,7 +64,7 @@ export const getTrip = async (tripId: string): Promise<TripWithDetails> => {
         throw new Error(getErrorMessage(error, 'Unable to load trip'))
     }
 
-    return data as TripWithDetails
+    return data
 }
 
 export const createTrip = async (payload: TripCreate): Promise<Trip> => {
@@ -76,7 +76,7 @@ export const createTrip = async (payload: TripCreate): Promise<Trip> => {
         throw new Error(getErrorMessage(error, 'Unable to create trip'))
     }
 
-    return data as Trip
+    return data
 }
 
 export const updateTrip = async (tripId: string, payload: TripUpdate): Promise<Trip> => {
@@ -89,7 +89,7 @@ export const updateTrip = async (tripId: string, payload: TripUpdate): Promise<T
         throw new Error(getErrorMessage(error, 'Unable to update trip'))
     }
 
-    return data as Trip
+    return data
 }
 
 export const removeTrip = async (tripId: string): Promise<void> => {
@@ -116,7 +116,7 @@ export const getRoutePreview = async (
         throw new Error(getErrorMessage(error, 'Unable to load route preview'))
     }
 
-    return data as TripRoutePreview
+    return data
 }
 
 // ─── Trip persons ────────────────────────────────────────────────────────────
@@ -148,7 +148,7 @@ export const addTripPersonPack = async (
     tripId: string,
     personId: string,
     payload: TripPersonPackCreate,
-): Promise<TripPersonPack> => {
+): Promise<TripPersonPackCreated> => {
     const { data, error, response } = await apiClient.POST(
         '/api/v1/trips/{tripId}/persons/{personId}/packs',
         {
@@ -161,7 +161,7 @@ export const addTripPersonPack = async (
         throw new Error(getErrorMessage(error, 'Unable to create pack'))
     }
 
-    return data as TripPersonPack
+    return data
 }
 
 export const removeTripPersonPack = async (
@@ -201,7 +201,7 @@ export const addTripPersonPackItem = async (
         throw new Error(getErrorMessage(error, 'Unable to add item to pack'))
     }
 
-    return data as TripPersonPackItem
+    return data
 }
 
 export const removeTripPersonPackItem = async (
@@ -241,7 +241,7 @@ export const addTripPersonItem = async (
         throw new Error(getErrorMessage(error, 'Unable to add item to person'))
     }
 
-    return data as TripPersonItem
+    return data
 }
 
 export const removeTripPersonItem = async (

@@ -19,7 +19,7 @@ export const getSettings = async (): Promise<Settings> => {
     throw new Error(getErrorMessage(error, 'Unable to load settings'))
   }
 
-  return data as Settings
+  return data
 }
 
 export const patchSettings = async (payload: SettingsUpdate): Promise<Settings> => {
@@ -31,7 +31,7 @@ export const patchSettings = async (payload: SettingsUpdate): Promise<Settings> 
     throw new Error(getErrorMessage(error, 'Unable to save settings'))
   }
 
-  return data as Settings
+  return data
 }
 
 export const startFresh = async (password: string): Promise<void> => {
