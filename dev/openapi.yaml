@@ -1307,6 +1307,44 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /api/v1/trips/route-preview/{service}:
+    get:
+      tags:
+        - trips
+      summary: Fetch route link preview metadata
+      description: >-
+        Fetches Open Graph preview metadata (image, title) for a public route
+        share link. The service is supplied in the path. komoot and strava
+        requests are restricted to their official hosts; wanderer accepts any
+        public self-hosted instance (requests resolving to private or loopback
+        addresses are rejected).
+      operationId: getTripRoutePreview
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: service
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [komoot, strava, wanderer]
+        - name: url
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Route preview metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripRoutePreview'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
   /api/v1/trips/{tripId}:
     get:
       tags:
@@ -2967,6 +3005,21 @@ components:
         updated_at:
           type: string
           format: date-time
+
+    TripRoutePreview:
+      type: object
+      required:
+        - service
+      properties:
+        service:
+          type: string
+          enum: [komoot, strava, wanderer, unknown]
+        image_url:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
 
     TripWithDetails:
       allOf:

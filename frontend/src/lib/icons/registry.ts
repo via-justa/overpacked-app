@@ -40,6 +40,7 @@ export const navigationIcons = {
   sets: 'pi-sitemap',
   packs: 'pi-briefcase',
   lists: 'pi-list',
+  trips: 'pi-map',
   planner: 'pi-check-square',
   person: 'pi-user',
   persons: 'pi-users',
@@ -75,6 +76,10 @@ export const contentIcons = {
   file: 'pi-file',
   folder: 'pi-folder',
   building: 'pi-building',
+  routeKomoot: 'pi-map-marker',
+  routeStrava: 'pi-bolt',
+  routeWanderer: 'pi-compass',
+  routeLink: 'pi-link',
 } as const
 
 /**

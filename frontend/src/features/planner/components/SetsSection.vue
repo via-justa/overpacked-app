@@ -26,7 +26,7 @@ const itemTypesQuery = useQuery({
 
 const displaySets = computed(() => {
   if (!setsQuery.data.value) return []
-  return setsQuery.data.value.slice(0, 6)
+  return setsQuery.data.value.slice(0, 3)
 })
 
 const totalSets = computed(() => setsQuery.data.value?.length ?? 0)

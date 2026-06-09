@@ -758,6 +758,30 @@ func (e TripPersonPackCreateTripType) Valid() bool {
 	}
 }
 
+// Defines values for TripRoutePreviewService.
+const (
+	TripRoutePreviewServiceKomoot   TripRoutePreviewService = "komoot"
+	TripRoutePreviewServiceStrava   TripRoutePreviewService = "strava"
+	TripRoutePreviewServiceUnknown  TripRoutePreviewService = "unknown"
+	TripRoutePreviewServiceWanderer TripRoutePreviewService = "wanderer"
+)
+
+// Valid indicates whether the value is a known member of the TripRoutePreviewService enum.
+func (e TripRoutePreviewService) Valid() bool {
+	switch e {
+	case TripRoutePreviewServiceKomoot:
+		return true
+	case TripRoutePreviewServiceStrava:
+		return true
+	case TripRoutePreviewServiceUnknown:
+		return true
+	case TripRoutePreviewServiceWanderer:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for TripUpdateTripType.
 const (
 	TripUpdateTripTypeDayHike   TripUpdateTripType = "day_hike"
@@ -800,6 +824,27 @@ func (e TripWithDetailsTripType) Valid() bool {
 	case TripWithDetailsTripTypeOvernight:
 		return true
 	case TripWithDetailsTripTypeThruHike:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetTripRoutePreviewParamsService.
+const (
+	GetTripRoutePreviewParamsServiceKomoot   GetTripRoutePreviewParamsService = "komoot"
+	GetTripRoutePreviewParamsServiceStrava   GetTripRoutePreviewParamsService = "strava"
+	GetTripRoutePreviewParamsServiceWanderer GetTripRoutePreviewParamsService = "wanderer"
+)
+
+// Valid indicates whether the value is a known member of the GetTripRoutePreviewParamsService enum.
+func (e GetTripRoutePreviewParamsService) Valid() bool {
+	switch e {
+	case GetTripRoutePreviewParamsServiceKomoot:
+		return true
+	case GetTripRoutePreviewParamsServiceStrava:
+		return true
+	case GetTripRoutePreviewParamsServiceWanderer:
 		return true
 	default:
 		return false
@@ -1401,6 +1446,16 @@ type TripPersonWithDetails struct {
 	PersonId openapi_types.UUID `json:"person_id"`
 }
 
+// TripRoutePreview defines model for TripRoutePreview.
+type TripRoutePreview struct {
+	ImageUrl *string                 `json:"image_url,omitempty"`
+	Service  TripRoutePreviewService `json:"service"`
+	Title    *string                 `json:"title,omitempty"`
+}
+
+// TripRoutePreviewService defines model for TripRoutePreview.Service.
+type TripRoutePreviewService string
+
 // TripUpdate defines model for TripUpdate.
 type TripUpdate struct {
 	Duration        *string             `json:"duration,omitempty"`
@@ -1466,6 +1521,14 @@ type SearchGlobalParams struct {
 	// Limit Maximum number of results to return
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
+
+// GetTripRoutePreviewParams defines parameters for GetTripRoutePreview.
+type GetTripRoutePreviewParams struct {
+	Url string `form:"url" json:"url"`
+}
+
+// GetTripRoutePreviewParamsService defines parameters for GetTripRoutePreview.
+type GetTripRoutePreviewParamsService string
 
 // AuthLoginJSONRequestBody defines body for AuthLogin for application/json ContentType.
 type AuthLoginJSONRequestBody = LoginRequest
@@ -1730,6 +1793,9 @@ type ServerInterface interface {
 	// Create a new trip
 	// (POST /api/v1/trips)
 	CreateTrip(w http.ResponseWriter, r *http.Request)
+	// Fetch route link preview metadata
+	// (GET /api/v1/trips/route-preview/{service})
+	GetTripRoutePreview(w http.ResponseWriter, r *http.Request, service GetTripRoutePreviewParamsService, params GetTripRoutePreviewParams)
 	// Delete trip
 	// (DELETE /api/v1/trips/{tripId})
 	DeleteTrip(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID)
@@ -3368,6 +3434,54 @@ func (siw *ServerInterfaceWrapper) CreateTrip(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// GetTripRoutePreview operation middleware
+func (siw *ServerInterfaceWrapper) GetTripRoutePreview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "service" -------------
+	var service GetTripRoutePreviewParamsService
+
+	err = runtime.BindStyledParameterWithOptions("simple", "service", r.PathValue("service"), &service, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "service", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetTripRoutePreviewParams
+
+	// ------------- Required query parameter "url" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "url", r.URL.Query(), &params.Url, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "url"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "url", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTripRoutePreview(w, r, service, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // DeleteTrip operation middleware
 func (siw *ServerInterfaceWrapper) DeleteTrip(w http.ResponseWriter, r *http.Request) {
 
@@ -4127,6 +4241,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/settings/start-fresh", wrapper.StartFresh)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/trips", wrapper.ListTrips)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/trips", wrapper.CreateTrip)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/trips/route-preview/{service}", wrapper.GetTripRoutePreview)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/trips/{tripId}", wrapper.DeleteTrip)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/trips/{tripId}", wrapper.GetTripById)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/trips/{tripId}", wrapper.UpdateTrip)

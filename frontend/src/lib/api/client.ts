@@ -711,6 +711,249 @@ type ApiPaths = {
       }
     }
   }
+  '/api/v1/trips': {
+    get: {
+      responses: {
+        200: {
+          content: {
+            'application/json': Array<Record<string, unknown>>
+          }
+        }
+      }
+    }
+    post: {
+      requestBody: {
+        content: {
+          'application/json': Record<string, unknown>
+        }
+      }
+      responses: {
+        201: {
+          content: {
+            'application/json': Record<string, unknown>
+          }
+        }
+      }
+    }
+  }
+  '/api/v1/trips/route-preview/{service}': {
+    get: {
+      parameters: {
+        path: {
+          service: string
+        }
+        query: {
+          url: string
+        }
+      }
+      responses: {
+        200: {
+          content: {
+            'application/json': Record<string, unknown>
+          }
+        }
+      }
+    }
+  }
+  '/api/v1/trips/{tripId}': {
+    get: {
+      parameters: {
+        path: {
+          tripId: string
+        }
+      }
+      responses: {
+        200: {
+          content: {
+            'application/json': Record<string, unknown>
+          }
+        }
+      }
+    }
+    patch: {
+      parameters: {
+        path: {
+          tripId: string
+        }
+      }
+      requestBody: {
+        content: {
+          'application/json': Record<string, unknown>
+        }
+      }
+      responses: {
+        200: {
+          content: {
+            'application/json': Record<string, unknown>
+          }
+        }
+      }
+    }
+    delete: {
+      parameters: {
+        path: {
+          tripId: string
+        }
+      }
+      responses: {
+        204: {
+          content: never
+        }
+      }
+    }
+  }
+  '/api/v1/trips/{tripId}/persons': {
+    post: {
+      parameters: {
+        path: {
+          tripId: string
+        }
+      }
+      requestBody: {
+        content: {
+          'application/json': Record<string, unknown>
+        }
+      }
+      responses: {
+        201: {
+          content: {
+            'application/json': Record<string, unknown>
+          }
+        }
+      }
+    }
+  }
+  '/api/v1/trips/{tripId}/persons/{personId}': {
+    delete: {
+      parameters: {
+        path: {
+          tripId: string
+          personId: string
+        }
+      }
+      responses: {
+        204: {
+          content: never
+        }
+      }
+    }
+  }
+  '/api/v1/trips/{tripId}/persons/{personId}/packs': {
+    post: {
+      parameters: {
+        path: {
+          tripId: string
+          personId: string
+        }
+      }
+      requestBody: {
+        content: {
+          'application/json': Record<string, unknown>
+        }
+      }
+      responses: {
+        201: {
+          content: {
+            'application/json': Record<string, unknown>
+          }
+        }
+      }
+    }
+  }
+  '/api/v1/trips/{tripId}/persons/{personId}/packs/{packId}': {
+    delete: {
+      parameters: {
+        path: {
+          tripId: string
+          personId: string
+          packId: string
+        }
+      }
+      responses: {
+        204: {
+          content: never
+        }
+      }
+    }
+  }
+  '/api/v1/trips/{tripId}/persons/{personId}/packs/{packId}/items': {
+    post: {
+      parameters: {
+        path: {
+          tripId: string
+          personId: string
+          packId: string
+        }
+      }
+      requestBody: {
+        content: {
+          'application/json': Record<string, unknown>
+        }
+      }
+      responses: {
+        201: {
+          content: {
+            'application/json': Record<string, unknown>
+          }
+        }
+      }
+    }
+  }
+  '/api/v1/trips/{tripId}/persons/{personId}/packs/{packId}/items/{itemId}': {
+    delete: {
+      parameters: {
+        path: {
+          tripId: string
+          personId: string
+          packId: string
+          itemId: string
+        }
+      }
+      responses: {
+        204: {
+          content: never
+        }
+      }
+    }
+  }
+  '/api/v1/trips/{tripId}/persons/{personId}/items': {
+    post: {
+      parameters: {
+        path: {
+          tripId: string
+          personId: string
+        }
+      }
+      requestBody: {
+        content: {
+          'application/json': Record<string, unknown>
+        }
+      }
+      responses: {
+        201: {
+          content: {
+            'application/json': Record<string, unknown>
+          }
+        }
+      }
+    }
+  }
+  '/api/v1/trips/{tripId}/persons/{personId}/items/{itemId}': {
+    delete: {
+      parameters: {
+        path: {
+          tripId: string
+          personId: string
+          itemId: string
+        }
+      }
+      responses: {
+        204: {
+          content: never
+        }
+      }
+    }
+  }
 }
 
 let authToken: string | null = null

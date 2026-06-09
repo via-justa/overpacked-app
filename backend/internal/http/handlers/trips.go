@@ -4,7 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
+	"net"
 	"net/http"
+	"net/url"
+	"regexp"
+	"strings"
+	"syscall"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/oapi-codegen/runtime/types"
@@ -31,6 +38,165 @@ const (
 
 func NewTripsHandler(st *store.Store) *TripsHandler {
 	return &TripsHandler{store: st}
+}
+
+// Route preview (Open Graph metadata) constants and helpers.
+const (
+	routePreviewServiceKomoot   = "komoot"
+	routePreviewServiceStrava   = "strava"
+	routePreviewServiceWanderer = "wanderer"
+
+	routePreviewFetchTimeout = 6 * time.Second
+	routePreviewMaxBodyBytes = 1 << 20 // 1 MiB cap to avoid resource exhaustion
+)
+
+// errBlockedAddress is returned by the dial control hook when a target resolves
+// to a private, loopback, or otherwise non-public address.
+var errBlockedAddress = errors.New("blocked non-public address")
+
+// routePreviewClient resolves and blocks non-public IPs at dial time (after DNS
+// resolution, so it is resistant to DNS rebinding) and uses a short timeout to
+// limit SSRF impact. The same protection applies to any redirects it follows.
+var routePreviewClient = &http.Client{
+	Timeout: routePreviewFetchTimeout,
+	Transport: &http.Transport{
+		DialContext: (&net.Dialer{
+			Timeout:   routePreviewFetchTimeout,
+			KeepAlive: routePreviewFetchTimeout,
+			Control:   controlBlockPrivateAddr,
+		}).DialContext,
+	},
+}
+
+var (
+	ogImageRegexp = regexp.MustCompile(`(?is)<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']`)
+	ogTitleRegexp = regexp.MustCompile(`(?is)<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']`)
+)
+
+// controlBlockPrivateAddr rejects connections to private, loopback, link-local,
+// unspecified, or multicast addresses. It runs on the already-resolved address,
+// which prevents SSRF via DNS rebinding.
+func controlBlockPrivateAddr(_, address string, _ syscall.RawConn) error {
+	host, _, err := net.SplitHostPort(address)
+	if err != nil {
+		return errBlockedAddress
+	}
+
+	ip := net.ParseIP(host)
+	if ip == nil || isDisallowedIP(ip) {
+		return errBlockedAddress
+	}
+
+	return nil
+}
+
+// isDisallowedIP reports whether an IP must not be contacted by the preview fetcher.
+func isDisallowedIP(ip net.IP) bool {
+	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() ||
+		ip.IsLinkLocalMulticast() || ip.IsUnspecified() || ip.IsMulticast()
+}
+
+// normalizeHost lowercases a URL host and strips any port suffix.
+func normalizeHost(host string) string {
+	host = strings.ToLower(host)
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		return h
+	}
+	return host
+}
+
+// isKomootHost reports whether the host belongs to komoot's official domains.
+func isKomootHost(host string) bool {
+	return host == "komoot.com" || strings.HasSuffix(host, ".komoot.com") ||
+		host == "komoot.de" || strings.HasSuffix(host, ".komoot.de")
+}
+
+// isStravaHost reports whether the host belongs to strava's official domains.
+func isStravaHost(host string) bool {
+	return host == "strava.com" || strings.HasSuffix(host, ".strava.com") ||
+		host == "strava.app.link" || strings.HasSuffix(host, ".strava.app.link")
+}
+
+// hostAllowedForService enforces per-service host policy. komoot and strava are
+// restricted to their official domains; wanderer accepts any public host (its
+// SSRF protection is the dial-time private-address block).
+func hostAllowedForService(service, host string) bool {
+	switch service {
+	case routePreviewServiceKomoot:
+		return isKomootHost(host)
+	case routePreviewServiceStrava:
+		return isStravaHost(host)
+	case routePreviewServiceWanderer:
+		return host != ""
+	default:
+		return false
+	}
+}
+
+// GetTripRoutePreview fetches Open Graph preview metadata for a public route share link.
+func (h *TripsHandler) GetTripRoutePreview(w http.ResponseWriter, r *http.Request, service api.GetTripRoutePreviewParamsService, params api.GetTripRoutePreviewParams) {
+	if !service.Valid() {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported route service"})
+		return
+	}
+
+	parsed, err := url.Parse(strings.TrimSpace(params.Url))
+	if err != nil || parsed.Scheme != "https" || parsed.Host == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid route url"})
+		return
+	}
+
+	if !hostAllowedForService(string(service), normalizeHost(parsed.Host)) {
+		// Reject hosts that do not match the requested service to prevent abuse.
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "url does not match service host"})
+		return
+	}
+
+	preview := api.TripRoutePreview{Service: api.TripRoutePreviewService(service)}
+
+	imageURL, title := fetchOpenGraphMeta(r.Context(), parsed.String())
+	if imageURL != "" {
+		preview.ImageUrl = &imageURL
+	}
+	if title != "" {
+		preview.Title = &title
+	}
+
+	writeJSON(w, http.StatusOK, preview)
+}
+
+// fetchOpenGraphMeta retrieves og:image and og:title from the target page; failures yield empty values.
+func fetchOpenGraphMeta(ctx context.Context, target string) (imageURL, title string) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
+	if err != nil {
+		return "", ""
+	}
+	req.Header.Set("User-Agent", "OverpackedApp/1.0 (+route-preview)")
+	req.Header.Set("Accept", "text/html")
+
+	resp, err := routePreviewClient.Do(req)
+	if err != nil {
+		return "", ""
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", ""
+	}
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, routePreviewMaxBodyBytes))
+	if err != nil {
+		return "", ""
+	}
+
+	if match := ogImageRegexp.FindSubmatch(body); match != nil {
+		imageURL = strings.TrimSpace(string(match[1]))
+	}
+	if match := ogTitleRegexp.FindSubmatch(body); match != nil {
+		title = strings.TrimSpace(string(match[1]))
+	}
+
+	return imageURL, title
 }
 
 // Trip CRUD operations

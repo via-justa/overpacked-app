@@ -26,6 +26,22 @@ const router = createRouter({
           component: () => import('../features/dashboard/views/DashboardPage.vue'),
         },
         {
+          path: 'trips',
+          name: 'trips',
+          component: () => import('../features/trips/views/TripsPage.vue'),
+        },
+        {
+          path: 'trips/new',
+          name: 'trip-new',
+          component: () => import('../features/trips/views/TripPlannerPage.vue'),
+        },
+        {
+          path: 'trips/:tripId/edit',
+          name: 'trip-edit',
+          component: () => import('../features/trips/views/TripPlannerPage.vue'),
+          props: true,
+        },
+        {
           path: 'planner',
           name: 'planner',
           component: () => import('../features/planner/views/PlannerPage.vue'),

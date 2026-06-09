@@ -28,7 +28,7 @@ const personsQuery = useQuery({
 
 const displayPersons = computed(() => {
   if (!personsQuery.data.value) return []
-  return personsQuery.data.value.slice(0, 6)
+  return personsQuery.data.value.slice(0, 3)
 })
 
 const totalPersons = computed(() => personsQuery.data.value?.length ?? 0)

@@ -3,7 +3,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { iconRegistry } from '../../lib/icons'
 import { AppIcon } from '../icons'
 
-export type ActionTarget = 'add-item' | 'add-set' | 'add-person' | 'add-packing-list' | 'manage-manufacturers' | 'manage-categories' | 'import-csv' | 'settings' | 'logout' | 'dashboard' | 'planner' | 'sets' | 'lists' | 'gear' | 'persons'
+export type ActionTarget = 'add-trip' | 'add-item' | 'add-set' | 'add-person' | 'add-packing-list' | 'manage-manufacturers' | 'manage-categories' | 'import-csv' | 'settings' | 'logout' | 'dashboard' | 'trips' | 'planner' | 'sets' | 'lists' | 'gear' | 'persons'
 
 interface ActionOption {
   value: ActionTarget
@@ -28,6 +28,7 @@ const focusedIndex = ref(0)
 const actionsExpanded = ref(false)
 
 const actionOptions: ActionOption[] = [
+  { value: 'add-trip', label: 'Add Trip', description: 'Plan a new trip.', icon: `pi ${iconRegistry.navigation.trips}` },
   { value: 'add-item', label: 'Add Item', description: 'Create a new gear item.', icon: `pi ${iconRegistry.navigation.gear}` },
   { value: 'add-set', label: 'Add Set', description: 'Create a new gear set.', icon: `pi ${iconRegistry.navigation.sets}` },
   { value: 'add-person', label: 'Add Person', description: 'Create a new person.', icon: `pi ${iconRegistry.navigation.person}` },
@@ -41,12 +42,14 @@ const actionOptions: ActionOption[] = [
 
 const desktopNavigationOptions: ActionOption[] = [
   { value: 'dashboard' as ActionTarget, label: 'Dashboard', description: 'View your dashboard.', icon: `pi ${iconRegistry.navigation.dashboard}` },
+  { value: 'trips' as ActionTarget, label: 'Trips', description: 'Plan and manage trips.', icon: `pi ${iconRegistry.navigation.trips}` },
   { value: 'planner' as ActionTarget, label: 'Planner', description: 'Sets, lists, and persons.', icon: `pi ${iconRegistry.navigation.planner}` },
   { value: 'gear' as ActionTarget, label: 'Gear', description: 'Manage your gear items.', icon: `pi ${iconRegistry.navigation.gear}` },
 ]
 
 const mobileNavigationOptions: ActionOption[] = [
   { value: 'dashboard' as ActionTarget, label: 'Dashboard', description: 'View your dashboard.', icon: `pi ${iconRegistry.navigation.dashboard}` },
+  { value: 'trips' as ActionTarget, label: 'Trips', description: 'Plan and manage trips.', icon: `pi ${iconRegistry.navigation.trips}` },
   { value: 'sets' as ActionTarget, label: 'Sets', description: 'Manage your gear sets.', icon: `pi ${iconRegistry.navigation.sets}` },
   { value: 'lists' as ActionTarget, label: 'Packing Lists', description: 'Trip checklist templates.', icon: `pi ${iconRegistry.navigation.planner}` },
   { value: 'persons' as ActionTarget, label: 'Persons', description: 'Manage persons.', icon: `pi ${iconRegistry.navigation.persons}` },

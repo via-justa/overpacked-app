@@ -10,6 +10,7 @@ const router = useRouter()
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', iconCategory: 'navigation' as const, iconName: 'dashboard' as const },
+  { to: '/trips', label: 'Trips', iconCategory: 'navigation' as const, iconName: 'trips' as const },
   { to: '/planner', label: 'Planner', iconCategory: 'navigation' as const, iconName: 'planner' as const },
   { to: '/gear', label: 'Gear', iconCategory: 'navigation' as const, iconName: 'gear' as const },
   { to: '/settings', label: 'Settings', iconCategory: 'navigation' as const, iconName: 'settings' as const },

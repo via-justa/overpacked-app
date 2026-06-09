@@ -167,6 +167,9 @@ func (s *apiServer) ListTrips(w http.ResponseWriter, r *http.Request) { s.trips.
 func (s *apiServer) CreateTrip(w http.ResponseWriter, r *http.Request) {
 	s.trips.CreateTrip(w, r)
 }
+func (s *apiServer) GetTripRoutePreview(w http.ResponseWriter, r *http.Request, service api.GetTripRoutePreviewParamsService, params api.GetTripRoutePreviewParams) {
+	s.trips.GetTripRoutePreview(w, r, service, params)
+}
 func (s *apiServer) GetTripById(w http.ResponseWriter, r *http.Request, tripId openapi_types.UUID) {
 	s.trips.GetTripById(w, r, tripId)
 }

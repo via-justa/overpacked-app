@@ -66,6 +66,7 @@ const onSelectAction = async (target: ActionTarget) => {
   }
 
   const actionRoutes: Record<Exclude<ActionTarget, 'logout'>, { path: string; query?: Record<string, string> }> = {
+    'add-trip': { path: '/trips/new' },
     'add-item': { path: '/gear', query: { action: 'create-item' } },
     'add-set': { path: '/sets', query: { create: '1' } },
     'add-person': { path: '/persons', query: { create: '1' } },
@@ -75,6 +76,7 @@ const onSelectAction = async (target: ActionTarget) => {
     'import-csv': { path: '/gear', query: { action: 'import' } },
     'settings': { path: '/settings' },
     'dashboard': { path: '/dashboard' },
+    'trips': { path: '/trips' },
     'planner': { path: '/planner' },
     'sets': { path: '/sets' },
     'lists': { path: '/lists' },
@@ -99,7 +101,9 @@ const primaryNavItems = props.navItems.filter((item) => item.to !== '/settings')
           aria-label="Menu" @click="openActionsMenu">
           <AppIcon category="navigation" name="menu" size="sm" />
         </button>
-        <p class="text-brand-500 text-xs font-semibold uppercase tracking-[0.18em]">Overpacked</p>
+        <RouterLink to="/dashboard" class="flex h-10 items-center overflow-hidden" aria-label="Overpacked home">
+          <img src="/logo.png" alt="Overpacked" class="h-full w-44 object-cover object-center" />
+        </RouterLink>
       </div>
 
       <nav data-element="top-nav-primary" class="hidden items-center gap-1 md:flex">
