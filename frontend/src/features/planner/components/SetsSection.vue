@@ -9,6 +9,7 @@ import { useSettings } from '../../../composables/useSettings'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { formatDisplayWeight } from '../../../lib/units/conversions'
 import { formatValue } from '../../../lib/format/display'
+import { formatDateMedium as formatDate } from '../../../lib/format/date'
 import type { SetItemWithDetails } from '../../sets/types'
 import type { Label } from '../../items/types'
 
@@ -161,13 +162,6 @@ const getLabelBorderColor = (color?: string | null): string => {
     : 'rgba(0, 0, 0, 0.1)'
 }
 
-const formatDate = (date: string): string => {
-  return new Date(date).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-}
 </script>
 
 <template>

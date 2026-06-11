@@ -1,149 +1,51 @@
 import { apiClient } from '../../../lib/api/client'
+import { ensureApiResponse, unwrapApiResponse } from '../../../lib/api/request'
 import type { PackingList, PackingListCreate, PackingListUpdate, Label, PackingListLabelAdd } from '../types'
 
-const readString = (value: unknown): string | null => {
-  if (typeof value === 'string' && value.trim().length > 0) {
-    return value
-  }
+// NOTE: the packing-lists paths are cast to `any` because they are not yet in
+// the generated OpenAPI types (known drift; see dev/repo-violations.md).
 
-  return null
-}
+export const listPackingLists = async (): Promise<PackingList[]> =>
+  unwrapApiResponse(apiClient.GET('/api/v1/packing-lists' as any, {}), 'Unable to load packing lists')
 
-const getErrorMessage = (error: unknown, fallback: string) => {
-  if (!error || typeof error !== 'object') {
-    return fallback
-  }
+export const getPackingList = async (listId: string): Promise<PackingList> =>
+  unwrapApiResponse(
+    apiClient.GET('/api/v1/packing-lists/{listId}' as any, { params: { path: { listId } } }),
+    'Unable to load packing list',
+  )
 
-  const objectError = error as {
-    error?: unknown
-    message?: unknown
-    detail?: unknown
-    details?: unknown
-  }
+export const createPackingList = async (payload: PackingListCreate): Promise<PackingList> =>
+  unwrapApiResponse(
+    apiClient.POST('/api/v1/packing-lists' as any, { body: payload }),
+    'Unable to create packing list',
+  )
 
-  const directMessage =
-    readString(objectError.error)
-    ?? readString(objectError.message)
-    ?? readString(objectError.detail)
-    ?? readString(objectError.details)
-  if (directMessage) {
-    return directMessage
-  }
+export const updatePackingList = async (listId: string, payload: PackingListUpdate): Promise<PackingList> =>
+  unwrapApiResponse(
+    apiClient.PATCH('/api/v1/packing-lists/{listId}' as any, { params: { path: { listId } }, body: payload }),
+    'Unable to update packing list',
+  )
 
-  if (objectError.error && typeof objectError.error === 'object') {
-    const nestedError = objectError.error as { message?: unknown; detail?: unknown; error?: unknown }
-    const nestedMessage =
-      readString(nestedError.message)
-      ?? readString(nestedError.detail)
-      ?? readString(nestedError.error)
-    if (nestedMessage) {
-      return nestedMessage
-    }
-  }
+export const removePackingList = async (listId: string): Promise<void> =>
+  ensureApiResponse(
+    apiClient.DELETE('/api/v1/packing-lists/{listId}' as any, { params: { path: { listId } } }),
+    'Unable to delete packing list',
+  )
 
-  return fallback
-}
+export const listPackingListLabels = async (listId: string): Promise<Label[]> =>
+  unwrapApiResponse(
+    apiClient.GET('/api/v1/packing-lists/{listId}/labels' as any, { params: { path: { listId } } }),
+    'Unable to load packing list labels',
+  )
 
-export const listPackingLists = async (): Promise<PackingList[]> => {
-  const { data, error, response } = await apiClient.GET('/api/v1/packing-lists' as any, {})
+export const addPackingListLabel = async (listId: string, payload: PackingListLabelAdd): Promise<Label> =>
+  unwrapApiResponse(
+    apiClient.POST('/api/v1/packing-lists/{listId}/labels' as any, { params: { path: { listId } }, body: payload }),
+    'Unable to add label to packing list',
+  )
 
-  if (!response.ok || !data) {
-    throw new Error(getErrorMessage(error, 'Unable to load packing lists'))
-  }
-
-  return data
-}
-
-export const getPackingList = async (listId: string): Promise<PackingList> => {
-  const { data, error, response } = await apiClient.GET('/api/v1/packing-lists/{listId}' as any, {
-    params: {
-      path: { listId },
-    },
-  })
-
-  if (!response.ok || !data) {
-    throw new Error(getErrorMessage(error, 'Unable to load packing list'))
-  }
-
-  return data
-}
-
-export const createPackingList = async (payload: PackingListCreate): Promise<PackingList> => {
-  const { data, error, response } = await apiClient.POST('/api/v1/packing-lists' as any, {
-    body: payload,
-  })
-
-  if (!response.ok || !data) {
-    throw new Error(getErrorMessage(error, 'Unable to create packing list'))
-  }
-
-  return data
-}
-
-export const updatePackingList = async (listId: string, payload: PackingListUpdate): Promise<PackingList> => {
-  const { data, error, response } = await apiClient.PATCH('/api/v1/packing-lists/{listId}' as any, {
-    params: {
-      path: { listId },
-    },
-    body: payload,
-  })
-
-  if (!response.ok || !data) {
-    throw new Error(getErrorMessage(error, 'Unable to update packing list'))
-  }
-
-  return data
-}
-
-export const removePackingList = async (listId: string): Promise<void> => {
-  const { error, response } = await apiClient.DELETE('/api/v1/packing-lists/{listId}' as any, {
-    params: {
-      path: { listId },
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error(getErrorMessage(error, 'Unable to delete packing list'))
-  }
-}
-
-export const listPackingListLabels = async (listId: string): Promise<Label[]> => {
-  const { data, error, response } = await apiClient.GET('/api/v1/packing-lists/{listId}/labels' as any, {
-    params: {
-      path: { listId },
-    },
-  })
-
-  if (!response.ok || !data) {
-    throw new Error(getErrorMessage(error, 'Unable to load packing list labels'))
-  }
-
-  return data
-}
-
-export const addPackingListLabel = async (listId: string, payload: PackingListLabelAdd): Promise<Label> => {
-  const { data, error, response } = await apiClient.POST('/api/v1/packing-lists/{listId}/labels' as any, {
-    params: {
-      path: { listId },
-    },
-    body: payload,
-  })
-
-  if (!response.ok || !data) {
-    throw new Error(getErrorMessage(error, 'Unable to add label to packing list'))
-  }
-
-  return data
-}
-
-export const removePackingListLabel = async (listId: string, labelId: string): Promise<void> => {
-  const { error, response } = await apiClient.DELETE('/api/v1/packing-lists/{listId}/labels/{labelId}' as any, {
-    params: {
-      path: { listId, labelId },
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error(getErrorMessage(error, 'Unable to remove label from packing list'))
-  }
-}
+export const removePackingListLabel = async (listId: string, labelId: string): Promise<void> =>
+  ensureApiResponse(
+    apiClient.DELETE('/api/v1/packing-lists/{listId}/labels/{labelId}' as any, { params: { path: { listId, labelId } } }),
+    'Unable to remove label from packing list',
+  )

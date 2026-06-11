@@ -39,6 +39,19 @@ export function inputToGrams(value: number, unit: WeightUnit): number {
   return unit === 'oz' ? ouncesToGrams(value) : value
 }
 
+// Body weight is entered in kg or lb (heavier scale than gear weight in g/oz).
+export type BodyWeightInputUnit = 'kg' | 'lb'
+
+export function bodyWeightGramsToInput(grams: number, unit: BodyWeightInputUnit): number {
+  const kg = grams / GRAMS_PER_KILOGRAM
+  return unit === 'kg' ? kg : kg * LB_PER_KG
+}
+
+export function bodyWeightInputToGrams(value: number, unit: BodyWeightInputUnit): number {
+  const kg = unit === 'kg' ? value : value / LB_PER_KG
+  return Math.round(kg * GRAMS_PER_KILOGRAM)
+}
+
 // ─── Volume Conversions ────────────────────────────────────────────────────────
 
 export function mlToFluidOunces(ml: number): number {

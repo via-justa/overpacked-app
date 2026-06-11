@@ -1,4 +1,5 @@
 import { apiClient } from '../../../lib/api/client'
+import { unwrapApiResponse } from '../../../lib/api/request'
 import type { components } from '../../../lib/api/schema'
 
 // Server types are sourced from the generated OpenAPI schema (single source of truth).
@@ -6,17 +7,6 @@ export type SearchEntityType = components['schemas']['SearchEntityType']
 export type SearchResult = components['schemas']['SearchResult']
 
 const SEARCH_ERROR_FALLBACK = 'Unable to perform search'
-
-function getErrorMessage(error: unknown, fallback: string): string {
-    if (error && typeof error === 'object' && 'error' in error) {
-        const message = (error as { error?: unknown }).error
-        if (typeof message === 'string' && message.trim().length > 0) {
-            return message
-        }
-    }
-
-    return fallback
-}
 
 export async function globalSearch(
     q: string,
@@ -31,13 +21,5 @@ export async function globalSearch(
         query.limit = limit
     }
 
-    const { data, error, response } = await apiClient.GET('/api/v1/search', {
-        params: { query },
-    })
-
-    if (!response.ok || !data) {
-        throw new Error(getErrorMessage(error, SEARCH_ERROR_FALLBACK))
-    }
-
-    return data
+    return unwrapApiResponse(apiClient.GET('/api/v1/search', { params: { query } }), SEARCH_ERROR_FALLBACK)
 }

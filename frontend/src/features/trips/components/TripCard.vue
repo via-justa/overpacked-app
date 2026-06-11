@@ -6,6 +6,7 @@ import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { useSettings } from '../../../composables/useSettings'
 import { formatDisplayWeight, toRoundedString } from '../../../lib/units/conversions'
 import { formatValue } from '../../../lib/format/display'
+import { formatDate } from '../../../lib/format/date'
 import { getRoutePreview } from '../api/tripsApi'
 import {
     ROUTE_SERVICE_ICONS,
@@ -63,17 +64,6 @@ const dateLabel = computed(() => {
     const isUpdated = props.trip.updated_at !== props.trip.created_at
     return isUpdated ? `Updated ${formatDate(props.trip.updated_at)}` : `Created ${formatDate(props.trip.created_at)}`
 })
-
-function formatDate(value: string): string {
-    const parsed = new Date(value)
-    if (Number.isNaN(parsed.getTime())) {
-        return value
-    }
-    const day = String(parsed.getDate()).padStart(2, '0')
-    const month = String(parsed.getMonth() + 1).padStart(2, '0')
-    const year = parsed.getFullYear()
-    return `${day}-${month}-${year}`
-}
 </script>
 
 <template>

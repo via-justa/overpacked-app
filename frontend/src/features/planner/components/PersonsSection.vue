@@ -6,20 +6,13 @@ import AppQueryState from '../../../components/feedback/AppQueryState.vue'
 import { listPersons } from '../../persons/api/personsApi'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { useSettings } from '../../../composables/useSettings'
-import { getPersonRecommendedMaxWeightGrams } from '../../persons/utils'
-import { GRAMS_PER_KILOGRAM, LB_PER_KG } from '../../../lib/units/conversions'
+import { formatAge, formatGender, getPersonRecommendedMaxWeightGrams } from '../../persons/utils'
+import { bodyWeightGramsToInput as gramsToInput, type BodyWeightInputUnit } from '../../../lib/units/conversions'
 import type { Person } from '../../persons/types'
-
-type BodyWeightInputUnit = 'kg' | 'lb'
 
 const { weightUnit } = useSettings()
 const defaultInputUnit = computed<BodyWeightInputUnit>(() => (weightUnit.value === 'oz' ? 'lb' : 'kg'))
 const inputWeightLabel = computed<'kg' | 'lb'>(() => (defaultInputUnit.value === 'lb' ? 'lb' : 'kg'))
-
-const gramsToInput = (grams: number, inputUnit: BodyWeightInputUnit): number => {
-  const kg = grams / GRAMS_PER_KILOGRAM
-  return inputUnit === 'kg' ? kg : kg * LB_PER_KG
-}
 
 const personsQuery = useQuery({
   queryKey: ['persons'],
@@ -36,27 +29,6 @@ const totalPersons = computed(() => personsQuery.data.value?.length ?? 0)
 const canShowContent = computed(() => {
   return !personsQuery.isPending.value && !personsQuery.isError.value && totalPersons.value > 0
 })
-
-const formatGender = (value?: string | null) => {
-  if (!value) return 'Not set'
-  return value.charAt(0).toUpperCase() + value.slice(1)
-}
-
-const formatAge = (birthdate?: string | null): string => {
-  if (!birthdate) return 'Not set'
-
-  const parsed = new Date(birthdate)
-  if (Number.isNaN(parsed.getTime())) return 'Not set'
-
-  const today = new Date()
-  let age = today.getFullYear() - parsed.getFullYear()
-  const monthDiff = today.getMonth() - parsed.getMonth()
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < parsed.getDate())) {
-    age -= 1
-  }
-
-  return age >= 0 ? String(age) : 'Not set'
-}
 
 const formatWeight = (value?: number | null) => {
   if (typeof value !== 'number') {

@@ -16,6 +16,7 @@ import { queryClient } from '../../../lib/query/client'
 import { listItemTypes, listItems, listManufacturers, listItemLabels } from '../../items/api/itemsApi'
 import { useSettings } from '../../../composables/useSettings'
 import { toRoundedString, formatDisplayWeight } from '../../../lib/units/conversions'
+import { formatDate } from '../../../lib/format/date'
 import {
   formatNumber,
   formatValue,
@@ -42,18 +43,6 @@ const router = useRouter()
 
 type VolumeInputUnit = 'ml' | 'fl_oz'
 
-
-const formatDate = (value: string): string => {
-  const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) {
-    return value
-  }
-
-  const day = String(parsed.getDate()).padStart(2, '0')
-  const month = String(parsed.getMonth() + 1).padStart(2, '0')
-  const year = parsed.getFullYear()
-  return `${day}-${month}-${year}`
-}
 
 const { weightUnit, volumeUnit, currency } = useSettings()
 

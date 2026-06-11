@@ -16,30 +16,16 @@ import {
 import PersonFormDialog from '../components/PersonFormDialog.vue'
 import type { Person, PersonCreate, PersonFormValues, PersonUpdate } from '../types'
 
-import { getPersonRecommendedMaxWeightGrams } from '../utils'
+import { formatAge, formatGender, getPersonRecommendedMaxWeightGrams } from '../utils'
 import { useSettings } from '../../../composables/useSettings'
-import { GRAMS_PER_KILOGRAM, LB_PER_KG } from '../../../lib/units/conversions'
+import { bodyWeightGramsToInput as gramsToInput, bodyWeightInputToGrams as inputToGrams, type BodyWeightInputUnit } from '../../../lib/units/conversions'
 
 const route = useRoute()
 const router = useRouter()
 
-type BodyWeightInputUnit = 'kg' | 'lb'
-
 const { weightUnit } = useSettings()
 const defaultInputUnit = computed<BodyWeightInputUnit>(() => (weightUnit.value === 'oz' ? 'lb' : 'kg'))
 const inputWeightLabel = computed<'kg' | 'lb'>(() => (defaultInputUnit.value === 'lb' ? 'lb' : 'kg'))
-
-// Backend always stores and returns grams. These functions convert between
-// the user-facing input unit (kg or lb) and grams.
-const gramsToInput = (grams: number, inputUnit: BodyWeightInputUnit): number => {
-  const kg = grams / GRAMS_PER_KILOGRAM
-  return inputUnit === 'kg' ? kg : kg * LB_PER_KG
-}
-
-const inputToGrams = (value: number, inputUnit: BodyWeightInputUnit): number => {
-  const kg = inputUnit === 'kg' ? value : value / LB_PER_KG
-  return Math.round(kg * GRAMS_PER_KILOGRAM)
-}
 
 const buildRange = (start: number, end: number, step: number): number[] => {
   const options: number[] = []
@@ -98,34 +84,6 @@ const toPayload = (
   }
 
   return payload
-}
-
-const formatAge = (birthdate?: string | null): string => {
-  if (!birthdate) {
-    return 'Not set'
-  }
-
-  const parsed = new Date(birthdate)
-  if (Number.isNaN(parsed.getTime())) {
-    return 'Not set'
-  }
-
-  const today = new Date()
-  let age = today.getFullYear() - parsed.getFullYear()
-  const monthDiff = today.getMonth() - parsed.getMonth()
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < parsed.getDate())) {
-    age -= 1
-  }
-
-  return age >= 0 ? String(age) : 'Not set'
-}
-
-const formatGender = (value?: string | null) => {
-  if (!value) {
-    return 'Not set'
-  }
-
-  return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
 const formatWeight = (value?: number | null) => {
