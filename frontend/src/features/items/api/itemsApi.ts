@@ -93,6 +93,42 @@ export const removeItem = async (itemId: string): Promise<void> => {
   }
 }
 
+export const uploadItemImage = async (itemId: string, file: File): Promise<Item> => {
+  const { data, error, response } = await apiClient.POST('/api/v1/items/{itemId}/image', {
+    params: {
+      path: { itemId },
+    },
+    // The generated body type models the binary field as a string; the real
+    // upload is the File, sent as multipart. openapi-fetch returns the
+    // FormData unchanged and drops the JSON Content-Type so the browser sets
+    // the multipart boundary itself.
+    body: { file: file as unknown as string },
+    bodySerializer: () => {
+      const formData = new FormData()
+      formData.set('file', file)
+      return formData
+    },
+  })
+
+  if (!response.ok || !data) {
+    throw new Error(getErrorMessage(error, 'Unable to upload item image'))
+  }
+
+  return data
+}
+
+export const deleteItemImage = async (itemId: string): Promise<void> => {
+  const { error, response } = await apiClient.DELETE('/api/v1/items/{itemId}/image', {
+    params: {
+      path: { itemId },
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(getErrorMessage(error, 'Unable to delete item image'))
+  }
+}
+
 export const listManufacturers = async (): Promise<Manufacturer[]> => {
   const { data, error, response } = await apiClient.GET('/api/v1/manufacturers')
 

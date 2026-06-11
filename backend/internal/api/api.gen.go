@@ -863,21 +863,23 @@ type ItemBase struct {
 	DefaultQuantity    *int                        `json:"default_quantity,omitempty"`
 	Description        *string                     `json:"description,omitempty"`
 	Id                 openapi_types.UUID          `json:"id"`
-	ImageBlob          *[]byte                     `json:"image_blob,omitempty"`
 	ImageHeightPx      *int                        `json:"image_height_px,omitempty"`
 	ImageMimeType      *string                     `json:"image_mime_type,omitempty"`
 	ImageSizeBytes     *int                        `json:"image_size_bytes,omitempty"`
-	ImageWidthPx       *int                        `json:"image_width_px,omitempty"`
-	IsActive           bool                        `json:"is_active"`
-	IsDefault          *bool                       `json:"is_default,omitempty"`
-	ManufacturerId     openapi_types.UUID          `json:"manufacturer_id"`
-	Name               string                      `json:"name"`
-	SourceUrl          *string                     `json:"source_url,omitempty"`
-	Type               string                      `json:"type"`
-	UpdatedAt          time.Time                   `json:"updated_at"`
-	Value              *float32                    `json:"value,omitempty"`
-	VolumeMl           *float32                    `json:"volume_ml,omitempty"`
-	WeightGrams        *float32                    `json:"weight_grams,omitempty"`
+
+	// ImageUrl URL to fetch the item's image, or null when the item has no image. The image bytes are stored on disk and served by GET /api/v1/items/{itemId}/image.
+	ImageUrl       *string            `json:"image_url,omitempty"`
+	ImageWidthPx   *int               `json:"image_width_px,omitempty"`
+	IsActive       bool               `json:"is_active"`
+	IsDefault      *bool              `json:"is_default,omitempty"`
+	ManufacturerId openapi_types.UUID `json:"manufacturer_id"`
+	Name           string             `json:"name"`
+	SourceUrl      *string            `json:"source_url,omitempty"`
+	Type           string             `json:"type"`
+	UpdatedAt      time.Time          `json:"updated_at"`
+	Value          *float32           `json:"value,omitempty"`
+	VolumeMl       *float32           `json:"volume_ml,omitempty"`
+	WeightGrams    *float32           `json:"weight_grams,omitempty"`
 }
 
 // ItemBaseDefaultCarryStatus defines model for ItemBase.DefaultCarryStatus.
@@ -890,11 +892,6 @@ type ItemCreate struct {
 	DefaultCarryStatus *ItemCreateDefaultCarryStatus `json:"default_carry_status,omitempty"`
 	DefaultQuantity    *int                          `json:"default_quantity,omitempty"`
 	Description        *string                       `json:"description,omitempty"`
-	ImageBlob          *[]byte                       `json:"image_blob,omitempty"`
-	ImageHeightPx      *int                          `json:"image_height_px,omitempty"`
-	ImageMimeType      *string                       `json:"image_mime_type,omitempty"`
-	ImageSizeBytes     *int                          `json:"image_size_bytes,omitempty"`
-	ImageWidthPx       *int                          `json:"image_width_px,omitempty"`
 	IsActive           bool                          `json:"is_active"`
 	IsDefault          *bool                         `json:"is_default,omitempty"`
 	ManufacturerId     openapi_types.UUID            `json:"manufacturer_id"`
@@ -1024,11 +1021,6 @@ type ItemUpdate struct {
 	DefaultCarryStatus *ItemUpdateDefaultCarryStatus `json:"default_carry_status,omitempty"`
 	DefaultQuantity    *int                          `json:"default_quantity,omitempty"`
 	Description        *string                       `json:"description,omitempty"`
-	ImageBlob          *[]byte                       `json:"image_blob,omitempty"`
-	ImageHeightPx      *int                          `json:"image_height_px,omitempty"`
-	ImageMimeType      *string                       `json:"image_mime_type,omitempty"`
-	ImageSizeBytes     *int                          `json:"image_size_bytes,omitempty"`
-	ImageWidthPx       *int                          `json:"image_width_px,omitempty"`
 	IsActive           *bool                         `json:"is_active,omitempty"`
 	IsDefault          *bool                         `json:"is_default,omitempty"`
 	ManufacturerId     *openapi_types.UUID           `json:"manufacturer_id,omitempty"`
@@ -1510,6 +1502,11 @@ type Unauthorized struct {
 // bearerAuthContextKey is the context key for bearerAuth security scheme
 type bearerAuthContextKey string
 
+// UploadItemImageMultipartBody defines parameters for UploadItemImage.
+type UploadItemImageMultipartBody struct {
+	File openapi_types.File `json:"file"`
+}
+
 // SearchGlobalParams defines parameters for SearchGlobal.
 type SearchGlobalParams struct {
 	// Q Search query (minimum 2 characters)
@@ -1550,6 +1547,9 @@ type CreateItemJSONRequestBody = ItemCreate
 
 // UpdateItemJSONRequestBody defines body for UpdateItem for application/json ContentType.
 type UpdateItemJSONRequestBody = ItemUpdate
+
+// UploadItemImageMultipartRequestBody defines body for UploadItemImage for multipart/form-data ContentType.
+type UploadItemImageMultipartRequestBody UploadItemImageMultipartBody
 
 // AddItemLabelJSONRequestBody defines body for AddItemLabel for application/json ContentType.
 type AddItemLabelJSONRequestBody = ItemLabelAdd
@@ -1670,6 +1670,15 @@ type ServerInterface interface {
 	// Update item
 	// (PATCH /api/v1/items/{itemId})
 	UpdateItem(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID)
+	// Delete an item's image
+	// (DELETE /api/v1/items/{itemId}/image)
+	DeleteItemImage(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID)
+	// Get an item's image
+	// (GET /api/v1/items/{itemId}/image)
+	GetItemImage(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID)
+	// Upload (or replace) an item's image
+	// (POST /api/v1/items/{itemId}/image)
+	UploadItemImage(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID)
 	// List labels for an item
 	// (GET /api/v1/items/{itemId}/labels)
 	ListItemLabels(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID)
@@ -2224,6 +2233,102 @@ func (siw *ServerInterfaceWrapper) UpdateItem(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateItem(w, r, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteItemImage operation middleware
+func (siw *ServerInterfaceWrapper) DeleteItemImage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteItemImage(w, r, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetItemImage operation middleware
+func (siw *ServerInterfaceWrapper) GetItemImage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetItemImage(w, r, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UploadItemImage operation middleware
+func (siw *ServerInterfaceWrapper) UploadItemImage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UploadItemImage(w, r, itemId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4200,6 +4305,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/items/{itemId}", wrapper.DeleteItem)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/items/{itemId}", wrapper.GetItem)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/api/v1/items/{itemId}", wrapper.UpdateItem)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/items/{itemId}/image", wrapper.DeleteItemImage)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/items/{itemId}/image", wrapper.GetItemImage)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/items/{itemId}/image", wrapper.UploadItemImage)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/items/{itemId}/labels", wrapper.ListItemLabels)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/items/{itemId}/labels", wrapper.AddItemLabel)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/items/{itemId}/labels/{labelId}", wrapper.RemoveItemLabel)

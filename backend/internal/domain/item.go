@@ -28,7 +28,7 @@ type Item struct {
 	DefaultQuantity    int
 	DefaultCarryStatus CarryStatus
 	IsDefault          bool
-	ImageBlob          []byte
+	ImagePath          *string
 	ImageMimeType      *string
 	ImageSizeBytes     *int
 	ImageWidthPX       *int

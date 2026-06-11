@@ -235,6 +235,28 @@ export interface paths {
         patch: operations["updateItem"];
         trace?: never;
     };
+    "/api/v1/items/{itemId}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an item's image
+         * @description Streams the item's image bytes from disk.
+         */
+        get: operations["getItemImage"];
+        put?: never;
+        /** Upload (or replace) an item's image */
+        post: operations["uploadItemImage"];
+        /** Delete an item's image */
+        delete: operations["deleteItemImage"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/item-types": {
         parameters: {
             query?: never;
@@ -904,8 +926,8 @@ export interface components {
             /** @enum {string|null} */
             default_carry_status?: "packed" | "worn" | null;
             is_default?: boolean | null;
-            /** Format: byte */
-            image_blob?: string | null;
+            /** @description URL to fetch the item's image, or null when the item has no image. The image bytes are stored on disk and served by GET /api/v1/items/{itemId}/image. */
+            image_url?: string | null;
             image_mime_type?: string | null;
             image_size_bytes?: number | null;
             image_width_px?: number | null;
@@ -937,12 +959,6 @@ export interface components {
             /** @enum {string|null} */
             default_carry_status?: "packed" | "worn" | null;
             is_default?: boolean | null;
-            /** Format: byte */
-            image_blob?: string | null;
-            image_mime_type?: string | null;
-            image_size_bytes?: number | null;
-            image_width_px?: number | null;
-            image_height_px?: number | null;
             /** @description Dynamic per-item values keyed by item type field definitions */
             attributes?: {
                 [key: string]: unknown;
@@ -966,12 +982,6 @@ export interface components {
             /** @enum {string|null} */
             default_carry_status?: "packed" | "worn" | null;
             is_default?: boolean | null;
-            /** Format: byte */
-            image_blob?: string | null;
-            image_mime_type?: string | null;
-            image_size_bytes?: number | null;
-            image_width_px?: number | null;
-            image_height_px?: number | null;
             /** @description Dynamic per-item values keyed by item type field definitions */
             attributes?: {
                 [key: string]: unknown;
@@ -1863,6 +1873,84 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getItemImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Image bytes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": string;
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    uploadItemImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Image uploaded; updated item returned */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Item"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteItemImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Image deleted */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
         };

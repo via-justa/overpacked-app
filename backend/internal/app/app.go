@@ -15,6 +15,7 @@ import (
 	"github.com/via-justa/overpacked-app/backend/internal/http/handlers"
 	"github.com/via-justa/overpacked-app/backend/internal/migrations"
 	"github.com/via-justa/overpacked-app/backend/internal/seeds"
+	"github.com/via-justa/overpacked-app/backend/internal/storage"
 	"github.com/via-justa/overpacked-app/backend/internal/store"
 )
 
@@ -44,11 +45,17 @@ func New(ctx context.Context, cfg *config.Config) (*App, error) {
 	authHandler := handlers.NewAuthHandler(authService)
 	st := store.New(database)
 
+	images, err := storage.New(cfg.ImagesDir)
+	if err != nil {
+		_ = database.Close()
+		return nil, fmt.Errorf("init image storage: %w", err)
+	}
+
 	router := chi.NewRouter()
 	router.Use(chimiddleware.Recoverer)
 	router.Use(chimiddleware.RequestID)
 	router.Use(chimiddleware.Logger)
-	router.Mount("/", setupRoutes(authHandler, st, cfg.AppPassword))
+	router.Mount("/", setupRoutes(authHandler, st, images, cfg.AppPassword))
 
 	app := &App{
 		cfg:   cfg,

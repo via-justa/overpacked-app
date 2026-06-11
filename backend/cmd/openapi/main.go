@@ -93,7 +93,7 @@ func main() {
 	if err != nil {
 		panic(fmt.Errorf("init auth service: %w", err))
 	}
-	router := app.NewRouter(handlers.NewAuthHandler(authService), store.New(nil), "openapi")
+	router := app.NewRouter(handlers.NewAuthHandler(authService), store.New(nil), nil, "openapi")
 
 	routes, err := collectRoutes(router)
 	if err != nil {

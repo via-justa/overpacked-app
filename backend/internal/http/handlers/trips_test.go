@@ -174,8 +174,9 @@ func insertTripTestData(t *testing.T, dbConn *sql.DB) (manufacturerID, personID,
 		t.Fatalf("insert person: %v", err)
 	}
 
-	// Insert item type
-	itemTypeID := "test-item-type"
+	// Insert item type. The truncation helper deliberately skips item_types, so the
+	// id must be unique per test to stay idempotent across runs of the shared DB.
+	itemTypeID := "test-item-type-" + uuid.NewString()
 	if _, err := dbConn.ExecContext(context.Background(), "INSERT INTO item_types (id, name, base_profile) VALUES ($1, $2, $3)", itemTypeID, "Test Type", "shelter"); err != nil {
 		t.Fatalf("insert item type: %v", err)
 	}
@@ -326,7 +327,7 @@ func TestTripsHandlerIntegrationNestedGet(t *testing.T) {
 	h, dbConn := newContainerizedTripsHandler(t)
 	defer func() { _ = dbConn.Close() }()
 
-	_, personID, itemID, _, packID := insertTripTestData(t, dbConn)
+	_, personID, itemID, _, _ := insertTripTestData(t, dbConn)
 	trip := mustCreateTrip(t, h)
 
 	// Add person to trip
@@ -340,7 +341,8 @@ func TestTripsHandlerIntegrationNestedGet(t *testing.T) {
 		t.Fatalf("expected 201 for add person, got %d: %s", addPersonW.Code, addPersonW.Body.String())
 	}
 
-	// Create pack for person
+	// Create pack for person. AddTripPersonPack creates a new pack with a generated
+	// id, so use the returned pack id for subsequent calls and assertions.
 	addPackReqBody := api.TripPersonPackCreate{
 		Name:     "Test Pack",
 		TripType: "overnight",
@@ -353,6 +355,12 @@ func TestTripsHandlerIntegrationNestedGet(t *testing.T) {
 	if addPackW.Code != http.StatusCreated {
 		t.Fatalf("expected 201 for add pack, got %d: %s", addPackW.Code, addPackW.Body.String())
 	}
+
+	var createdPack api.TripPersonPackWithDetails
+	if err := json.NewDecoder(addPackW.Body).Decode(&createdPack); err != nil {
+		t.Fatalf("decode created pack: %v", err)
+	}
+	packID := createdPack.PackId
 
 	// Add item to pack
 	addPackItemReqBody := api.PackItemCreate{
@@ -443,7 +451,7 @@ func TestTripsHandlerIntegrationTripPersonPacks(t *testing.T) {
 	h, dbConn := newContainerizedTripsHandler(t)
 	defer func() { _ = dbConn.Close() }()
 
-	_, personID, _, _, packID := insertTripTestData(t, dbConn)
+	_, personID, _, _, _ := insertTripTestData(t, dbConn)
 	trip := mustCreateTrip(t, h)
 
 	// Add person to trip
@@ -457,7 +465,8 @@ func TestTripsHandlerIntegrationTripPersonPacks(t *testing.T) {
 		t.Fatalf("expected 201 for add person, got %d: %s", addPersonW.Code, addPersonW.Body.String())
 	}
 
-	// Create pack for person
+	// Create pack for person. AddTripPersonPack creates a new pack with a generated
+	// id, so use the returned pack id for subsequent calls and assertions.
 	addPackReqBody := api.TripPersonPackCreate{
 		Name:     "Test Pack",
 		TripType: "overnight",
@@ -475,10 +484,7 @@ func TestTripsHandlerIntegrationTripPersonPacks(t *testing.T) {
 	if err := json.NewDecoder(addPackW.Body).Decode(&packDetails); err != nil {
 		t.Fatalf("decode pack details: %v", err)
 	}
-
-	if packDetails.PackId != packID {
-		t.Errorf("expected pack ID %s, got %s", packID, packDetails.PackId)
-	}
+	packID := packDetails.PackId
 
 	// Verify pack in nested GET
 	getReq := httptest.NewRequest(http.MethodGet, "/api/v1/trips/"+trip.Id.String(), nil)

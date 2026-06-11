@@ -1,30 +1,32 @@
 package handlers
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
-	"image"
-	_ "image/gif"
-	_ "image/jpeg"
-	_ "image/png"
+	"io"
 	"net/http"
 
 	"github.com/google/uuid"
 	"github.com/oapi-codegen/runtime/types"
 	"github.com/via-justa/overpacked-app/backend/internal/api"
 	"github.com/via-justa/overpacked-app/backend/internal/domain"
+	"github.com/via-justa/overpacked-app/backend/internal/storage"
 	"github.com/via-justa/overpacked-app/backend/internal/store"
 )
 
 type ItemsHandler struct {
-	store *store.Store
+	store  *store.Store
+	images *storage.ImageStore
 }
 
-const itemsErrNotFound = "item not found"
+const (
+	itemsErrNotFound  = "item not found"
+	imageFormField    = "file"
+	imageMaxFormBytes = storage.MaxImageBytes + (1 << 20) // image cap + multipart overhead
+)
 
-func NewItemsHandler(st *store.Store) *ItemsHandler {
-	return &ItemsHandler{store: st}
+func NewItemsHandler(st *store.Store, images *storage.ImageStore) *ItemsHandler {
+	return &ItemsHandler{store: st, images: images}
 }
 
 func (h *ItemsHandler) ListItems(w http.ResponseWriter, r *http.Request) {
@@ -62,10 +64,6 @@ func (h *ItemsHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	applyCreateBaseFields(item, &req)
-	if err := applyCreateImage(item, &req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-		return
-	}
 
 	if err := h.store.Items.Create(r.Context(), item); err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to create item"})
@@ -108,10 +106,6 @@ func (h *ItemsHandler) UpdateItem(w http.ResponseWriter, r *http.Request, itemId
 	}
 
 	applyUpdateBaseFields(item, &req)
-	if err := applyUpdateImage(item, &req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-		return
-	}
 
 	if err := h.store.Items.Update(r.Context(), item); err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
@@ -126,7 +120,7 @@ func (h *ItemsHandler) UpdateItem(w http.ResponseWriter, r *http.Request, itemId
 }
 
 func (h *ItemsHandler) DeleteItem(w http.ResponseWriter, r *http.Request, itemId types.UUID) {
-	err := h.store.Items.Delete(r.Context(), uuid.UUID(itemId))
+	oldPath, err := h.store.Items.Delete(r.Context(), uuid.UUID(itemId))
 	if errors.Is(err, domain.ErrNotFound) {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": itemsErrNotFound})
 		return
@@ -136,7 +130,126 @@ func (h *ItemsHandler) DeleteItem(w http.ResponseWriter, r *http.Request, itemId
 		return
 	}
 
+	if oldPath != nil {
+		_ = h.images.Delete(*oldPath)
+	}
+
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *ItemsHandler) UploadItemImage(w http.ResponseWriter, r *http.Request, itemId types.UUID) {
+	r.Body = http.MaxBytesReader(w, r.Body, imageMaxFormBytes)
+	if err := r.ParseMultipartForm(imageMaxFormBytes); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid multipart form"})
+		return
+	}
+
+	file, _, err := r.FormFile(imageFormField)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing image file"})
+		return
+	}
+	defer file.Close()
+
+	data, err := io.ReadAll(file)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "failed to read image"})
+		return
+	}
+
+	mimeType := http.DetectContentType(data)
+
+	path, width, height, err := h.images.Save(uuid.UUID(itemId), mimeType, data)
+	if errors.Is(err, storage.ErrUnsupportedType) || errors.Is(err, storage.ErrInvalidImage) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported or invalid image"})
+		return
+	}
+	if errors.Is(err, storage.ErrTooLarge) {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "image is too large"})
+		return
+	}
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to store image"})
+		return
+	}
+
+	oldPath, err := h.store.Items.SetImage(r.Context(), uuid.UUID(itemId), path, mimeType, len(data), width, height)
+	if errors.Is(err, domain.ErrNotFound) {
+		_ = h.images.Delete(path)
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": itemsErrNotFound})
+		return
+	}
+	if err != nil {
+		_ = h.images.Delete(path)
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to save image"})
+		return
+	}
+
+	if oldPath != nil && *oldPath != path {
+		_ = h.images.Delete(*oldPath)
+	}
+
+	item, err := h.store.Items.GetByID(r.Context(), uuid.UUID(itemId))
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get item"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, itemToAPI(item))
+}
+
+func (h *ItemsHandler) DeleteItemImage(w http.ResponseWriter, r *http.Request, itemId types.UUID) {
+	oldPath, err := h.store.Items.ClearImage(r.Context(), uuid.UUID(itemId))
+	if errors.Is(err, domain.ErrNotFound) {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": itemsErrNotFound})
+		return
+	}
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete image"})
+		return
+	}
+
+	if oldPath != nil {
+		_ = h.images.Delete(*oldPath)
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *ItemsHandler) GetItemImage(w http.ResponseWriter, r *http.Request, itemId types.UUID) {
+	item, err := h.store.Items.GetByID(r.Context(), uuid.UUID(itemId))
+	if errors.Is(err, domain.ErrNotFound) {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": itemsErrNotFound})
+		return
+	}
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get item"})
+		return
+	}
+	if item.ImagePath == nil {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "item has no image"})
+		return
+	}
+
+	file, err := h.images.Open(*item.ImagePath)
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "image not found"})
+		return
+	}
+	defer file.Close()
+
+	if item.ImageMimeType != nil {
+		w.Header().Set("Content-Type", *item.ImageMimeType)
+	}
+	w.Header().Set("Cache-Control", "private, max-age=31536000, immutable")
+	w.Header().Set("ETag", `"`+*item.ImagePath+`"`)
+
+	if match := r.Header.Get("If-None-Match"); match != "" && match == `"`+*item.ImagePath+`"` {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+
+	_, _ = io.Copy(w, file)
 }
 
 func itemToAPI(item *domain.Item) api.Item {
@@ -165,8 +278,9 @@ func itemToAPI(item *domain.Item) api.Item {
 		status := api.ItemBaseDefaultCarryStatus(item.DefaultCarryStatus)
 		resp.DefaultCarryStatus = &status
 	}
-	if item.ImageBlob != nil {
-		resp.ImageBlob = bytesPtr(item.ImageBlob)
+	if item.ImagePath != nil {
+		url := "/api/v1/items/" + item.ID.String() + "/image"
+		resp.ImageUrl = &url
 	}
 	return resp
 }
@@ -200,11 +314,6 @@ func intPtr(value int) *int {
 	return &value
 }
 
-func bytesPtr(value []byte) *[]byte {
-	converted := append([]byte(nil), value...)
-	return &converted
-}
-
 func applyCreateBaseFields(item *domain.Item, req *api.ItemCreate) {
 	item.Description = req.Description
 	item.SourceURL = req.SourceUrl
@@ -234,31 +343,6 @@ func attributesFromReq(value *map[string]interface{}) map[string]any {
 	}
 
 	return cloned
-}
-
-func applyCreateImage(item *domain.Item, req *api.ItemCreate) error {
-	if req.ImageBlob == nil {
-		return nil
-	}
-	if req.ImageMimeType == nil || req.ImageSizeBytes == nil {
-		return errors.New("image metadata is required when image is provided")
-	}
-
-	width, height, err := decodeImageDimensions(*req.ImageBlob)
-	if err != nil {
-		return errors.New("invalid image content")
-	}
-
-	imageBlob := append([]byte(nil), (*req.ImageBlob)...)
-	imageMimeType := *req.ImageMimeType
-	imageSizeBytes := *req.ImageSizeBytes
-
-	item.ImageBlob = imageBlob
-	item.ImageMimeType = &imageMimeType
-	item.ImageSizeBytes = &imageSizeBytes
-	item.ImageWidthPX = &width
-	item.ImageHeightPX = &height
-	return nil
 }
 
 func applyUpdateBaseFields(item *domain.Item, req *api.ItemUpdate) {
@@ -303,44 +387,10 @@ func applyUpdateBaseFields(item *domain.Item, req *api.ItemUpdate) {
 	}
 }
 
-func applyUpdateImage(item *domain.Item, req *api.ItemUpdate) error {
-	if req.ImageBlob == nil {
-		return nil
-	}
-	if req.ImageMimeType == nil || req.ImageSizeBytes == nil {
-		return errors.New("image metadata is required when image is provided")
-	}
-
-	width, height, err := decodeImageDimensions(*req.ImageBlob)
-	if err != nil {
-		return errors.New("invalid image content")
-	}
-
-	imageBlob := append([]byte(nil), (*req.ImageBlob)...)
-	imageMimeType := *req.ImageMimeType
-	imageSizeBytes := *req.ImageSizeBytes
-
-	item.ImageBlob = imageBlob
-	item.ImageMimeType = &imageMimeType
-	item.ImageSizeBytes = &imageSizeBytes
-	item.ImageWidthPX = &width
-	item.ImageHeightPX = &height
-	return nil
-}
-
 func float64PtrFromFloat32(value *float32) *float64 {
 	if value == nil {
 		return nil
 	}
 	converted := float64(*value)
 	return &converted
-}
-
-func decodeImageDimensions(imageBlob []byte) (int, int, error) {
-	config, _, err := image.DecodeConfig(bytes.NewReader(imageBlob))
-	if err != nil {
-		return 0, 0, err
-	}
-
-	return config.Width, config.Height, nil
 }

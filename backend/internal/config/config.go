@@ -7,6 +7,7 @@ import (
 
 const (
 	defaultServerAddr = "0.0.0.0:8000"
+	defaultImagesDir  = "./data/images"
 )
 
 type Config struct {
@@ -15,6 +16,7 @@ type Config struct {
 	AppUsername string
 	AppPassword string
 	JWTSecret   string
+	ImagesDir   string
 }
 
 func Load() (*Config, error) {
@@ -28,11 +30,17 @@ func Load() (*Config, error) {
 		serverAddr = defaultServerAddr
 	}
 
+	imagesDir := os.Getenv("IMAGES_DIR")
+	if imagesDir == "" {
+		imagesDir = defaultImagesDir
+	}
+
 	return &Config{
 		DatabaseURL: databaseURL,
 		ServerAddr:  serverAddr,
 		AppUsername: os.Getenv("APP_USERNAME"),
 		AppPassword: os.Getenv("APP_PASSWORD"),
 		JWTSecret:   os.Getenv("JWT_SECRET"),
+		ImagesDir:   imagesDir,
 	}, nil
 }

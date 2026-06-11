@@ -581,6 +581,97 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /api/v1/items/{itemId}/image:
+    get:
+      tags:
+        - items
+      summary: Get an item's image
+      description: Streams the item's image bytes from disk.
+      operationId: getItemImage
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Image bytes
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags:
+        - items
+      summary: Upload (or replace) an item's image
+      operationId: uploadItemImage
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Image uploaded; updated item returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - items
+      summary: Delete an item's image
+      operationId: deleteItemImage
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Image deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /api/v1/item-types:
     get:
       tags:
@@ -2504,10 +2595,13 @@ components:
         is_default:
           type: boolean
           nullable: true
-        image_blob:
+        image_url:
           type: string
-          format: byte
           nullable: true
+          description: >-
+            URL to fetch the item's image, or null when the item has no image.
+            The image bytes are stored on disk and served by
+            GET /api/v1/items/{itemId}/image.
         image_mime_type:
           type: string
           nullable: true
@@ -2577,22 +2671,6 @@ components:
         is_default:
           type: boolean
           nullable: true
-        image_blob:
-          type: string
-          format: byte
-          nullable: true
-        image_mime_type:
-          type: string
-          nullable: true
-        image_size_bytes:
-          type: integer
-          nullable: true
-        image_width_px:
-          type: integer
-          nullable: true
-        image_height_px:
-          type: integer
-          nullable: true
         attributes:
           type: object
           additionalProperties: true
@@ -2638,22 +2716,6 @@ components:
           nullable: true
         is_default:
           type: boolean
-          nullable: true
-        image_blob:
-          type: string
-          format: byte
-          nullable: true
-        image_mime_type:
-          type: string
-          nullable: true
-        image_size_bytes:
-          type: integer
-          nullable: true
-        image_width_px:
-          type: integer
-          nullable: true
-        image_height_px:
-          type: integer
           nullable: true
         attributes:
           type: object

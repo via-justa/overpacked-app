@@ -40,6 +40,9 @@ services:
       APP_PASSWORD: ${APP_PASSWORD:-pw123}
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
       SERVER_ADDR: ${SERVER_ADDR:-0.0.0.0:8000}
+      IMAGES_DIR: ${IMAGES_DIR:-/app/uploads}
+    volumes:
+      - overpacked_uploads:/app/uploads
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8000/api/health"]
       interval: 10s
@@ -65,3 +68,4 @@ services:
 
 volumes:
   overpacked_db_data:
+  overpacked_uploads:

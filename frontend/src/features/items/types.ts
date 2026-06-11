@@ -39,9 +39,12 @@ export type ItemFormValues = {
   is_default: boolean
   weight_value: string
   volume_value: string
-  image_blob: string
-  image_mime_type: string
-  image_size_bytes: string
+  // Image bytes are uploaded separately (multipart) after the item is saved.
+  // `imageFile` holds a newly picked file; `image_url` is the existing image
+  // (if any); `imageRemoved` flags that the user cleared an existing image.
+  imageFile: File | null
+  image_url: string | null
+  imageRemoved: boolean
   attributes: Record<string, string | boolean>
   label_ids: string[]
 }
