@@ -8,7 +8,6 @@ export type TripCreate = components['schemas']['TripCreate']
 export type TripUpdate = components['schemas']['TripUpdate']
 export type TripWithDetails = components['schemas']['TripWithDetails']
 export type TripPersonDetails = components['schemas']['TripPersonDetailsNested']
-export type TripPersonPack = components['schemas']['TripPersonPackDetailsNested']
 // The create-pack endpoint returns the pack record without its (still-empty) items.
 export type TripPersonPackCreated = components['schemas']['TripPersonPackWithDetails']
 export type TripPersonPackItem = components['schemas']['PackItemWithDetails']

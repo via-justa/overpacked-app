@@ -14,16 +14,10 @@ export type ItemTypeFieldInput = components['schemas']['ItemTypeFieldInput']
 export type ItemTypeField = components['schemas']['ItemTypeField']
 export type Label = components['schemas']['Label']
 export type LabelCreate = components['schemas']['LabelCreate']
-export type LabelUpdate = components['schemas']['LabelUpdate']
 export type ItemLabelAdd = components['schemas']['ItemLabelAdd']
 
 // Named enums derived from the schema for use in forms/selects.
 export type DefaultCarryStatus = NonNullable<Item['default_carry_status']>
-export type ItemTypeCreateBaseProfile = NonNullable<ItemTypeCreate['base_profile']>
-export type ItemTypeFieldDataType = ItemTypeField['data_type']
-
-// UI-only: a curated subset of item types; the server `type` field is a free-form string.
-export type KnownItemType = 'consumable' | 'wearable' | 'shelter' | 'sleep' | 'electronics'
 
 // UI-only form state — no server/spec equivalent.
 export type ItemFormValues = {
