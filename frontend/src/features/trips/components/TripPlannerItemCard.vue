@@ -7,8 +7,17 @@ import { formatDisplayWeight } from '../../../lib/units/conversions'
 import { useTripPlanner } from '../composables/useTripPlanner'
 import type { PlannerPlacement } from '../plannerTypes'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     placement: PlannerPlacement
+    selectable?: boolean
+    selected?: boolean
+}>(), {
+    selectable: false,
+    selected: false,
+})
+
+const emit = defineEmits<{
+    'update:selected': [value: boolean]
 }>()
 
 const planner = useTripPlanner()
@@ -30,7 +39,9 @@ const increment = (): void => {
 <template>
     <div data-element="trip-planner-card"
         class="border-line-subtle bg-surface-elevated flex cursor-grab items-center gap-2 rounded-lg border px-2 py-1.5 active:cursor-grabbing">
-        <AppIcon category="action" name="menuBars" size="xs" class="text-copy-subtle shrink-0" />
+        <input v-if="selectable" type="checkbox" class="shrink-0 cursor-pointer" :checked="selected"
+            aria-label="Select item" @click.stop @change="emit('update:selected', ($event.target as HTMLInputElement).checked)" />
+        <AppIcon v-if="!selectable" category="action" name="menuBars" size="xs" class="text-copy-subtle shrink-0" />
         <div class="min-w-0 flex-1">
             <p class="text-copy truncate text-sm font-medium">{{ normalizeTitleWords(placement.item.name) }}</p>
             <p class="text-copy-subtle text-xs">{{ lineWeight }}</p>

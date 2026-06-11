@@ -126,6 +126,7 @@ export type TripPlannerContext = {
     setMainPack: (personId: string, packLocalId: string) => void
 
     autoAssignToPerson: (personId: string, placement: PlannerPlacement) => void
+    assignToPerson: (personId: string, placements?: PlannerPlacement[]) => void
     personStats: (person: PlannerPerson) => PlannerPersonStats
 
     buildStagedTrip: () => StagedTrip
@@ -444,6 +445,17 @@ function createTripPlannerContext(): TripPlannerContext {
         person.worn.push(placement)
     }
 
+    // Assign the given placements to a person; defaults to every unassigned item.
+    function assignToPerson(personId: string, placements?: PlannerPlacement[]): void {
+        if (!findPerson(personId)) {
+            return
+        }
+        // Snapshot first: autoAssignToPerson mutates unassigned as it goes.
+        for (const placement of [...(placements ?? unassigned.value)]) {
+            autoAssignToPerson(personId, placement)
+        }
+    }
+
     // ─── Per-person stats ──────────────────────────────────────────────────────
     function personStats(person: PlannerPerson): PlannerPersonStats {
         let packedWeightGrams = 0
@@ -587,6 +599,7 @@ function createTripPlannerContext(): TripPlannerContext {
         renamePack,
         setMainPack,
         autoAssignToPerson,
+        assignToPerson,
         personStats,
         buildStagedTrip,
         loadExisting,

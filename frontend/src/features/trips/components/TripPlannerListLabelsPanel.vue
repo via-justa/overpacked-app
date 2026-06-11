@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import AppSelect from '../../../components/forms/AppSelect.vue'
+import AppIcon from '../../../components/icons/AppIcon.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { useTripPlanner } from '../composables/useTripPlanner'
 
 const planner = useTripPlanner()
+
+const packingListTooltip =
+    'Pick a packing list to use as a checklist to ensure you have all necessary items for the trip. Click a label to filter the gear pool to just those items.'
 
 // Toggle the pool filter for a label (clicking the active one clears it).
 const onLabelClick = (labelId: string): void => {
@@ -13,7 +17,11 @@ const onLabelClick = (labelId: string): void => {
 
 <template>
     <aside data-element="trip-planner-labels" class="surface-panel flex h-fit flex-col gap-3 p-5">
-        <h2 class="text-copy text-lg font-semibold">Packing list</h2>
+        <h2 class="text-copy flex items-center justify-between gap-1.5 text-lg font-semibold">
+            Packing list
+            <AppIcon category="feedback" name="info" size="xs" class="text-copy-subtle cursor-help"
+                v-tooltip.top="packingListTooltip" />
+        </h2>
 
         <AppSelect v-model="planner.selectedPackingListId.value">
             <option value="">No packing list</option>
@@ -23,7 +31,7 @@ const onLabelClick = (labelId: string): void => {
         </AppSelect>
 
         <p v-if="!planner.selectedPackingListId.value" class="text-copy-subtle text-sm">
-            Select a packing list to see its labels. Added gear grays out matching labels.
+            {{ packingListTooltip }}
         </p>
 
         <p v-else-if="planner.packingListLabels.value.length === 0" class="text-copy-subtle text-sm">

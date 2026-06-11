@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import PrimeVue from 'primevue/config'
 import ToastService from 'primevue/toastservice'
+import Tooltip from 'primevue/tooltip'
 import Aura from '@primeuix/themes/aura'
 import { VueQueryPlugin } from '@tanstack/vue-query'
 import './style.css'
@@ -42,6 +43,7 @@ app.use(PrimeVue, {
 	},
 })
 app.use(ToastService)
+app.directive('tooltip', Tooltip)
 
 app.use(VueQueryPlugin, {
 	queryClient,

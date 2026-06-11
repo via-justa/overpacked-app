@@ -16,10 +16,10 @@ const cards = computed(() => [
 </script>
 
 <template>
-    <div data-element="trip-planner-stats" class="grid gap-3 sm:grid-cols-3">
-        <div v-for="card in cards" :key="card.label" class="surface-panel flex flex-col gap-1 p-4">
+    <div data-element="trip-planner-stats" class="surface-panel flex flex-col gap-2 p-4">
+        <div v-for="card in cards" :key="card.label" class="flex items-baseline justify-between gap-3">
             <span class="text-copy-subtle text-xs font-semibold uppercase tracking-[0.06em]">{{ card.label }}</span>
-            <span class="text-copy text-xl font-bold">{{ card.value }}</span>
+            <span class="text-copy text-xs font-bold">{{ card.value }}</span>
         </div>
     </div>
 </template>

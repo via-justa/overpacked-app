@@ -1,21 +1,13 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
-import Button from 'primevue/button'
-import AppSelect from '../../../components/forms/AppSelect.vue'
+import { computed } from 'vue'
 import AppIcon from '../../../components/icons/AppIcon.vue'
 import TripItemPicker from './TripItemPicker.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
-import { listSets } from '../../sets/api/setsApi'
 import { useTripPlanner } from '../composables/useTripPlanner'
 import type { CarryStatus } from '../types'
 import type { PlannerPlacement } from '../plannerTypes'
 
 const planner = useTripPlanner()
-
-const setsQuery = useQuery({ queryKey: ['sets'], queryFn: listSets })
-const sets = computed(() => setsQuery.data.value ?? [])
-const selectedSetId = ref('')
 
 // Items filtered by the label clicked in the packing-list panel.
 const filteredItems = computed(() => {
@@ -38,13 +30,6 @@ const activeFilterLabel = computed(() => {
 
 const onAddItem = (payload: { itemId: string; quantity: number; carryStatus: CarryStatus }): void => {
     planner.addPoolItem(payload.itemId, payload.quantity, payload.carryStatus)
-}
-
-const onAddSet = (): void => {
-    if (selectedSetId.value) {
-        void planner.addSet(selectedSetId.value)
-        selectedSetId.value = ''
-    }
 }
 
 const onQuantityInput = (placement: PlannerPlacement, event: Event): void => {
@@ -70,14 +55,6 @@ const toggleCarry = (placement: PlannerPlacement): void => {
         </div>
 
         <TripItemPicker :items="filteredItems" @add="onAddItem" />
-
-        <div class="grid gap-2 sm:grid-cols-[1fr_auto]">
-            <AppSelect v-model="selectedSetId">
-                <option value="">Add a set…</option>
-                <option v-for="set in sets" :key="set.id" :value="set.id">{{ normalizeTitleWords(set.name) }}</option>
-            </AppSelect>
-            <Button label="Add set" size="small" outlined :disabled="!selectedSetId" @click="onAddSet" />
-        </div>
 
         <p v-if="planner.unassigned.value.length === 0" class="text-copy-subtle text-sm">
             No gear added yet. Use the pickers above to build your gear list.

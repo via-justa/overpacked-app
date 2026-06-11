@@ -36,8 +36,8 @@ const WEIGHT_STATUS_CLASS: Record<string, string> = {
 
 const weightChipClass = computed(() => WEIGHT_STATUS_CLASS[stats.value.weightStatus])
 
-const statCards = computed(() => [
-    { label: 'Packed', value: formatDisplayWeight(stats.value.packedWeightGrams, weightUnit.value) },
+const statChips = computed(() => [
+    { label: 'Packed', value: formatDisplayWeight(stats.value.packedWeightGrams, weightUnit.value), class: weightChipClass.value },
     { label: 'Worn', value: formatDisplayWeight(stats.value.wornWeightGrams, weightUnit.value) },
     { label: 'Recommended max', value: formatDisplayWeight(stats.value.recommendedMaxGrams, weightUnit.value) },
     { label: 'Gear cost', value: formatValue(stats.value.totalValue, currency.value) },
@@ -60,18 +60,15 @@ const onAutoDrop = (): void => {
     <section data-element="trip-planner-person" class="surface-panel flex flex-col gap-3 p-4">
         <header class="flex items-center justify-between gap-2">
             <h3 class="text-copy text-base font-semibold">{{ normalizeTitleWords(person.person.name) }}</h3>
-            <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold" :class="weightChipClass">
-                {{ formatDisplayWeight(stats.packedWeightGrams, weightUnit) }} packed
-            </span>
         </header>
 
-        <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-            <div v-for="card in statCards" :key="card.label"
-                class="bg-surface-muted flex flex-col rounded-lg px-2 py-1">
-                <span class="text-copy-subtle text-[0.65rem] font-semibold uppercase tracking-wider">{{ card.label
-                }}</span>
-                <span class="text-copy text-sm font-semibold">{{ card.value }}</span>
-            </div>
+        <div class="flex flex-wrap gap-1.5">
+            <span v-for="chip in statChips" :key="chip.label"
+                class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs"
+                :class="chip.class ?? 'bg-surface-muted'">
+                <span class="text-copy-subtle font-semibold uppercase tracking-wider">{{ chip.label }}</span>
+                <span class="text-copy font-semibold">{{ chip.value }}</span>
+            </span>
         </div>
 
         <!-- Person-level auto-assign target -->

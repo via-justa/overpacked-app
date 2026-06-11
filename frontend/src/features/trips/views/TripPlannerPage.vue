@@ -7,6 +7,7 @@ import TripPlannerDetailsForm from '../components/TripPlannerDetailsForm.vue'
 import TripPlannerStats from '../components/TripPlannerStats.vue'
 import TripPlannerPeoplePicker from '../components/TripPlannerPeoplePicker.vue'
 import TripPlannerItemPool from '../components/TripPlannerItemPool.vue'
+import TripPlannerSetsSelector from '../components/TripPlannerSetsSelector.vue'
 import TripPlannerListLabelsPanel from '../components/TripPlannerListLabelsPanel.vue'
 import TripPlannerAssignBoard from '../components/TripPlannerAssignBoard.vue'
 import { useMutationWithToast } from '../../../composables/useMutationWithToast'
@@ -68,7 +69,18 @@ const onSave = () => {
         <header class="flex flex-col gap-1">
             <div class="flex items-center justify-between gap-2">
                 <h1 class="text-copy text-2xl font-bold">{{ pageTitle }}</h1>
-                <span class="text-copy-subtle text-sm">Step {{ planner.step.value }} of 2</span>
+                <div class="flex items-center gap-2">
+                    <button v-if="planner.step.value === 2" type="button"
+                        class="text-brand-500 hover:text-brand-600 text-sm font-medium" @click="goToStep1">
+                        ←
+                    </button>
+                    <span class="text-copy-subtle text-sm">Step {{ planner.step.value }} of 2</span>
+                    <button v-if="planner.step.value === 1" type="button"
+                        class="text-brand-500 hover:text-brand-600 text-sm font-medium disabled:opacity-40"
+                        :disabled="!planner.canProceedToStep2.value" @click="goToStep2">
+                        →
+                    </button>
+                </div>
             </div>
             <p class="text-copy-subtle text-sm">
                 {{ planner.step.value === 1 ? 'Trip details, people, and gear' :
@@ -85,14 +97,16 @@ const onSave = () => {
                 <TripPlannerDetailsForm />
             </div>
 
-            <TripPlannerStats />
-
             <div class="grid gap-4 lg:grid-cols-[1fr_18rem]">
                 <div class="flex flex-col gap-4">
                     <TripPlannerPeoplePicker />
                     <TripPlannerItemPool />
                 </div>
-                <TripPlannerListLabelsPanel />
+                <div class="flex flex-col gap-4">
+                    <TripPlannerStats />
+                    <TripPlannerSetsSelector />
+                    <TripPlannerListLabelsPanel />
+                </div>
             </div>
         </div>
 
@@ -112,10 +126,7 @@ const onSave = () => {
             class="border-line-subtle surface-panel sticky bottom-0 flex items-center justify-between gap-2 border-t p-4">
             <Button label="Cancel" text @click="onCancel" />
             <div class="flex gap-2">
-                <Button v-if="planner.step.value === 2" label="Back" outlined @click="goToStep1" />
-                <Button v-if="planner.step.value === 1" label="Next" :disabled="!planner.canProceedToStep2.value"
-                    @click="goToStep2" />
-                <Button v-else label="Save trip" :loading="saveMutation.isPending.value"
+                <Button v-if="planner.step.value === 2" label="Save trip" :loading="saveMutation.isPending.value"
                     :disabled="!planner.canSave.value" @click="onSave" />
             </div>
         </footer>
