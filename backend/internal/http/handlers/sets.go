@@ -30,7 +30,7 @@ func NewSetsHandler(st *store.Store) *SetsHandler {
 func (h *SetsHandler) ListSets(w http.ResponseWriter, r *http.Request) {
 	sets, err := h.store.Sets.List(r.Context())
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to list sets"})
+		writeError(w, http.StatusInternalServerError, "failed to list sets")
 		return
 	}
 
@@ -45,29 +45,29 @@ func (h *SetsHandler) ListSets(w http.ResponseWriter, r *http.Request) {
 func (h *SetsHandler) CreateSet(w http.ResponseWriter, r *http.Request) {
 	var req api.ItemSetCreate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": setsErrInvalidRequestBody})
+		writeError(w, http.StatusBadRequest, setsErrInvalidRequestBody)
 		return
 	}
 	defer r.Body.Close()
 
 	set := &domain.ItemSet{ID: uuid.New(), Name: req.Name, IsActive: true}
 	if req.SetCategory == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "set_category is required"})
+		writeError(w, http.StatusBadRequest, "set_category is required")
 		return
 	}
 
 	if _, err := h.store.ItemTypes.GetByID(r.Context(), req.SetCategory); errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid set_category"})
+		writeError(w, http.StatusBadRequest, "invalid set_category")
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to validate set category"})
+		writeError(w, http.StatusInternalServerError, "failed to validate set category")
 		return
 	}
 
 	set.SetCategory = req.SetCategory
 
 	if err := h.store.Sets.Create(r.Context(), set); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to create set"})
+		writeError(w, http.StatusInternalServerError, "failed to create set")
 		return
 	}
 
@@ -77,11 +77,11 @@ func (h *SetsHandler) CreateSet(w http.ResponseWriter, r *http.Request) {
 func (h *SetsHandler) GetSet(w http.ResponseWriter, r *http.Request, setId types.UUID) {
 	set, err := h.store.Sets.GetByID(r.Context(), uuid.UUID(setId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": setsErrSetNotFound})
+		writeError(w, http.StatusNotFound, setsErrSetNotFound)
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": setsErrFailedToGetSet})
+		writeError(w, http.StatusInternalServerError, setsErrFailedToGetSet)
 		return
 	}
 
@@ -91,18 +91,18 @@ func (h *SetsHandler) GetSet(w http.ResponseWriter, r *http.Request, setId types
 func (h *SetsHandler) UpdateSet(w http.ResponseWriter, r *http.Request, setId types.UUID) {
 	var req api.ItemSetUpdate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": setsErrInvalidRequestBody})
+		writeError(w, http.StatusBadRequest, setsErrInvalidRequestBody)
 		return
 	}
 	defer r.Body.Close()
 
 	set, err := h.store.Sets.GetByID(r.Context(), uuid.UUID(setId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": setsErrSetNotFound})
+		writeError(w, http.StatusNotFound, setsErrSetNotFound)
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": setsErrFailedToGetSet})
+		writeError(w, http.StatusInternalServerError, setsErrFailedToGetSet)
 		return
 	}
 
@@ -111,22 +111,22 @@ func (h *SetsHandler) UpdateSet(w http.ResponseWriter, r *http.Request, setId ty
 	}
 
 	if req.SetCategory == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "set_category is required"})
+		writeError(w, http.StatusBadRequest, "set_category is required")
 		return
 	}
 
 	if _, err := h.store.ItemTypes.GetByID(r.Context(), req.SetCategory); errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid set_category"})
+		writeError(w, http.StatusBadRequest, "invalid set_category")
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to validate set category"})
+		writeError(w, http.StatusInternalServerError, "failed to validate set category")
 		return
 	}
 
 	set.SetCategory = req.SetCategory
 
 	if err := h.store.Sets.Update(r.Context(), set); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to update set"})
+		writeError(w, http.StatusInternalServerError, "failed to update set")
 		return
 	}
 
@@ -136,11 +136,11 @@ func (h *SetsHandler) UpdateSet(w http.ResponseWriter, r *http.Request, setId ty
 func (h *SetsHandler) DeleteSet(w http.ResponseWriter, r *http.Request, setId types.UUID) {
 	err := h.store.Sets.Delete(r.Context(), uuid.UUID(setId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": setsErrSetNotFound})
+		writeError(w, http.StatusNotFound, setsErrSetNotFound)
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete set"})
+		writeError(w, http.StatusInternalServerError, "failed to delete set")
 		return
 	}
 
@@ -149,16 +149,16 @@ func (h *SetsHandler) DeleteSet(w http.ResponseWriter, r *http.Request, setId ty
 
 func (h *SetsHandler) ListSetItems(w http.ResponseWriter, r *http.Request, setId types.UUID) {
 	if _, err := h.store.Sets.GetByID(r.Context(), uuid.UUID(setId)); errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": setsErrSetNotFound})
+		writeError(w, http.StatusNotFound, setsErrSetNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": setsErrFailedToGetSet})
+		writeError(w, http.StatusInternalServerError, setsErrFailedToGetSet)
 		return
 	}
 
 	setItems, err := h.store.Sets.ListItems(r.Context(), uuid.UUID(setId))
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to list set items"})
+		writeError(w, http.StatusInternalServerError, "failed to list set items")
 		return
 	}
 
@@ -166,7 +166,7 @@ func (h *SetsHandler) ListSetItems(w http.ResponseWriter, r *http.Request, setId
 	for _, si := range setItems {
 		item, getErr := h.store.Items.GetByID(r.Context(), si.ItemID)
 		if getErr != nil {
-			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to load set item details"})
+			writeError(w, http.StatusInternalServerError, "failed to load set item details")
 			return
 		}
 		resp = append(resp, setItemToAPI(&si, item))
@@ -178,26 +178,26 @@ func (h *SetsHandler) ListSetItems(w http.ResponseWriter, r *http.Request, setId
 func (h *SetsHandler) AddSetItem(w http.ResponseWriter, r *http.Request, setId types.UUID) {
 	var req api.SetItemCreate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": setsErrInvalidRequestBody})
+		writeError(w, http.StatusBadRequest, setsErrInvalidRequestBody)
 		return
 	}
 	defer r.Body.Close()
 
 	if _, err := h.store.Sets.GetByID(r.Context(), uuid.UUID(setId)); errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": setsErrSetNotFound})
+		writeError(w, http.StatusNotFound, setsErrSetNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": setsErrFailedToGetSet})
+		writeError(w, http.StatusInternalServerError, setsErrFailedToGetSet)
 		return
 	}
 
 	item, err := h.store.Items.GetByID(r.Context(), uuid.UUID(req.ItemId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "item not found"})
+		writeError(w, http.StatusNotFound, "item not found")
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get item"})
+		writeError(w, http.StatusInternalServerError, "failed to get item")
 		return
 	}
 
@@ -214,7 +214,7 @@ func (h *SetsHandler) AddSetItem(w http.ResponseWriter, r *http.Request, setId t
 	}
 
 	if err := h.store.Sets.AddItem(r.Context(), setItem); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to add item to set"})
+		writeError(w, http.StatusInternalServerError, "failed to add item to set")
 		return
 	}
 
@@ -224,32 +224,32 @@ func (h *SetsHandler) AddSetItem(w http.ResponseWriter, r *http.Request, setId t
 func (h *SetsHandler) UpdateSetItem(w http.ResponseWriter, r *http.Request, setId types.UUID, itemId types.UUID) {
 	var req api.SetItemUpdate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": setsErrInvalidRequestBody})
+		writeError(w, http.StatusBadRequest, setsErrInvalidRequestBody)
 		return
 	}
 	defer r.Body.Close()
 
 	if _, err := h.store.Sets.GetByID(r.Context(), uuid.UUID(setId)); errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": setsErrSetNotFound})
+		writeError(w, http.StatusNotFound, setsErrSetNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": setsErrFailedToGetSet})
+		writeError(w, http.StatusInternalServerError, setsErrFailedToGetSet)
 		return
 	}
 
 	item, err := h.store.Items.GetByID(r.Context(), uuid.UUID(itemId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "item not found"})
+		writeError(w, http.StatusNotFound, "item not found")
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get item"})
+		writeError(w, http.StatusInternalServerError, "failed to get item")
 		return
 	}
 
 	setItems, err := h.store.Sets.ListItems(r.Context(), uuid.UUID(setId))
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to load set items"})
+		writeError(w, http.StatusInternalServerError, "failed to load set items")
 		return
 	}
 
@@ -261,7 +261,7 @@ func (h *SetsHandler) UpdateSetItem(w http.ResponseWriter, r *http.Request, setI
 		}
 	}
 	if current == nil {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": setsErrSetItemNotFound})
+		writeError(w, http.StatusNotFound, setsErrSetItemNotFound)
 		return
 	}
 
@@ -276,10 +276,10 @@ func (h *SetsHandler) UpdateSetItem(w http.ResponseWriter, r *http.Request, setI
 	}
 
 	if err := h.store.Sets.UpdateItem(r.Context(), current); errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": setsErrSetItemNotFound})
+		writeError(w, http.StatusNotFound, setsErrSetItemNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to update set item"})
+		writeError(w, http.StatusInternalServerError, "failed to update set item")
 		return
 	}
 
@@ -288,20 +288,20 @@ func (h *SetsHandler) UpdateSetItem(w http.ResponseWriter, r *http.Request, setI
 
 func (h *SetsHandler) RemoveSetItem(w http.ResponseWriter, r *http.Request, setId types.UUID, itemId types.UUID) {
 	if _, err := h.store.Sets.GetByID(r.Context(), uuid.UUID(setId)); errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": setsErrSetNotFound})
+		writeError(w, http.StatusNotFound, setsErrSetNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": setsErrFailedToGetSet})
+		writeError(w, http.StatusInternalServerError, setsErrFailedToGetSet)
 		return
 	}
 
 	err := h.store.Sets.RemoveItem(r.Context(), uuid.UUID(setId), uuid.UUID(itemId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": setsErrSetItemNotFound})
+		writeError(w, http.StatusNotFound, setsErrSetItemNotFound)
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to remove set item"})
+		writeError(w, http.StatusInternalServerError, "failed to remove set item")
 		return
 	}
 

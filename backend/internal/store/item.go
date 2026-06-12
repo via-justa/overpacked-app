@@ -302,13 +302,5 @@ func (s *ItemStore) Delete(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("delete item: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("rows affected on delete item: %w", err)
-	}
-	if rowsAffected == 0 {
-		return domain.ErrNotFound
-	}
-
-	return nil
+	return rowsAffectedOrNotFound(result, "rows affected on delete item")
 }

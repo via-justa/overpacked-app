@@ -36,11 +36,3 @@ type PackItem struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
-
-type PackSet struct {
-	ID        uuid.UUID
-	PackID    uuid.UUID
-	SetID     uuid.UUID
-	AppliedAt time.Time
-	CreatedAt time.Time
-}

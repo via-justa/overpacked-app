@@ -136,19 +136,19 @@ func hostAllowedForService(service, host string) bool {
 // GetTripRoutePreview fetches Open Graph preview metadata for a public route share link.
 func (h *TripsHandler) GetTripRoutePreview(w http.ResponseWriter, r *http.Request, service api.GetTripRoutePreviewParamsService, params api.GetTripRoutePreviewParams) {
 	if !service.Valid() {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported route service"})
+		writeError(w, http.StatusBadRequest, "unsupported route service")
 		return
 	}
 
 	parsed, err := url.Parse(strings.TrimSpace(params.Url))
 	if err != nil || parsed.Scheme != "https" || parsed.Host == "" {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid route url"})
+		writeError(w, http.StatusBadRequest, "invalid route url")
 		return
 	}
 
 	if !hostAllowedForService(string(service), normalizeHost(parsed.Host)) {
 		// Reject hosts that do not match the requested service to prevent abuse.
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "url does not match service host"})
+		writeError(w, http.StatusBadRequest, "url does not match service host")
 		return
 	}
 
@@ -204,7 +204,7 @@ func fetchOpenGraphMeta(ctx context.Context, target string) (imageURL, title str
 func (h *TripsHandler) ListTrips(w http.ResponseWriter, r *http.Request) {
 	trips, err := h.store.Trips.List(r.Context())
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": failedToGetErrMsg + " trips"})
+		writeError(w, http.StatusInternalServerError, failedToGetErrMsg+" trips")
 		return
 	}
 
@@ -219,7 +219,7 @@ func (h *TripsHandler) ListTrips(w http.ResponseWriter, r *http.Request) {
 func (h *TripsHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 	var req api.TripCreate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": tripsErrInvalidRequestBody})
+		writeError(w, http.StatusBadRequest, tripsErrInvalidRequestBody)
 		return
 	}
 	defer r.Body.Close()
@@ -250,7 +250,7 @@ func (h *TripsHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.store.Trips.Create(r.Context(), trip); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to create trip"})
+		writeError(w, http.StatusInternalServerError, "failed to create trip")
 		return
 	}
 
@@ -260,18 +260,18 @@ func (h *TripsHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 func (h *TripsHandler) GetTripById(w http.ResponseWriter, r *http.Request, tripId types.UUID) {
 	trip, err := h.store.Trips.GetByID(r.Context(), uuid.UUID(tripId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrTripNotFound})
+		writeError(w, http.StatusNotFound, tripsErrTripNotFound)
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": tripsErrFailedToGetTrip})
+		writeError(w, http.StatusInternalServerError, tripsErrFailedToGetTrip)
 		return
 	}
 
 	// Build nested response with persons, packs, and items
 	resp, err := h.buildTripWithDetails(r.Context(), trip)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to build trip details"})
+		writeError(w, http.StatusInternalServerError, "failed to build trip details")
 		return
 	}
 
@@ -281,18 +281,18 @@ func (h *TripsHandler) GetTripById(w http.ResponseWriter, r *http.Request, tripI
 func (h *TripsHandler) UpdateTrip(w http.ResponseWriter, r *http.Request, tripId types.UUID) {
 	var req api.TripUpdate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": tripsErrInvalidRequestBody})
+		writeError(w, http.StatusBadRequest, tripsErrInvalidRequestBody)
 		return
 	}
 	defer r.Body.Close()
 
 	trip, err := h.store.Trips.GetByID(r.Context(), uuid.UUID(tripId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrTripNotFound})
+		writeError(w, http.StatusNotFound, tripsErrTripNotFound)
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": tripsErrFailedToGetTrip})
+		writeError(w, http.StatusInternalServerError, tripsErrFailedToGetTrip)
 		return
 	}
 
@@ -324,7 +324,7 @@ func (h *TripsHandler) UpdateTrip(w http.ResponseWriter, r *http.Request, tripId
 	}
 
 	if err := h.store.Trips.Update(r.Context(), trip); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to update trip"})
+		writeError(w, http.StatusInternalServerError, "failed to update trip")
 		return
 	}
 
@@ -333,10 +333,10 @@ func (h *TripsHandler) UpdateTrip(w http.ResponseWriter, r *http.Request, tripId
 
 func (h *TripsHandler) DeleteTrip(w http.ResponseWriter, r *http.Request, tripId types.UUID) {
 	if err := h.store.Trips.Delete(r.Context(), uuid.UUID(tripId)); errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrTripNotFound})
+		writeError(w, http.StatusNotFound, tripsErrTripNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete trip"})
+		writeError(w, http.StatusInternalServerError, "failed to delete trip")
 		return
 	}
 
@@ -348,27 +348,27 @@ func (h *TripsHandler) DeleteTrip(w http.ResponseWriter, r *http.Request, tripId
 func (h *TripsHandler) AddTripPerson(w http.ResponseWriter, r *http.Request, tripId types.UUID) {
 	var req api.TripPersonCreate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": tripsErrInvalidRequestBody})
+		writeError(w, http.StatusBadRequest, tripsErrInvalidRequestBody)
 		return
 	}
 	defer r.Body.Close()
 
 	// Verify trip exists
 	if _, err := h.store.Trips.GetByID(r.Context(), uuid.UUID(tripId)); errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrTripNotFound})
+		writeError(w, http.StatusNotFound, tripsErrTripNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": tripsErrFailedToGetTrip})
+		writeError(w, http.StatusInternalServerError, tripsErrFailedToGetTrip)
 		return
 	}
 
 	// Verify person exists
 	person, err := h.store.Persons.GetByID(r.Context(), uuid.UUID(req.PersonId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "person not found"})
+		writeError(w, http.StatusNotFound, "person not found")
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get person"})
+		writeError(w, http.StatusInternalServerError, "failed to get person")
 		return
 	}
 
@@ -378,7 +378,7 @@ func (h *TripsHandler) AddTripPerson(w http.ResponseWriter, r *http.Request, tri
 	}
 
 	if err := h.store.Trips.AddPerson(r.Context(), tripPerson); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to add person to trip"})
+		writeError(w, http.StatusInternalServerError, "failed to add person to trip")
 		return
 	}
 
@@ -393,10 +393,10 @@ func (h *TripsHandler) AddTripPerson(w http.ResponseWriter, r *http.Request, tri
 
 func (h *TripsHandler) RemoveTripPerson(w http.ResponseWriter, r *http.Request, tripId types.UUID, personId types.UUID) {
 	if err := h.store.Trips.RemovePerson(r.Context(), uuid.UUID(tripId), uuid.UUID(personId)); errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrPersonNotFound})
+		writeError(w, http.StatusNotFound, tripsErrPersonNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to remove person from trip"})
+		writeError(w, http.StatusInternalServerError, "failed to remove person from trip")
 		return
 	}
 
@@ -408,7 +408,7 @@ func (h *TripsHandler) RemoveTripPerson(w http.ResponseWriter, r *http.Request, 
 func (h *TripsHandler) AddTripPersonPack(w http.ResponseWriter, r *http.Request, tripId types.UUID, personId types.UUID) {
 	var req api.TripPersonPackCreate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": tripsErrInvalidRequestBody})
+		writeError(w, http.StatusBadRequest, tripsErrInvalidRequestBody)
 		return
 	}
 	defer r.Body.Close()
@@ -416,10 +416,10 @@ func (h *TripsHandler) AddTripPersonPack(w http.ResponseWriter, r *http.Request,
 	// Get trip_person_id
 	tripPersonID, err := h.store.Trips.GetTripPersonID(r.Context(), uuid.UUID(tripId), uuid.UUID(personId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrPersonNotFound})
+		writeError(w, http.StatusNotFound, tripsErrPersonNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": tripsErrFailedToGetTripPerson})
+		writeError(w, http.StatusInternalServerError, tripsErrFailedToGetTripPerson)
 		return
 	}
 
@@ -433,7 +433,7 @@ func (h *TripsHandler) AddTripPersonPack(w http.ResponseWriter, r *http.Request,
 	}
 
 	if err := h.store.Packs.Create(r.Context(), pack); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to create pack"})
+		writeError(w, http.StatusInternalServerError, "failed to create pack")
 		return
 	}
 
@@ -444,7 +444,7 @@ func (h *TripsHandler) AddTripPersonPack(w http.ResponseWriter, r *http.Request,
 	}
 
 	if err := h.store.Trips.AddPersonPack(r.Context(), tripPersonPack); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to add pack to person"})
+		writeError(w, http.StatusInternalServerError, "failed to add pack to person")
 		return
 	}
 
@@ -465,18 +465,18 @@ func (h *TripsHandler) RemoveTripPersonPack(w http.ResponseWriter, r *http.Reque
 	// Get trip_person_id
 	tripPersonID, err := h.store.Trips.GetTripPersonID(r.Context(), uuid.UUID(tripId), uuid.UUID(personId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrPersonNotFound})
+		writeError(w, http.StatusNotFound, tripsErrPersonNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": tripsErrFailedToGetTripPerson})
+		writeError(w, http.StatusInternalServerError, tripsErrFailedToGetTripPerson)
 		return
 	}
 
 	if err := h.store.Trips.RemovePersonPack(r.Context(), tripPersonID, uuid.UUID(packId)); errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrPackNotFound})
+		writeError(w, http.StatusNotFound, tripsErrPackNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to remove pack from person"})
+		writeError(w, http.StatusInternalServerError, "failed to remove pack from person")
 		return
 	}
 
@@ -488,7 +488,7 @@ func (h *TripsHandler) RemoveTripPersonPack(w http.ResponseWriter, r *http.Reque
 func (h *TripsHandler) AddTripPersonItem(w http.ResponseWriter, r *http.Request, tripId types.UUID, personId types.UUID) {
 	var req api.TripPersonItemCreate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": tripsErrInvalidRequestBody})
+		writeError(w, http.StatusBadRequest, tripsErrInvalidRequestBody)
 		return
 	}
 	defer r.Body.Close()
@@ -496,20 +496,20 @@ func (h *TripsHandler) AddTripPersonItem(w http.ResponseWriter, r *http.Request,
 	// Get trip_person_id
 	tripPersonID, err := h.store.Trips.GetTripPersonID(r.Context(), uuid.UUID(tripId), uuid.UUID(personId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrPersonNotFound})
+		writeError(w, http.StatusNotFound, tripsErrPersonNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": tripsErrFailedToGetTripPerson})
+		writeError(w, http.StatusInternalServerError, tripsErrFailedToGetTripPerson)
 		return
 	}
 
 	// Verify item exists
 	item, err := h.store.Items.GetByID(r.Context(), uuid.UUID(req.ItemId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrItemNotFound})
+		writeError(w, http.StatusNotFound, tripsErrItemNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get item"})
+		writeError(w, http.StatusInternalServerError, "failed to get item")
 		return
 	}
 
@@ -524,7 +524,7 @@ func (h *TripsHandler) AddTripPersonItem(w http.ResponseWriter, r *http.Request,
 	}
 
 	if err := h.store.Trips.AddPersonItem(r.Context(), tripPersonItem); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to add item to person"})
+		writeError(w, http.StatusInternalServerError, "failed to add item to person")
 		return
 	}
 
@@ -547,7 +547,7 @@ func (h *TripsHandler) AddTripPersonItem(w http.ResponseWriter, r *http.Request,
 func (h *TripsHandler) UpdateTripPersonItem(w http.ResponseWriter, r *http.Request, tripId types.UUID, personId types.UUID, itemId types.UUID) {
 	var req api.TripPersonItemUpdate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": tripsErrInvalidRequestBody})
+		writeError(w, http.StatusBadRequest, tripsErrInvalidRequestBody)
 		return
 	}
 	defer r.Body.Close()
@@ -555,19 +555,19 @@ func (h *TripsHandler) UpdateTripPersonItem(w http.ResponseWriter, r *http.Reque
 	// Verify trip person exists
 	_, err := h.store.Trips.GetTripPersonID(r.Context(), uuid.UUID(tripId), uuid.UUID(personId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrPersonNotFound})
+		writeError(w, http.StatusNotFound, tripsErrPersonNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": tripsErrFailedToGetTripPerson})
+		writeError(w, http.StatusInternalServerError, tripsErrFailedToGetTripPerson)
 		return
 	}
 
 	tripPersonItem, err := h.store.Trips.GetPersonItemByID(r.Context(), uuid.UUID(itemId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrItemNotFound})
+		writeError(w, http.StatusNotFound, tripsErrItemNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get person item"})
+		writeError(w, http.StatusInternalServerError, "failed to get person item")
 		return
 	}
 
@@ -582,13 +582,13 @@ func (h *TripsHandler) UpdateTripPersonItem(w http.ResponseWriter, r *http.Reque
 	}
 
 	if err := h.store.Trips.UpdatePersonItem(r.Context(), tripPersonItem); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to update person item"})
+		writeError(w, http.StatusInternalServerError, "failed to update person item")
 		return
 	}
 
 	item, err := h.store.Items.GetByID(r.Context(), tripPersonItem.ItemID)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get item details"})
+		writeError(w, http.StatusInternalServerError, "failed to get item details")
 		return
 	}
 
@@ -612,18 +612,18 @@ func (h *TripsHandler) RemoveTripPersonItem(w http.ResponseWriter, r *http.Reque
 	// Verify trip person exists
 	_, err := h.store.Trips.GetTripPersonID(r.Context(), uuid.UUID(tripId), uuid.UUID(personId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrPersonNotFound})
+		writeError(w, http.StatusNotFound, tripsErrPersonNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": tripsErrFailedToGetTripPerson})
+		writeError(w, http.StatusInternalServerError, tripsErrFailedToGetTripPerson)
 		return
 	}
 
 	if err := h.store.Trips.RemovePersonItem(r.Context(), uuid.UUID(itemId)); errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrItemNotFound})
+		writeError(w, http.StatusNotFound, tripsErrItemNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to remove item from person"})
+		writeError(w, http.StatusInternalServerError, "failed to remove item from person")
 		return
 	}
 
@@ -636,7 +636,7 @@ func (h *TripsHandler) RemoveTripPersonItem(w http.ResponseWriter, r *http.Reque
 func (h *TripsHandler) AddTripPersonPackItem(w http.ResponseWriter, r *http.Request, tripId types.UUID, personId types.UUID, packId types.UUID) {
 	var req api.PackItemCreate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": tripsErrInvalidRequestBody})
+		writeError(w, http.StatusBadRequest, tripsErrInvalidRequestBody)
 		return
 	}
 	defer r.Body.Close()
@@ -644,30 +644,30 @@ func (h *TripsHandler) AddTripPersonPackItem(w http.ResponseWriter, r *http.Requ
 	// Verify trip person exists
 	_, err := h.store.Trips.GetTripPersonID(r.Context(), uuid.UUID(tripId), uuid.UUID(personId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrPersonNotFound})
+		writeError(w, http.StatusNotFound, tripsErrPersonNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": tripsErrFailedToGetTripPerson})
+		writeError(w, http.StatusInternalServerError, tripsErrFailedToGetTripPerson)
 		return
 	}
 
 	// Verify pack exists
 	_, err = h.store.Packs.GetByID(r.Context(), uuid.UUID(packId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "pack not found"})
+		writeError(w, http.StatusNotFound, "pack not found")
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get pack"})
+		writeError(w, http.StatusInternalServerError, "failed to get pack")
 		return
 	}
 
 	// Verify item exists
 	item, err := h.store.Items.GetByID(r.Context(), uuid.UUID(req.ItemId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "item not found"})
+		writeError(w, http.StatusNotFound, "item not found")
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get item"})
+		writeError(w, http.StatusInternalServerError, "failed to get item")
 		return
 	}
 
@@ -680,7 +680,7 @@ func (h *TripsHandler) AddTripPersonPackItem(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err := h.store.Packs.AddItem(r.Context(), packItem); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to add item to pack"})
+		writeError(w, http.StatusInternalServerError, "failed to add item to pack")
 		return
 	}
 
@@ -700,7 +700,7 @@ func (h *TripsHandler) AddTripPersonPackItem(w http.ResponseWriter, r *http.Requ
 func (h *TripsHandler) UpdateTripPersonPackItem(w http.ResponseWriter, r *http.Request, tripId types.UUID, personId types.UUID, packId types.UUID, itemId types.UUID) {
 	var req api.PackItemUpdate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": tripsErrInvalidRequestBody})
+		writeError(w, http.StatusBadRequest, tripsErrInvalidRequestBody)
 		return
 	}
 	defer r.Body.Close()
@@ -708,19 +708,19 @@ func (h *TripsHandler) UpdateTripPersonPackItem(w http.ResponseWriter, r *http.R
 	// Verify trip person exists
 	_, err := h.store.Trips.GetTripPersonID(r.Context(), uuid.UUID(tripId), uuid.UUID(personId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrPersonNotFound})
+		writeError(w, http.StatusNotFound, tripsErrPersonNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get trip person"})
+		writeError(w, http.StatusInternalServerError, "failed to get trip person")
 		return
 	}
 
 	packItem, err := h.store.Packs.GetItemByID(r.Context(), uuid.UUID(packId), uuid.UUID(itemId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrItemNotFound})
+		writeError(w, http.StatusNotFound, tripsErrItemNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get pack item"})
+		writeError(w, http.StatusInternalServerError, "failed to get pack item")
 		return
 	}
 
@@ -735,13 +735,13 @@ func (h *TripsHandler) UpdateTripPersonPackItem(w http.ResponseWriter, r *http.R
 	}
 
 	if err := h.store.Packs.UpdateItem(r.Context(), packItem); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to update pack item"})
+		writeError(w, http.StatusInternalServerError, "failed to update pack item")
 		return
 	}
 
 	item, err := h.store.Items.GetByID(r.Context(), packItem.ItemID)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get item details"})
+		writeError(w, http.StatusInternalServerError, "failed to get item details")
 		return
 	}
 
@@ -762,18 +762,18 @@ func (h *TripsHandler) RemoveTripPersonPackItem(w http.ResponseWriter, r *http.R
 	// Verify trip person exists
 	_, err := h.store.Trips.GetTripPersonID(r.Context(), uuid.UUID(tripId), uuid.UUID(personId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrPersonNotFound})
+		writeError(w, http.StatusNotFound, tripsErrPersonNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get trip person"})
+		writeError(w, http.StatusInternalServerError, "failed to get trip person")
 		return
 	}
 
 	if err := h.store.Packs.RemoveItem(r.Context(), uuid.UUID(packId), uuid.UUID(itemId)); errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": tripsErrItemNotFound})
+		writeError(w, http.StatusNotFound, tripsErrItemNotFound)
 		return
 	} else if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to remove item from pack"})
+		writeError(w, http.StatusInternalServerError, "failed to remove item from pack")
 		return
 	}
 

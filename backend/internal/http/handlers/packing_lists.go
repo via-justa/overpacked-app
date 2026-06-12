@@ -45,7 +45,7 @@ const (
 func (h *PackingListsHandler) ListPackingLists(w http.ResponseWriter, r *http.Request) {
 	lists, err := h.packingLists.List(r.Context())
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": packingListErrFailedList})
+		writeError(w, http.StatusInternalServerError, packingListErrFailedList)
 		return
 	}
 
@@ -61,7 +61,7 @@ func (h *PackingListsHandler) ListPackingLists(w http.ResponseWriter, r *http.Re
 func (h *PackingListsHandler) CreatePackingList(w http.ResponseWriter, r *http.Request) {
 	var req api.PackingListCreate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": packingListErrInvalidBody})
+		writeError(w, http.StatusBadRequest, packingListErrInvalidBody)
 		return
 	}
 	defer r.Body.Close()
@@ -73,7 +73,7 @@ func (h *PackingListsHandler) CreatePackingList(w http.ResponseWriter, r *http.R
 
 	pl, err := h.packingLists.Create(r.Context(), req.Name, description)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": packingListErrFailedCreate})
+		writeError(w, http.StatusInternalServerError, packingListErrFailedCreate)
 		return
 	}
 
@@ -85,10 +85,10 @@ func (h *PackingListsHandler) GetPackingListById(w http.ResponseWriter, r *http.
 	pl, err := h.packingLists.GetByID(r.Context(), uuid.UUID(listId))
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			writeJSON(w, http.StatusNotFound, map[string]string{"error": packingListErrNotFound})
+			writeError(w, http.StatusNotFound, packingListErrNotFound)
 			return
 		}
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": packingListErrFailedGet})
+		writeError(w, http.StatusInternalServerError, packingListErrFailedGet)
 		return
 	}
 
@@ -99,7 +99,7 @@ func (h *PackingListsHandler) GetPackingListById(w http.ResponseWriter, r *http.
 func (h *PackingListsHandler) UpdatePackingList(w http.ResponseWriter, r *http.Request, listId types.UUID) {
 	var req api.PackingListUpdate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": packingListErrInvalidBody})
+		writeError(w, http.StatusBadRequest, packingListErrInvalidBody)
 		return
 	}
 	defer r.Body.Close()
@@ -107,10 +107,10 @@ func (h *PackingListsHandler) UpdatePackingList(w http.ResponseWriter, r *http.R
 	pl, err := h.packingLists.Update(r.Context(), uuid.UUID(listId), req.Name, req.Description)
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			writeJSON(w, http.StatusNotFound, map[string]string{"error": packingListErrNotFound})
+			writeError(w, http.StatusNotFound, packingListErrNotFound)
 			return
 		}
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": packingListErrFailedUpdate})
+		writeError(w, http.StatusInternalServerError, packingListErrFailedUpdate)
 		return
 	}
 
@@ -121,10 +121,10 @@ func (h *PackingListsHandler) UpdatePackingList(w http.ResponseWriter, r *http.R
 func (h *PackingListsHandler) DeletePackingList(w http.ResponseWriter, r *http.Request, listId types.UUID) {
 	if err := h.packingLists.Delete(r.Context(), uuid.UUID(listId)); err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			writeJSON(w, http.StatusNotFound, map[string]string{"error": packingListErrNotFound})
+			writeError(w, http.StatusNotFound, packingListErrNotFound)
 			return
 		}
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": packingListErrFailedDelete})
+		writeError(w, http.StatusInternalServerError, packingListErrFailedDelete)
 		return
 	}
 
@@ -135,7 +135,7 @@ func (h *PackingListsHandler) DeletePackingList(w http.ResponseWriter, r *http.R
 func (h *PackingListsHandler) ListPackingListLabels(w http.ResponseWriter, r *http.Request, listId types.UUID) {
 	labels, err := h.packingLists.ListLabels(r.Context(), uuid.UUID(listId))
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": packingListErrFailedListLabels})
+		writeError(w, http.StatusInternalServerError, packingListErrFailedListLabels)
 		return
 	}
 
@@ -151,7 +151,7 @@ func (h *PackingListsHandler) ListPackingListLabels(w http.ResponseWriter, r *ht
 func (h *PackingListsHandler) AddPackingListLabel(w http.ResponseWriter, r *http.Request, listId types.UUID) {
 	var req api.PackingListLabelAdd
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": packingListErrInvalidBody})
+		writeError(w, http.StatusBadRequest, packingListErrInvalidBody)
 		return
 	}
 	defer r.Body.Close()
@@ -160,20 +160,20 @@ func (h *PackingListsHandler) AddPackingListLabel(w http.ResponseWriter, r *http
 	label, err := h.labels.GetByID(r.Context(), uuid.UUID(req.LabelId))
 	if err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			writeJSON(w, http.StatusNotFound, map[string]string{"error": packingListErrLabelNotFound})
+			writeError(w, http.StatusNotFound, packingListErrLabelNotFound)
 			return
 		}
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": packingListErrFailedGetLabel})
+		writeError(w, http.StatusInternalServerError, packingListErrFailedGetLabel)
 		return
 	}
 
 	// Add label to packing list
 	if err := h.packingLists.AddLabel(r.Context(), uuid.UUID(listId), uuid.UUID(req.LabelId)); err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			writeJSON(w, http.StatusNotFound, map[string]string{"error": packingListErrNotFound})
+			writeError(w, http.StatusNotFound, packingListErrNotFound)
 			return
 		}
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": packingListErrFailedAddLabel})
+		writeError(w, http.StatusInternalServerError, packingListErrFailedAddLabel)
 		return
 	}
 
@@ -184,10 +184,10 @@ func (h *PackingListsHandler) AddPackingListLabel(w http.ResponseWriter, r *http
 func (h *PackingListsHandler) RemovePackingListLabel(w http.ResponseWriter, r *http.Request, listId types.UUID, labelId types.UUID) {
 	if err := h.packingLists.RemoveLabel(r.Context(), uuid.UUID(listId), uuid.UUID(labelId)); err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			writeJSON(w, http.StatusNotFound, map[string]string{"error": packingListErrNotFound})
+			writeError(w, http.StatusNotFound, packingListErrNotFound)
 			return
 		}
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": packingListErrFailedRemoveLabel})
+		writeError(w, http.StatusInternalServerError, packingListErrFailedRemoveLabel)
 		return
 	}
 

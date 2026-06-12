@@ -132,15 +132,7 @@ func (s *SetStore) Delete(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("delete set: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("rows affected on delete set: %w", err)
-	}
-	if rowsAffected == 0 {
-		return domain.ErrNotFound
-	}
-
-	return nil
+	return rowsAffectedOrNotFound(result, "rows affected on delete set")
 }
 
 func (s *SetStore) AddItem(ctx context.Context, item *domain.SetItem) error {
@@ -200,15 +192,7 @@ func (s *SetStore) UpdateItem(ctx context.Context, item *domain.SetItem) error {
 		return fmt.Errorf("update set item: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("rows affected on update set item: %w", err)
-	}
-	if rowsAffected == 0 {
-		return domain.ErrNotFound
-	}
-
-	return nil
+	return rowsAffectedOrNotFound(result, "rows affected on update set item")
 }
 
 func (s *SetStore) RemoveItem(ctx context.Context, setID uuid.UUID, itemID uuid.UUID) error {
@@ -217,13 +201,5 @@ func (s *SetStore) RemoveItem(ctx context.Context, setID uuid.UUID, itemID uuid.
 		return fmt.Errorf("remove set item: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("rows affected on remove set item: %w", err)
-	}
-	if rowsAffected == 0 {
-		return domain.ErrNotFound
-	}
-
-	return nil
+	return rowsAffectedOrNotFound(result, "rows affected on remove set item")
 }

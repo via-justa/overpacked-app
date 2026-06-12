@@ -25,7 +25,7 @@ func (h *PersonsHandler) ListPersons(w http.ResponseWriter, r *http.Request) {
 
 	persons, err := h.store.Persons.List(ctx)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to list persons"})
+		writeError(w, http.StatusInternalServerError, "failed to list persons")
 		return
 	}
 
@@ -42,7 +42,7 @@ func (h *PersonsHandler) CreatePerson(w http.ResponseWriter, r *http.Request) {
 
 	var req api.PersonCreate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	defer r.Body.Close()
@@ -70,7 +70,7 @@ func (h *PersonsHandler) CreatePerson(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.store.Persons.Create(ctx, domainPerson); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to create person"})
+		writeError(w, http.StatusInternalServerError, "failed to create person")
 		return
 	}
 
@@ -83,11 +83,11 @@ func (h *PersonsHandler) GetPerson(w http.ResponseWriter, r *http.Request, perso
 
 	person, err := h.store.Persons.GetByID(ctx, uuid.UUID(personId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "person not found"})
+		writeError(w, http.StatusNotFound, "person not found")
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get person"})
+		writeError(w, http.StatusInternalServerError, "failed to get person")
 		return
 	}
 
@@ -99,18 +99,18 @@ func (h *PersonsHandler) UpdatePerson(w http.ResponseWriter, r *http.Request, pe
 
 	var req api.PersonUpdate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	defer r.Body.Close()
 
 	person, err := h.store.Persons.GetByID(ctx, uuid.UUID(personId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "person not found"})
+		writeError(w, http.StatusNotFound, "person not found")
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get person"})
+		writeError(w, http.StatusInternalServerError, "failed to get person")
 		return
 	}
 
@@ -136,7 +136,7 @@ func (h *PersonsHandler) UpdatePerson(w http.ResponseWriter, r *http.Request, pe
 	}
 
 	if err := h.store.Persons.Update(ctx, person); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to update person"})
+		writeError(w, http.StatusInternalServerError, "failed to update person")
 		return
 	}
 
@@ -147,7 +147,7 @@ func (h *PersonsHandler) DeletePerson(w http.ResponseWriter, r *http.Request, pe
 	ctx := r.Context()
 
 	if err := h.store.Persons.Delete(ctx, uuid.UUID(personId)); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete person"})
+		writeError(w, http.StatusInternalServerError, "failed to delete person")
 		return
 	}
 

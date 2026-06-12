@@ -196,15 +196,7 @@ func (s *PackStore) Delete(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("delete pack: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("rows affected on delete pack: %w", err)
-	}
-	if rowsAffected == 0 {
-		return domain.ErrNotFound
-	}
-
-	return nil
+	return rowsAffectedOrNotFound(result, "rows affected on delete pack")
 }
 
 func (s *PackStore) AddItem(ctx context.Context, item *domain.PackItem) error {
@@ -341,73 +333,5 @@ func (s *PackStore) RemoveItem(ctx context.Context, packID uuid.UUID, itemID uui
 		return fmt.Errorf("remove pack item: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("rows affected on remove pack item: %w", err)
-	}
-	if rowsAffected == 0 {
-		return domain.ErrNotFound
-	}
-
-	return nil
-}
-
-func (s *PackStore) AssignSet(ctx context.Context, packSet *domain.PackSet) error {
-	query := `
-		INSERT INTO pack_sets (pack_id, set_id)
-		VALUES ($1, $2)
-		RETURNING id, applied_at, created_at`
-
-	err := s.db.QueryRowContext(ctx, query, packSet.PackID, packSet.SetID).Scan(&packSet.ID, &packSet.AppliedAt, &packSet.CreatedAt)
-	if err != nil {
-		return fmt.Errorf("assign set to pack: %w", err)
-	}
-
-	return nil
-}
-
-func (s *PackStore) ListSets(ctx context.Context, packID uuid.UUID) ([]domain.PackSet, error) {
-	query := `
-		SELECT id, pack_id, set_id, applied_at, created_at
-		FROM pack_sets
-		WHERE pack_id = $1
-		ORDER BY created_at ASC`
-
-	rows, err := s.db.QueryContext(ctx, query, packID)
-	if err != nil {
-		return nil, fmt.Errorf("list pack sets: %w", err)
-	}
-	defer rows.Close()
-
-	out := make([]domain.PackSet, 0)
-	for rows.Next() {
-		var ps domain.PackSet
-		if err := rows.Scan(&ps.ID, &ps.PackID, &ps.SetID, &ps.AppliedAt, &ps.CreatedAt); err != nil {
-			return nil, fmt.Errorf("scan pack set: %w", err)
-		}
-		out = append(out, ps)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate pack sets: %w", err)
-	}
-
-	return out, nil
-}
-
-func (s *PackStore) RemoveSet(ctx context.Context, packID uuid.UUID, setID uuid.UUID) error {
-	result, err := s.db.ExecContext(ctx, "DELETE FROM pack_sets WHERE pack_id = $1 AND set_id = $2", packID, setID)
-	if err != nil {
-		return fmt.Errorf("remove pack set: %w", err)
-	}
-
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("rows affected on remove pack set: %w", err)
-	}
-	if rowsAffected == 0 {
-		return domain.ErrNotFound
-	}
-
-	return nil
+	return rowsAffectedOrNotFound(result, "rows affected on remove pack item")
 }

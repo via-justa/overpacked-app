@@ -128,14 +128,7 @@ func (s *PackingListStore) Delete(ctx context.Context, id uuid.UUID) error {
 		return err
 	}
 
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rows == 0 {
-		return domain.ErrNotFound
-	}
-	return nil
+	return rowsAffectedOrNotFound(result, "delete packing list")
 }
 
 // ListLabels returns all labels for a packing list
@@ -198,12 +191,5 @@ func (s *PackingListStore) RemoveLabel(ctx context.Context, packingListID, label
 		return err
 	}
 
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rows == 0 {
-		return domain.ErrNotFound
-	}
-	return nil
+	return rowsAffectedOrNotFound(result, "remove packing list label")
 }

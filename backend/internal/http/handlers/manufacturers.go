@@ -25,7 +25,7 @@ func NewManufacturersHandler(st *store.Store) *ManufacturersHandler {
 func (h *ManufacturersHandler) ListManufacturers(w http.ResponseWriter, r *http.Request) {
 	manufacturers, err := h.store.Manufacturers.List(r.Context())
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to list manufacturers"})
+		writeError(w, http.StatusInternalServerError, "failed to list manufacturers")
 		return
 	}
 
@@ -40,7 +40,7 @@ func (h *ManufacturersHandler) ListManufacturers(w http.ResponseWriter, r *http.
 func (h *ManufacturersHandler) CreateManufacturer(w http.ResponseWriter, r *http.Request) {
 	var req api.ManufacturerCreate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	defer r.Body.Close()
@@ -54,7 +54,7 @@ func (h *ManufacturersHandler) CreateManufacturer(w http.ResponseWriter, r *http
 	}
 
 	if err := h.store.Manufacturers.Create(r.Context(), manufacturer); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to create manufacturer"})
+		writeError(w, http.StatusInternalServerError, "failed to create manufacturer")
 		return
 	}
 
@@ -64,11 +64,11 @@ func (h *ManufacturersHandler) CreateManufacturer(w http.ResponseWriter, r *http
 func (h *ManufacturersHandler) GetManufacturer(w http.ResponseWriter, r *http.Request, manufacturerId types.UUID) {
 	manufacturer, err := h.store.Manufacturers.GetByID(r.Context(), uuid.UUID(manufacturerId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": manufacturersErrNotFound})
+		writeError(w, http.StatusNotFound, manufacturersErrNotFound)
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get manufacturer"})
+		writeError(w, http.StatusInternalServerError, "failed to get manufacturer")
 		return
 	}
 
@@ -78,18 +78,18 @@ func (h *ManufacturersHandler) GetManufacturer(w http.ResponseWriter, r *http.Re
 func (h *ManufacturersHandler) UpdateManufacturer(w http.ResponseWriter, r *http.Request, manufacturerId types.UUID) {
 	var req api.ManufacturerUpdate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	defer r.Body.Close()
 
 	manufacturer, err := h.store.Manufacturers.GetByID(r.Context(), uuid.UUID(manufacturerId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": manufacturersErrNotFound})
+		writeError(w, http.StatusNotFound, manufacturersErrNotFound)
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get manufacturer"})
+		writeError(w, http.StatusInternalServerError, "failed to get manufacturer")
 		return
 	}
 
@@ -101,7 +101,7 @@ func (h *ManufacturersHandler) UpdateManufacturer(w http.ResponseWriter, r *http
 	}
 
 	if err := h.store.Manufacturers.Update(r.Context(), manufacturer); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to update manufacturer"})
+		writeError(w, http.StatusInternalServerError, "failed to update manufacturer")
 		return
 	}
 
@@ -111,11 +111,11 @@ func (h *ManufacturersHandler) UpdateManufacturer(w http.ResponseWriter, r *http
 func (h *ManufacturersHandler) DeleteManufacturer(w http.ResponseWriter, r *http.Request, manufacturerId types.UUID) {
 	err := h.store.Manufacturers.Delete(r.Context(), uuid.UUID(manufacturerId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": manufacturersErrNotFound})
+		writeError(w, http.StatusNotFound, manufacturersErrNotFound)
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete manufacturer"})
+		writeError(w, http.StatusInternalServerError, "failed to delete manufacturer")
 		return
 	}
 

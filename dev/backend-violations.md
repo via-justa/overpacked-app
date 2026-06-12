@@ -43,4 +43,4 @@ Status key: `open` (needs fixing) · `fixed` · `wontfix` (with reason).
 
 | # | File:line | Type | Status | Note |
 |---|-----------|------|--------|------|
-| 1 | `internal/store/pack.go:355` (`AssignSet`), `:369` (`ListSets`), `:398` (`RemoveSet`); `internal/domain/pack.go:40` (`PackSet`) | dead code | open | These query a `pack_sets` table (`INSERT/SELECT/DELETE FROM pack_sets`) that **no migration creates** — they fail at runtime. Either add the migration or remove the dead code + `PackSet` type. Not wired to any route. |
+| 1 | `internal/store/pack.go` (`AssignSet`, `ListSets`, `RemoveSet`); `internal/domain/pack.go` (`PackSet`) | dead code | fixed | Removed — queried a `pack_sets` table no migration creates, wired to no route. Also removed unused `domain.PackingListLabel`. |

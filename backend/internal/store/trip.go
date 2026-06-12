@@ -18,8 +18,6 @@ func NewTripStore(db *sql.DB) *TripStore {
 	return &TripStore{db: db}
 }
 
-const errGetRowsAffected = "get rows affected: %w"
-
 // Trip CRUD operations
 
 func (s *TripStore) Create(ctx context.Context, trip *domain.Trip) error {
@@ -177,16 +175,7 @@ func (s *TripStore) Delete(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("delete trip: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf(errGetRowsAffected, err)
-	}
-
-	if rowsAffected == 0 {
-		return domain.ErrNotFound
-	}
-
-	return nil
+	return rowsAffectedOrNotFound(result, "get rows affected")
 }
 
 // TripPerson operations
@@ -256,16 +245,7 @@ func (s *TripStore) RemovePerson(ctx context.Context, tripID, personID uuid.UUID
 		return fmt.Errorf("remove person from trip: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf(errGetRowsAffected, err)
-	}
-
-	if rowsAffected == 0 {
-		return domain.ErrNotFound
-	}
-
-	return nil
+	return rowsAffectedOrNotFound(result, "get rows affected")
 }
 
 // TripPersonPack operations
@@ -320,16 +300,7 @@ func (s *TripStore) RemovePersonPack(ctx context.Context, tripPersonID, packID u
 		return fmt.Errorf("remove pack from person: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf(errGetRowsAffected, err)
-	}
-
-	if rowsAffected == 0 {
-		return domain.ErrNotFound
-	}
-
-	return nil
+	return rowsAffectedOrNotFound(result, "get rows affected")
 }
 
 // TripPersonItem operations
@@ -459,14 +430,5 @@ func (s *TripStore) RemovePersonItem(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("remove item from person: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf(errGetRowsAffected, err)
-	}
-
-	if rowsAffected == 0 {
-		return domain.ErrNotFound
-	}
-
-	return nil
+	return rowsAffectedOrNotFound(result, "get rows affected")
 }

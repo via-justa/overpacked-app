@@ -30,19 +30,19 @@ func NewSearchHandler(st *store.Store) *SearchHandler {
 func (h *SearchHandler) SearchGlobal(w http.ResponseWriter, r *http.Request, params api.SearchGlobalParams) {
 	query := strings.TrimSpace(params.Q)
 	if len(query) < searchMinQueryLength {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": searchErrQueryTooShort})
+		writeError(w, http.StatusBadRequest, searchErrQueryTooShort)
 		return
 	}
 
 	types, ok := normalizeSearchTypes(params.Types)
 	if !ok {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": searchErrInvalidType})
+		writeError(w, http.StatusBadRequest, searchErrInvalidType)
 		return
 	}
 
 	results, err := h.store.Search.Search(r.Context(), query, types, resolveSearchLimit(params.Limit))
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": searchErrFailed})
+		writeError(w, http.StatusInternalServerError, searchErrFailed)
 		return
 	}
 

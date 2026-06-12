@@ -80,12 +80,8 @@ func (s *SettingsStore) Update(ctx context.Context, settings *domain.Settings) e
 		return fmt.Errorf("update settings: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("rows affected on update settings: %w", err)
-	}
-	if rowsAffected == 0 {
-		return domain.ErrNotFound
+	if err := rowsAffectedOrNotFound(result, "rows affected on update settings"); err != nil {
+		return err
 	}
 
 	settings.ID = singletonSettingsID

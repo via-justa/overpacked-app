@@ -115,16 +115,7 @@ func (s *LabelStore) Delete(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("delete label: %w", err)
 	}
 
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("check delete label result: %w", err)
-	}
-
-	if rows == 0 {
-		return domain.ErrNotFound
-	}
-
-	return nil
+	return rowsAffectedOrNotFound(result, "check delete label result")
 }
 
 // ListItemLabels returns all labels for a given item.
@@ -183,14 +174,5 @@ func (s *LabelStore) RemoveItemLabel(ctx context.Context, itemID, labelID uuid.U
 		return fmt.Errorf("remove item label: %w", err)
 	}
 
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("check remove item label result: %w", err)
-	}
-
-	if rows == 0 {
-		return domain.ErrNotFound
-	}
-
-	return nil
+	return rowsAffectedOrNotFound(result, "check remove item label result")
 }

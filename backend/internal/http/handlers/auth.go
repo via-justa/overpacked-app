@@ -36,17 +36,17 @@ func NewAuthHandler(authService *auth.Service) *AuthHandler {
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 	if err := decodeJSON(r, &req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	tokens, err := h.authService.Login(req.Username, req.Password)
 	if errors.Is(err, auth.ErrInvalidCredentials) {
-		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid credentials"})
+		writeError(w, http.StatusUnauthorized, "invalid credentials")
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
+		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -61,17 +61,17 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	var req refreshRequest
 	if err := decodeJSON(r, &req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
 	tokens, err := h.authService.Refresh(req.RefreshToken)
 	if errors.Is(err, auth.ErrInvalidToken) {
-		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid refresh token"})
+		writeError(w, http.StatusUnauthorized, "invalid refresh token")
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal error"})
+		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
 
@@ -101,4 +101,9 @@ func writeJSON(w http.ResponseWriter, status int, payload any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(payload)
+}
+
+// writeError writes a standard JSON error body: {"error": msg}.
+func writeError(w http.ResponseWriter, status int, msg string) {
+	writeJSON(w, status, map[string]string{"error": msg})
 }

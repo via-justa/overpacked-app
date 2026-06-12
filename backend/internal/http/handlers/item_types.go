@@ -32,7 +32,7 @@ func NewItemTypesHandler(st *store.Store) *ItemTypesHandler {
 func (h *ItemTypesHandler) ListItemTypes(w http.ResponseWriter, r *http.Request) {
 	itemTypes, err := h.store.ItemTypes.List(r.Context())
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to list item types"})
+		writeError(w, http.StatusInternalServerError, "failed to list item types")
 		return
 	}
 
@@ -47,7 +47,7 @@ func (h *ItemTypesHandler) ListItemTypes(w http.ResponseWriter, r *http.Request)
 func (h *ItemTypesHandler) CreateItemType(w http.ResponseWriter, r *http.Request) {
 	var req api.ItemTypeCreate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": itemTypesErrInvalidRequestBody})
+		writeError(w, http.StatusBadRequest, itemTypesErrInvalidRequestBody)
 		return
 	}
 	defer r.Body.Close()
@@ -67,10 +67,10 @@ func (h *ItemTypesHandler) CreateItemType(w http.ResponseWriter, r *http.Request
 
 	if err := h.store.ItemTypes.Create(r.Context(), itemType); err != nil {
 		if isPostgresUniqueViolation(err) {
-			writeJSON(w, http.StatusConflict, map[string]string{"error": "category already exists"})
+			writeError(w, http.StatusConflict, "category already exists")
 			return
 		}
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to create item type"})
+		writeError(w, http.StatusInternalServerError, "failed to create item type")
 		return
 	}
 
@@ -80,11 +80,11 @@ func (h *ItemTypesHandler) CreateItemType(w http.ResponseWriter, r *http.Request
 func (h *ItemTypesHandler) GetItemType(w http.ResponseWriter, r *http.Request, typeID string) {
 	itemType, err := h.store.ItemTypes.GetByID(r.Context(), typeID)
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": itemTypesErrNotFound})
+		writeError(w, http.StatusNotFound, itemTypesErrNotFound)
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": itemTypesErrGetFailed})
+		writeError(w, http.StatusInternalServerError, itemTypesErrGetFailed)
 		return
 	}
 
@@ -94,18 +94,18 @@ func (h *ItemTypesHandler) GetItemType(w http.ResponseWriter, r *http.Request, t
 func (h *ItemTypesHandler) UpdateItemType(w http.ResponseWriter, r *http.Request, typeID string) {
 	var req api.ItemTypeUpdate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": itemTypesErrInvalidRequestBody})
+		writeError(w, http.StatusBadRequest, itemTypesErrInvalidRequestBody)
 		return
 	}
 	defer r.Body.Close()
 
 	itemType, err := h.store.ItemTypes.GetByID(r.Context(), typeID)
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": itemTypesErrNotFound})
+		writeError(w, http.StatusNotFound, itemTypesErrNotFound)
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": itemTypesErrGetFailed})
+		writeError(w, http.StatusInternalServerError, itemTypesErrGetFailed)
 		return
 	}
 
@@ -122,10 +122,10 @@ func (h *ItemTypesHandler) UpdateItemType(w http.ResponseWriter, r *http.Request
 
 	if err := h.store.ItemTypes.Update(r.Context(), itemType); err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			writeJSON(w, http.StatusNotFound, map[string]string{"error": itemTypesErrNotFound})
+			writeError(w, http.StatusNotFound, itemTypesErrNotFound)
 			return
 		}
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to update item type"})
+		writeError(w, http.StatusInternalServerError, "failed to update item type")
 		return
 	}
 
@@ -135,16 +135,16 @@ func (h *ItemTypesHandler) UpdateItemType(w http.ResponseWriter, r *http.Request
 func (h *ItemTypesHandler) ListItemTypeFields(w http.ResponseWriter, r *http.Request, typeID string) {
 	if _, err := h.store.ItemTypes.GetByID(r.Context(), typeID); err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			writeJSON(w, http.StatusNotFound, map[string]string{"error": itemTypesErrNotFound})
+			writeError(w, http.StatusNotFound, itemTypesErrNotFound)
 			return
 		}
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": itemTypesErrGetFailed})
+		writeError(w, http.StatusInternalServerError, itemTypesErrGetFailed)
 		return
 	}
 
 	fields, err := h.store.ItemTypes.ListFields(r.Context(), typeID)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to list item type fields"})
+		writeError(w, http.StatusInternalServerError, "failed to list item type fields")
 		return
 	}
 
@@ -158,17 +158,17 @@ func (h *ItemTypesHandler) ListItemTypeFields(w http.ResponseWriter, r *http.Req
 func (h *ItemTypesHandler) ReplaceItemTypeFields(w http.ResponseWriter, r *http.Request, typeID string) {
 	var req api.ItemTypeFieldsReplace
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": itemTypesErrInvalidRequestBody})
+		writeError(w, http.StatusBadRequest, itemTypesErrInvalidRequestBody)
 		return
 	}
 	defer r.Body.Close()
 
 	if _, err := h.store.ItemTypes.GetByID(r.Context(), typeID); err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			writeJSON(w, http.StatusNotFound, map[string]string{"error": itemTypesErrNotFound})
+			writeError(w, http.StatusNotFound, itemTypesErrNotFound)
 			return
 		}
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": itemTypesErrGetFailed})
+		writeError(w, http.StatusInternalServerError, itemTypesErrGetFailed)
 		return
 	}
 
@@ -205,10 +205,10 @@ func (h *ItemTypesHandler) ReplaceItemTypeFields(w http.ResponseWriter, r *http.
 	updatedFields, err := h.store.ItemTypes.ReplaceFields(r.Context(), typeID, fields)
 	if err != nil {
 		if isPostgresUniqueViolation(err) {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "field keys must be unique within a category"})
+			writeError(w, http.StatusBadRequest, "field keys must be unique within a category")
 			return
 		}
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to replace item type fields"})
+		writeError(w, http.StatusInternalServerError, "failed to replace item type fields")
 		return
 	}
 
@@ -223,23 +223,23 @@ func (h *ItemTypesHandler) ReplaceItemTypeFields(w http.ResponseWriter, r *http.
 func (h *ItemTypesHandler) DeleteItemType(w http.ResponseWriter, r *http.Request, typeID string) {
 	err := h.store.ItemTypes.Delete(r.Context(), typeID)
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": itemTypesErrNotFound})
+		writeError(w, http.StatusNotFound, itemTypesErrNotFound)
 		return
 	}
 
 	var validationErr domain.ValidationError
 	if errors.As(err, &validationErr) {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": validationErr.Message})
+		writeError(w, http.StatusBadRequest, validationErr.Message)
 		return
 	}
 
 	if isPostgresForeignKeyViolation(err) {
-		writeJSON(w, http.StatusConflict, map[string]string{"error": itemTypesErrDeleteInUse})
+		writeError(w, http.StatusConflict, itemTypesErrDeleteInUse)
 		return
 	}
 
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete item type"})
+		writeError(w, http.StatusInternalServerError, "failed to delete item type")
 		return
 	}
 
