@@ -31,10 +31,13 @@ it rather than inventing a new shape.
 API functions live in `features/<f>/api/<f>Api.ts` and use the shared `apiClient`
 (`openapi-fetch`) imported from `lib/api/client.ts`. They return typed entities from the
 feature's `types.ts` (which build on the generated OpenAPI types) — do not hand-write response
-types that duplicate the generated ones. Normalize errors into a message string with a small
-helper (see the `getErrorMessage` pattern in `itemsApi.ts`) so the UI gets something
-presentable. Auth-specific calls live in `lib/api/auth.ts`; the client is configured once with
-the auth token + refresh handler by the auth store.
+types that duplicate the generated ones. Wrap each call with the shared helpers from
+`lib/api/request.ts` — `unwrapApiResponse(call, fallback)` for data endpoints and
+`ensureApiResponse(call, fallback)` for no-content ones — which check `response.ok`/`data` and
+throw a friendly message via `getErrorMessage` (in `lib/api/errors.ts`). Import those helpers;
+do **not** re-roll a per-file `getErrorMessage`/`readString` (that duplication was consolidated).
+Auth-specific calls live in `lib/api/auth.ts`; the client is configured once with the auth token
++ refresh handler by the auth store.
 
 ## Data layer: vue-query composables
 

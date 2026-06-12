@@ -65,7 +65,10 @@ Conventions:
   rather than re-implementing conversions inline.
 - Wrap errors with context using `%w` and lowercase messages: `fmt.Errorf("create item: %w", err)`.
 - Map "no rows" to the domain sentinel — a lookup that finds nothing returns
-  `domain.ErrNotFound` (translate `sql.ErrNoRows`), so handlers can `errors.Is` on it.
+  `domain.ErrNotFound` (translate `sql.ErrNoRows`), so handlers can `errors.Is` on it. For
+  deletes/updates, map an Exec that affected no rows with the shared
+  `rowsAffectedOrNotFound(res, op)` helper in `sql_helpers.go` instead of re-writing the
+  `RowsAffected()` check inline.
 - `attributes`/JSON columns are marshaled to/from `map[string]any` with `encoding/json`.
 
 ## API types are generated
@@ -98,22 +101,23 @@ r *http.Request)` plus typed path params where the spec has them (e.g.
 ```go
 item, err := h.store.Items.GetByID(r.Context(), uuid.UUID(itemId))
 if errors.Is(err, domain.ErrNotFound) {
-	writeJSON(w, http.StatusNotFound, map[string]string{"error": itemsErrNotFound})
+	writeError(w, http.StatusNotFound, itemsErrNotFound)
 	return
 }
 if err != nil {
-	writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get item"})
+	writeError(w, http.StatusInternalServerError, "failed to get item")
 	return
 }
 writeJSON(w, http.StatusOK, itemToAPI(item))
 ```
 
-- Error responses are always `map[string]string{"error": "<message>"}`; reuse per-handler
-  message consts (e.g. `const itemsErrNotFound = "item not found"`).
+- Write error responses with `writeError(w, status, msg)` (it wraps the standard
+  `map[string]string{"error": msg}` body); reuse per-handler message consts (e.g.
+  `const itemsErrNotFound = "item not found"`). Success bodies use `writeJSON`.
 - Status mapping: `domain.ErrNotFound` → 404, `domain.ValidationError` / bad body → 400,
   anything else → 500.
 - Convert domain→api with `xToAPI` functions and the pointer helpers (`intPtr`, `boolPtr`,
-  `float32PtrFromFloat64`, …). `writeJSON` and `decodeJSON` live in `handlers/auth.go`.
+  `float32PtrFromFloat64`, …). `writeJSON`, `writeError`, and `decodeJSON` live in `handlers/auth.go`.
 
 ## Wiring (app layer)
 
@@ -143,3 +147,12 @@ update the OpenAPI spec, regenerate, add the handler method, and add the delegat
   `RUN_CONTAINERIZED_TESTS == "true"` and `DATABASE_URL` is set, run migrations once via
   `sync.Once`, and are exercised with `make test-backend-container`. Don't write store tests
   that assume a DB is always present — follow the skip pattern.
+- **Keep integration tests isolated.** They share one database across the whole run, so each
+  test must stand on its own — passing alone and in the full suite, and on a re-run against a
+  persisted volume:
+  - If a setup helper truncates user tables but deliberately leaves a shared table (e.g.
+    `item_types`) intact, insert into that table **idempotently** (`ON CONFLICT (id) DO NOTHING`)
+    or use a per-test unique id. A fixed id inserted by every test collides on the second run.
+  - Don't assert against (or mutate) a **pre-seeded fixture id** when the handler under test
+    *creates a new row and returns its id* — operate on the id from the API response. (A create
+    endpoint like `AddTripPersonPack` mints a fresh pack; the pre-inserted `packID` is unrelated.)

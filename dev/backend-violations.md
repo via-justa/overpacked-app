@@ -36,6 +36,9 @@ Detail and the correct pattern for each are in the `go-development` skill (SKILL
 15. **Test names not in `TestXxxHandlerScenario` CamelCase** (don't use `Test_func_scenario`).
 16. **Migration without a `Down` block**, or editing an already-applied migration.
 17. **Non-canonical unit columns** (weights not `_grams`, volumes not `_ml`, etc.).
+18. **Non-isolated integration tests** — fixed ids inserted into shared/un-truncated tables
+    (collide on re-run; use `ON CONFLICT DO NOTHING` or unique ids), or asserting against a
+    pre-seeded fixture id when the handler creates and returns a new id.
 
 ## Logged violations
 
