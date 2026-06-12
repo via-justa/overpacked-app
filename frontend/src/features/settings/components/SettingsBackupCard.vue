@@ -13,6 +13,7 @@ import {
   updateBackupConfig,
   type ImportBackupParams,
 } from '../api/backupApi'
+import AppSelect from '../../../components/forms/AppSelect.vue'
 import SettingsSectionCard from './SettingsSectionCard.vue'
 import SettingsBackupImportDialog from './SettingsBackupImportDialog.vue'
 import type { BackupConfig, BackupConfigUpdate, BackupRunResult } from '../types'
@@ -145,9 +146,9 @@ const onImport = (params: ImportBackupParams) => {
           <p class="text-copy-muted text-xs">Download a full backup archive, or restore your data from one.</p>
         </div>
         <div class="flex flex-wrap gap-2">
-          <Button data-element="settings-backup-download" label="Download Backup"
-            :icon="`pi ${iconRegistry.action.download}`" :loading="downloadMutation.isPending.value"
-            :disabled="downloadMutation.isPending.value" @click="downloadMutation.mutateAsync()" />
+          <Button data-element="settings-backup-download" label="Download" :icon="`pi ${iconRegistry.action.download}`"
+            :loading="downloadMutation.isPending.value" :disabled="downloadMutation.isPending.value"
+            @click="downloadMutation.mutateAsync()" />
           <Button data-element="settings-backup-restore" label="Restore" :icon="`pi ${iconRegistry.action.upload}`"
             severity="secondary" outlined @click="isImportDialogOpen = true" />
         </div>
@@ -161,15 +162,15 @@ const onImport = (params: ImportBackupParams) => {
         </label>
 
         <div class="grid gap-3 sm:grid-cols-2">
-          <label class="grid gap-1">
+          <div class="grid gap-1">
             <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Schedule</span>
-            <select data-element="settings-backup-schedule-preset" v-model="schedulePreset" class="input-shell">
+            <AppSelect data-element="settings-backup-schedule-preset" v-model="schedulePreset">
               <option v-for="option in SCHEDULE_PRESETS" :key="option.value" :value="option.value">
                 {{ option.label }}
               </option>
               <option :value="CUSTOM">Custom (cron expression)</option>
-            </select>
-          </label>
+            </AppSelect>
+          </div>
 
           <label v-if="schedulePreset === CUSTOM" class="grid gap-1">
             <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Cron expression</span>
@@ -190,10 +191,10 @@ const onImport = (params: ImportBackupParams) => {
             class="text-copy-subtle">— {{ configQuery.data.value.last_error }}</span>
         </p>
 
-        <footer class="flex flex-wrap items-center gap-3">
-          <Button data-element="settings-backup-save" label="Save Schedule"
-            :icon="`pi ${iconRegistry.action.confirm}`" :loading="updateMutation.isPending.value"
-            :disabled="!isScheduleValid || updateMutation.isPending.value" @click="onSave" />
+        <footer class="flex flex-wrap items-center justify-end gap-3">
+          <Button data-element="settings-backup-save" label="Save" :icon="`pi ${iconRegistry.action.confirm}`"
+            :loading="updateMutation.isPending.value" :disabled="!isScheduleValid || updateMutation.isPending.value"
+            @click="onSave" />
           <Button data-element="settings-backup-run-now" label="Run Now" :icon="`pi ${iconRegistry.action.refresh}`"
             severity="secondary" outlined :loading="runNowMutation.isPending.value"
             :disabled="runNowMutation.isPending.value" @click="runNowMutation.mutateAsync()" />

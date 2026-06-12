@@ -31,7 +31,6 @@ defineProps<{
 
 const emit = defineEmits<{
   save: []
-  reset: []
   updateField: [payload: { key: UnitSettingKey; value: string }]
 }>()
 </script>
@@ -56,12 +55,10 @@ const emit = defineEmits<{
         @update:model-value="(value) => emit('updateField', { key: field.key, value })" />
     </div>
 
-    <footer data-element="settings-actions" class="mt-6 flex flex-wrap items-center gap-3">
+    <footer data-element="settings-actions" class="mt-6 flex flex-wrap items-center justify-end gap-3">
       <Button data-element="settings-save" label="Save Changes" :icon="`pi ${iconRegistry.action.confirm}`"
         :disabled="!isDirty || isSavingSettings || isLoadingSettings" :loading="isSavingSettings"
         @click="emit('save')" />
-      <Button data-element="settings-reset" label="Reset" :icon="`pi ${iconRegistry.action.reset}`" severity="secondary"
-        outlined :disabled="!isDirty || isSavingSettings || isLoadingSettings" @click="emit('reset')" />
     </footer>
   </SettingsSectionCard>
 </template>

@@ -146,14 +146,6 @@ const fieldConfigs: Array<{
     },
   ]
 
-const onReset = () => {
-  if (!settingsQuery.data.value) {
-    return
-  }
-
-  editableSettings.value = { ...settingsQuery.data.value }
-}
-
 const onSave = async () => {
   if (!editableSettings.value) {
     return
@@ -207,7 +199,7 @@ const isFieldDirty = (
     <SettingsDisplaySettingsCard :has-settings-error="hasSettingsError" :settings-error-message="settingsErrorMessage"
       :is-loading-settings="isLoadingSettings" :editable-settings="editableSettings" :field-configs="fieldConfigs"
       :is-saving-settings="isSavingSettings" :is-dirty="isDirty" :is-field-dirty="isFieldDirty" @save="onSave"
-      @reset="onReset" @update-field="({ key, value }) => setFieldValue(key, value)" />
+      @update-field="({ key, value }) => setFieldValue(key, value)" />
 
     <SettingsExportCard />
 
