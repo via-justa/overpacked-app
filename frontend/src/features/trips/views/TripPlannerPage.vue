@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import Button from 'primevue/button'
+import AppActionButton from '../../../components/actions/AppActionButton.vue'
+import AppActionCluster from '../../../components/actions/AppActionCluster.vue'
 import AppLoadingState from '../../../components/feedback/AppLoadingState.vue'
 import TripPlannerDetailsForm from '../components/TripPlannerDetailsForm.vue'
 import TripPlannerStats from '../components/TripPlannerStats.vue'
@@ -65,9 +66,16 @@ const onSave = () => {
 </script>
 
 <template>
-    <section data-component="trip-planner-page" class="flex w-full flex-col gap-4">
+    <section data-component="trip-planner-page" class="relative flex w-full flex-col gap-4">
+        <AppActionCluster data-element="trip-planner-actions">
+            <AppActionButton action="cancel" label="Cancel" data-element="trip-planner-cancel" @click="onCancel" />
+            <AppActionButton v-if="planner.step.value === 2" action="save" label="Save trip"
+                data-element="trip-planner-save" :loading="saveMutation.isPending.value"
+                :disabled="!planner.canSave.value" @click="onSave" />
+        </AppActionCluster>
+
         <header class="flex flex-col gap-1">
-            <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center justify-between gap-2 pr-24">
                 <h1 class="text-copy text-2xl font-bold">{{ pageTitle }}</h1>
                 <div class="flex items-center gap-2">
                     <button v-if="planner.step.value === 2" type="button"
@@ -121,14 +129,5 @@ const onSave = () => {
 
             <TripPlannerAssignBoard />
         </div>
-
-        <footer
-            class="border-line-subtle surface-panel sticky bottom-0 flex items-center justify-between gap-2 border-t p-4">
-            <Button label="Cancel" text @click="onCancel" />
-            <div class="flex gap-2">
-                <Button v-if="planner.step.value === 2" label="Save trip" :loading="saveMutation.isPending.value"
-                    :disabled="!planner.canSave.value" @click="onSave" />
-            </div>
-        </footer>
     </section>
 </template>

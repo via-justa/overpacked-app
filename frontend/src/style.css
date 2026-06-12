@@ -43,6 +43,19 @@
   --app-shell-gradient-soft-middle: color-mix(in srgb, var(--color-warning-200) 24%, var(--color-surface-base));
   --app-shell-gradient-soft-end: color-mix(in srgb, var(--color-brand-200) 30%, var(--color-surface-base));
 
+  /* Tonal action buttons: soft same-hue tint at rest, deeper on hover */
+  --color-action-primary-bg: color-mix(in srgb, var(--color-brand-500) 14%, var(--color-surface-base));
+  --color-action-primary-bg-hover: color-mix(in srgb, var(--color-brand-500) 28%, var(--color-surface-base));
+  --color-action-primary-fg: var(--color-brand-800);
+
+  --color-action-secondary-bg: color-mix(in srgb, var(--color-line) 45%, var(--color-surface-base));
+  --color-action-secondary-bg-hover: color-mix(in srgb, var(--color-line) 85%, var(--color-surface-base));
+  --color-action-secondary-fg: var(--color-copy);
+
+  --color-action-danger-bg: color-mix(in srgb, var(--color-danger-500) 12%, var(--color-surface-base));
+  --color-action-danger-bg-hover: color-mix(in srgb, var(--color-danger-500) 26%, var(--color-surface-base));
+  --color-action-danger-fg: var(--color-danger-500);
+
   --surface-panel-radius: var(--radius-panel);
   --surface-panel-border: var(--color-line-subtle);
   --surface-panel-background: var(--color-surface-elevated);

@@ -2,10 +2,10 @@
 import { computed, reactive, ref, watch } from 'vue'
 import { useMutation, useQuery } from '@tanstack/vue-query'
 import Papa from 'papaparse'
-import Button from 'primevue/button'
+import AppActionButton from '../../../components/actions/AppActionButton.vue'
+import AppActionCluster from '../../../components/actions/AppActionCluster.vue'
 import Message from 'primevue/message'
 import { useToast } from 'primevue/usetoast'
-import { iconRegistry } from '../../../lib/icons'
 import AppSelect from '../../../components/forms/AppSelect.vue'
 import AppTemplateDialog from '../../../components/dialogs/AppTemplateDialog.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
@@ -524,11 +524,21 @@ const onConfirmImport = async () => {
   <AppTemplateDialog :model-value="open" data-element="items-import-dialog" width="min(42rem, calc(100vw - 2rem))"
     @update:model-value="(v) => emit('update:open', v as boolean)" @hide="emit('update:open', false)">
     <section
-      class="border-line-subtle bg-surface-elevated flex max-h-[calc(100vh-8rem)] w-full flex-col rounded-2xl border p-4 shadow-panel backdrop-blur sm:p-5">
-      <h3 class="text-ink shrink-0 text-lg font-semibold">Import Gear From CSV</h3>
-      <p class="text-copy-muted mt-1 shrink-0 text-sm">
-        Review parsed rows first, then confirm import. Missing categories and manufacturers are created automatically.
-      </p>
+      class="border-line-subtle bg-surface-elevated relative flex max-h-[calc(100vh-8rem)] w-full flex-col rounded-2xl border p-4 shadow-panel backdrop-blur sm:p-5">
+      <AppActionCluster data-element="items-import-actions">
+        <AppActionButton action="cancel" data-element="items-import-cancel"
+          :disabled="importItemsMutation.isPending.value" @click="emit('update:open', false)" />
+        <AppActionButton action="confirm" label="Import" data-element="items-import-confirm"
+          :disabled="importDraftRows.length === 0 || importItemsMutation.isPending.value || importMissingRequiredMappings.length > 0"
+          :loading="importItemsMutation.isPending.value" @click="void onConfirmImport()" />
+      </AppActionCluster>
+
+      <div class="shrink-0 pr-24">
+        <h3 class="text-ink text-lg font-semibold">Import Gear From CSV</h3>
+        <p class="text-copy-muted mt-1 text-sm">
+          Review parsed rows first, then confirm import. Missing categories and manufacturers are created automatically.
+        </p>
+      </div>
 
       <div class="mt-4 flex-1 space-y-3 overflow-y-auto pr-1">
         <label class="grid gap-1">
@@ -613,14 +623,6 @@ const onConfirmImport = async () => {
         </div>
       </div>
 
-      <div class="mt-4 flex shrink-0 items-center gap-2">
-        <Button data-element="items-import-confirm" label="Import" :icon="`pi ${iconRegistry.action.upload}`"
-          :disabled="importDraftRows.length === 0 || importItemsMutation.isPending.value || importMissingRequiredMappings.length > 0"
-          :loading="importItemsMutation.isPending.value" @click="void onConfirmImport()" />
-        <Button data-element="items-import-cancel" label="Cancel" :icon="`pi ${iconRegistry.action.cancel}`"
-          severity="secondary" outlined :disabled="importItemsMutation.isPending.value"
-          @click="emit('update:open', false)" />
-      </div>
     </section>
   </AppTemplateDialog>
 </template>

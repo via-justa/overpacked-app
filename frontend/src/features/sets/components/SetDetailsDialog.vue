@@ -4,6 +4,8 @@ import Button from 'primevue/button'
 import { iconRegistry } from '../../../lib/icons'
 import { AppIcon } from '../../../components/icons'
 import AppSelect from '../../../components/forms/AppSelect.vue'
+import AppActionButton from '../../../components/actions/AppActionButton.vue'
+import AppActionCluster from '../../../components/actions/AppActionCluster.vue'
 import AppTemplateDialog from '../../../components/dialogs/AppTemplateDialog.vue'
 import AppNotSetValue from '../../../components/display/AppNotSetValue.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
@@ -198,8 +200,8 @@ watch(() => props.addItemId, (newItemId) => {
 <template>
   <AppTemplateDialog :model-value="modelValue" data-element="set-details-dialog" width="min(64rem, calc(100vw - 2rem))"
     @update:model-value="(value) => { if (!value) closeDialog() }">
-    <article v-if="activeSet" class="border-line-subtle bg-surface-elevated rounded-2xl border p-4 shadow-panel">
-      <div class="flex flex-wrap items-start justify-between gap-3">
+    <article v-if="activeSet" class="border-line-subtle bg-surface-elevated relative rounded-2xl border p-4 shadow-panel">
+      <div class="flex flex-wrap items-start justify-between gap-3 pr-20">
         <div>
           <h2 class="text-ink text-xl font-semibold">{{ normalizeTitleWords(activeSet.name) }}</h2>
           <p class="text-copy-muted mt-1 text-sm">
@@ -213,11 +215,12 @@ watch(() => props.addItemId, (newItemId) => {
           </p>
         </div>
 
-        <div class="flex items-center gap-2">
-          <Button label="Delete" severity="danger" outlined @click="emit('deleteSet')" />
-          <Button label="Close" severity="secondary" outlined @click="closeDialog" />
-        </div>
       </div>
+
+      <AppActionCluster data-element="set-details-actions">
+        <AppActionButton action="delete" data-element="set-details-delete" @click="emit('deleteSet')" />
+        <AppActionButton action="close" data-element="set-details-close" @click="closeDialog" />
+      </AppActionCluster>
 
       <section class="border-line-subtle bg-surface-muted mt-4 rounded-xl border p-3">
         <div class="mt-3 grid gap-3 sm:grid-cols-2">
@@ -308,17 +311,10 @@ watch(() => props.addItemId, (newItemId) => {
               </td>
               <td class="px-3 py-2 text-right">
                 <div class="flex items-center justify-end gap-1">
-                  <button type="button"
-                    class="text-copy-muted hover:text-copy inline-flex h-8 w-8 items-center justify-center rounded-full transition"
-                    :aria-label="`Edit ${entry.item.name}`"
-                    @click="emit('editSetItem', { itemId: entry.item_id, quantity: entry.quantity, notes: entry.notes ?? '' })">
-                    <AppIcon category="action" name="edit" size="sm" />
-                  </button>
-                  <button type="button" class="inline-flex h-8 w-8 items-center justify-center rounded-full transition"
-                    :style="{ color: 'var(--color-danger-500)' }" :aria-label="`Remove ${entry.item.name} from set`"
-                    @click="emit('requestRemoveSetItem', { itemId: entry.item_id, itemName: entry.item.name })">
-                    <AppIcon category="action" name="delete" size="sm" />
-                  </button>
+                  <AppActionButton action="edit" :label="`Edit ${entry.item.name}`"
+                    @click="emit('editSetItem', { itemId: entry.item_id, quantity: entry.quantity, notes: entry.notes ?? '' })" />
+                  <AppActionButton action="delete" :label="`Remove ${entry.item.name} from set`"
+                    @click="emit('requestRemoveSetItem', { itemId: entry.item_id, itemName: entry.item.name })" />
                 </div>
               </td>
             </tr>

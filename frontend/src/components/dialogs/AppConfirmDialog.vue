@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import AppTemplateDialog from './AppTemplateDialog.vue'
+import AppActionButton from '../actions/AppActionButton.vue'
+import AppActionCluster from '../actions/AppActionCluster.vue'
 
-withDefaults(defineProps<{
+const props = withDefaults(defineProps<{
   open: boolean
   title?: string
   message: string
@@ -29,32 +32,25 @@ const onCancel = () => {
 const onConfirm = () => {
   emit('confirm')
 }
+
+const confirmToneOverride = computed<'danger' | 'primary'>(() => (props.confirmTone === 'danger' ? 'danger' : 'primary'))
 </script>
 
 <template>
   <AppTemplateDialog :model-value="open" data-element="app-confirm-dialog" width="min(28rem, calc(100vw - 2rem))"
     @update:model-value="$emit('update:open', $event)">
-    <article class="surface-panel p-4">
+    <article class="surface-panel relative p-4">
       <header class="mb-2">
-        <h3 class="text-copy text-sm font-semibold uppercase tracking-[0.08em]">{{ title }}</h3>
+        <h3 class="text-copy text-sm font-semibold uppercase tracking-[0.08em] pr-20">{{ title }}</h3>
       </header>
 
       <p class="text-copy-subtle text-sm leading-6">{{ message }}</p>
 
-      <div class="mt-4 flex justify-end gap-2">
-        <button type="button"
-          class="border-line-subtle text-copy hover:bg-surface-soft rounded-md border px-3 py-1.5 text-sm font-medium"
-          @click="onCancel">
-          {{ cancelLabel }}
-        </button>
-        <button type="button" class="rounded-md px-3 py-1.5 text-sm font-semibold" :class="confirmTone === 'danger'
-          ? 'border hover:bg-[color-mix(in_srgb,var(--color-danger-500)_22%,var(--color-surface-elevated))]'
-          : 'bg-brand-600 text-ink-inverse hover:bg-brand-700'"
-          :style="confirmTone === 'danger' ? { borderColor: 'color-mix(in srgb, var(--color-danger-500) 55%, var(--color-line-subtle))', color: 'var(--color-danger-500)' } : undefined"
-          @click="onConfirm">
-          {{ confirmLabel }}
-        </button>
-      </div>
+      <AppActionCluster data-element="confirm-dialog-actions">
+        <AppActionButton action="cancel" :label="cancelLabel" data-element="confirm-dialog-cancel" @click="onCancel" />
+        <AppActionButton action="confirm" :label="confirmLabel" :tone="confirmToneOverride"
+          data-element="confirm-dialog-confirm" @click="onConfirm" />
+      </AppActionCluster>
     </article>
   </AppTemplateDialog>
 </template>

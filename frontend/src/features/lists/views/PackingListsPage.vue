@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useMutation, useQuery } from '@tanstack/vue-query'
 import { useToast } from 'primevue/usetoast'
 import AppConfirmDialog from '../../../components/dialogs/AppConfirmDialog.vue'
@@ -379,6 +379,14 @@ watch(
 
 <template>
   <section data-component="packing-lists-page" class="flex w-full flex-col gap-4">
+    <!-- Header -->
+    <div class="hidden items-center justify-between md:flex">
+      <h1 class="text-copy text-2xl font-bold">Packing Lists</h1>
+      <RouterLink to="/planner" class="text-brand-500 hover:text-brand-600 text-sm font-medium">
+        ← Back to Planner
+      </RouterLink>
+    </div>
+
     <AppConfirmDialog :open="confirmDialogState !== null" title="Confirm delete" :message="confirmDialogMessage"
       confirm-label="Delete" confirm-tone="danger" @update:open="(value) => { if (!value) closeConfirmDialog() }"
       @cancel="closeConfirmDialog" @confirm="handleConfirmDelete" />

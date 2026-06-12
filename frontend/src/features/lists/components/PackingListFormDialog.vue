@@ -93,8 +93,8 @@ const canSubmit = computed(() => formValues.value.name.trim().length > 0)
 <template>
   <AppTemplateDialog :model-value="open" data-element="packing-list-form-dialog" width="min(28rem, calc(100vw - 2rem))"
     @update:model-value="emit('update:open', $event)">
-    <article class="border-line-subtle bg-surface-elevated rounded-2xl border p-5 shadow-panel">
-      <h2 class="text-ink text-lg font-semibold">{{ dialogTitle }}</h2>
+    <article class="border-line-subtle bg-surface-elevated relative rounded-2xl border p-5 shadow-panel">
+      <h2 class="text-ink text-lg font-semibold pr-24">{{ dialogTitle }}</h2>
 
       <form class="mt-4 space-y-4" @submit.prevent="handleSubmit">
         <label class="grid gap-1">

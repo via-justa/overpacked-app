@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import Button from 'primevue/button'
-import { iconRegistry } from '../../lib/icons'
+import AppActionButton from '../actions/AppActionButton.vue'
+import AppActionCluster from '../actions/AppActionCluster.vue'
 
-// Reusable dialog action buttons (submit/cancel/delete) with loading states
+// Reusable dialog action buttons (submit/cancel/delete) rendered as a top-right
+// icon cluster. Keeps the original prop/emit surface so existing dialogs migrate
+// without template changes; the host panel must be `relative` (see wrappers).
 const props = withDefaults(defineProps<{
   mode: 'create' | 'edit'
   submitLabel?: string
@@ -27,7 +29,7 @@ const props = withDefaults(defineProps<{
   deleteDataElement: 'dialog-delete',
 })
 
-const submitText = computed(() => props.submitLabel ?? (props.mode === 'create' ? 'Create' : 'Save'))
+const submitAction = computed(() => (props.mode === 'create' ? 'create' : 'save'))
 const loading = computed(() => props.isPending || props.isCreating || props.isUpdating || props.isDeleting)
 
 defineEmits<{
@@ -38,15 +40,11 @@ defineEmits<{
 </script>
 
 <template>
-  <div data-element="dialog-actions" class="mt-4 flex shrink-0 items-center justify-between gap-3">
-    <div class="flex flex-wrap items-center gap-2">
-      <Button :data-element="submitDataElement" :label="submitText" :icon="`pi ${iconRegistry.action.confirm}`"
-        :disabled="!canSubmit || loading" :loading="loading" @click="$emit('submit')" />
-      <Button :data-element="cancelDataElement" label="Cancel" :icon="`pi ${iconRegistry.action.cancel}`"
-        severity="secondary" outlined :disabled="loading" @click="$emit('cancel')" />
-    </div>
-    <Button v-if="mode === 'edit' && showDelete" :data-element="deleteDataElement" label="Delete"
-      :icon="`pi ${iconRegistry.action.delete}`" severity="danger" outlined class="ml-auto" :disabled="isPending"
-      :loading="isDeleting" @click="$emit('delete')" />
-  </div>
+  <AppActionCluster data-element="dialog-actions">
+    <AppActionButton v-if="mode === 'edit' && showDelete" action="delete" :data-element="deleteDataElement"
+      :disabled="loading" :loading="isDeleting" @click="$emit('delete')" />
+    <AppActionButton action="cancel" :data-element="cancelDataElement" :disabled="loading" @click="$emit('cancel')" />
+    <AppActionButton :action="submitAction" :label="submitLabel" :data-element="submitDataElement"
+      :disabled="!canSubmit || loading" :loading="loading" @click="$emit('submit')" />
+  </AppActionCluster>
 </template>
