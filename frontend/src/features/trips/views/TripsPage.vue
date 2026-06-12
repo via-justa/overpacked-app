@@ -91,9 +91,6 @@ const onConfirmDelete = () => {
     <section data-component="trips-page" class="flex w-full flex-col gap-4">
         <div class="hidden items-center justify-between md:flex">
             <h1 class="text-copy text-2xl font-bold">Trips</h1>
-            <RouterLink to="/dashboard" class="text-brand-500 hover:text-brand-600 text-sm font-medium">
-                ← Back to Dashboard
-            </RouterLink>
         </div>
 
         <AppConfirmDialog :open="confirmState !== null" title="Delete trip" :message="getConfirmMessage()"

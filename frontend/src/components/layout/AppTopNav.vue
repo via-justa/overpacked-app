@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
-import AppActionsMenu, { type ActionTarget } from '../actions/AppActionsMenu.vue'
+import { RouterLink } from 'vue-router'
+import AppActionsMenu from '../actions/AppActionsMenu.vue'
+import type { ActionTarget } from '../actions/actionOptions'
+import { useActionRouter } from '../actions/useActionRouter'
+import { useActionRail } from '../../composables/useActionRail'
 import AppGlobalSearch from './AppGlobalSearch.vue'
 import { AppIcon } from '../icons'
 import type { IconCategory } from '../../lib/icons'
@@ -26,10 +29,23 @@ const onLogout = () => {
   emit('logout')
 }
 
-const router = useRouter()
+const { pinned, togglePinned } = useActionRail()
+const { selectAction } = useActionRouter(onLogout)
 
 const isActionsMenuOpen = ref(false)
 const actionsMenuPosition = ref<{ top: number; left: number }>({ top: 84, left: 16 })
+
+// Desktop pins/unpins the action rail; mobile opens the overlay actions menu.
+const onMenuButtonClick = (event: Event) => {
+  const isMobile = (globalThis.window?.innerWidth ?? 1024) < 768
+
+  if (isMobile) {
+    openActionsMenu(event)
+    return
+  }
+
+  togglePinned()
+}
 
 // Position actions menu relative to trigger button, responsive to viewport
 const openActionsMenu = (event: Event) => {
@@ -59,33 +75,7 @@ const closeActionsMenu = () => {
 
 const onSelectAction = async (target: ActionTarget) => {
   closeActionsMenu()
-
-  if (target === 'logout') {
-    onLogout()
-    return
-  }
-
-  const actionRoutes: Record<Exclude<ActionTarget, 'logout'>, { path: string; query?: Record<string, string> }> = {
-    'add-trip': { path: '/trips/new' },
-    'add-item': { path: '/gear', query: { action: 'create-item' } },
-    'add-set': { path: '/sets', query: { create: '1' } },
-    'add-person': { path: '/persons', query: { create: '1' } },
-    'add-packing-list': { path: '/lists', query: { create: '1' } },
-    'manage-manufacturers': { path: '/gear', query: { action: 'manufacturers' } },
-    'manage-categories': { path: '/gear', query: { action: 'categories' } },
-    'import-csv': { path: '/gear', query: { action: 'import' } },
-    'settings': { path: '/settings' },
-    'dashboard': { path: '/dashboard' },
-    'trips': { path: '/trips' },
-    'planner': { path: '/planner' },
-    'sets': { path: '/sets' },
-    'lists': { path: '/lists' },
-    'gear': { path: '/gear' },
-    'persons': { path: '/persons' },
-  }
-
-  const route = actionRoutes[target]
-  await router.push(route)
+  await selectAction(target)
 }
 
 const primaryNavItems = props.navItems.filter((item) => item.to !== '/settings')
@@ -96,12 +86,19 @@ const primaryNavItems = props.navItems.filter((item) => item.to !== '/settings')
     class="border-line-subtle bg-surface-elevated fixed inset-x-0 top-0 z-40 border-b backdrop-blur">
     <div class="flex w-full flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-10">
       <div class="flex items-center gap-3">
-        <button ref="actionsButtonRef" type="button" data-element="nav-menu-button"
-          class="text-copy hover:bg-surface-soft hover:text-ink inline-flex h-8 w-8 items-center justify-center rounded-lg transition"
-          aria-label="Menu" @click="openActionsMenu">
-          <AppIcon category="navigation" name="menu" size="sm" />
-        </button>
-        <RouterLink to="/dashboard" class="flex h-10 items-center overflow-hidden" aria-label="Overpacked home">
+        <!-- On md+ the burger sits in a flush-left 64px slot so it caps the action rail column;
+             negative margins cancel the nav's own left padding. -->
+        <div class="flex shrink-0 justify-center md:-ml-6 md:w-16 lg:-ml-10">
+          <button ref="actionsButtonRef" type="button" data-element="nav-menu-button"
+            class="inline-flex h-8 w-8 items-center justify-center rounded-lg transition"
+            :class="pinned
+              ? 'bg-surface-inverse text-ink-inverse'
+              : 'text-copy hover:bg-surface-soft hover:text-ink'"
+            aria-label="Menu" :aria-pressed="pinned" @click="onMenuButtonClick">
+            <AppIcon category="navigation" name="menu" size="sm" />
+          </button>
+        </div>
+        <RouterLink to="/trips" class="flex h-10 items-center overflow-hidden" aria-label="Overpacked home">
           <img src="/logo.png" alt="Overpacked" class="h-full w-44 object-cover object-center" />
         </RouterLink>
       </div>

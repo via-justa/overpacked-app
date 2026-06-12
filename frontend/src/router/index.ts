@@ -18,12 +18,7 @@ const router = createRouter({
       children: [
         {
           path: '',
-          redirect: { name: 'dashboard' },
-        },
-        {
-          path: 'dashboard',
-          name: 'dashboard',
-          component: () => import('../features/dashboard/views/DashboardPage.vue'),
+          redirect: { name: 'trips' },
         },
         {
           path: 'trips',
@@ -109,7 +104,7 @@ router.beforeEach(async (to) => {
       return redirectQuery
     }
 
-    return { name: 'dashboard' }
+    return { name: 'trips' }
   }
 
   return true

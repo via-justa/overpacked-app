@@ -65,7 +65,7 @@ const redirectPath = computed(() => {
     return redirect
   }
 
-  return '/dashboard'
+  return '/trips'
 })
 
 const { defineField, handleSubmit, errors, meta } = useForm({
