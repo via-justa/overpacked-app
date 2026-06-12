@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import Button from 'primevue/button'
 import { iconRegistry } from '../../../lib/icons'
+import { prepareImageForUpload } from '../../../lib/image/prepareImageForUpload'
 import AppSelect from '../../../components/forms/AppSelect.vue'
 import AppToggleGroup from '../../../components/forms/AppToggleGroup.vue'
 import ItemLabelsSelector from './ItemLabelsSelector.vue'
@@ -204,33 +205,23 @@ const updateFields = (partialValues: Partial<ItemFormValues>) => {
   })
 }
 
-const onImageChange = (event: Event) => {
+const onImageChange = async (event: Event) => {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
-
-  if (!file) {
-    return
-  }
-
-  if (!file.type.startsWith('image/')) {
-    input.value = ''
-    return
-  }
-
-  const reader = new FileReader()
-  reader.onload = () => {
-    const result = typeof reader.result === 'string' ? reader.result : ''
-    const base64 = result.includes(',') ? result.split(',')[1] ?? '' : ''
-
-    updateFields({
-      image_blob: base64,
-      image_mime_type: file.type,
-      image_size_bytes: String(file.size),
-    })
-  }
-
-  reader.readAsDataURL(file)
   input.value = ''
+
+  if (!file || !file.type.startsWith('image/')) {
+    return
+  }
+
+  // Downscale/re-encode in the browser so we never store oversized originals.
+  const prepared = await prepareImageForUpload(file)
+
+  updateFields({
+    image_blob: prepared.base64,
+    image_mime_type: prepared.mimeType,
+    image_size_bytes: String(prepared.sizeBytes),
+  })
 }
 
 const clearImage = () => {
