@@ -23,7 +23,7 @@ defineEmits<{
   <nav :aria-label="label ?? 'Filter'"
     class="text-copy-subtle flex flex-wrap items-center text-xs font-semibold uppercase tracking-[0.08em]">
     <template v-for="(option, index) in options" :key="option.value">
-      <span v-if="index > 0" class="text-line mx-1">/</span>
+      <span v-if="index > 0" class="text-line mx-0.5">/</span>
       <button type="button" class="rounded px-2 py-1 transition"
         :class="modelValue === option.value ? 'bg-brand-50 text-brand-800' : 'text-copy-subtle hover:bg-surface-soft hover:text-copy'"
         @click="$emit('update:modelValue', option.value)">

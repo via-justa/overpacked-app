@@ -67,7 +67,7 @@ const getLabelBorderColor = (color?: string | null): string => {
 </script>
 
 <template>
-  <td class="w-80 px-4 py-3 align-top">
+  <td class="w-80 px-4 py-2 align-middle">
     <button v-if="showNameLink" type="button"
       class="text-brand-500 decoration-brand-200 block max-w-full truncate text-left font-semibold underline underline-offset-2"
       :title="normalizeTitleWords(item.name)" @click="emit('edit', item)">
@@ -77,7 +77,8 @@ const getLabelBorderColor = (color?: string | null): string => {
       {{ normalizeTitleWords(item.name) }}
     </span>
   </td>
-  <td v-for="field in visibleFields" :key="`${item.id}-${field.key}`" class="whitespace-nowrap px-4 py-3 align-top">
+  <td v-for="field in visibleFields" :key="`${item.id}-${field.key}`" class="whitespace-nowrap px-4 py-2 align-middle"
+    :class="field.key === 'manufacturer' ? '' : 'text-center'">
     <template v-if="field.key === 'labels'">
       <span class="group/labels relative inline-flex items-center gap-1.5"
         :aria-label="`${itemLabels.length} label${itemLabels.length === 1 ? '' : 's'}`">
@@ -110,7 +111,12 @@ const getLabelBorderColor = (color?: string | null): string => {
       <AppNotSetValue v-else :label="field.label" />
     </template>
     <template v-else>
-      <a v-if="field.renderHref?.(item)" :href="field.renderHref(item)" target="_blank" rel="noreferrer"
+      <a v-if="field.key === 'manufacturer' && field.renderHref?.(item)" :href="field.renderHref(item)" target="_blank"
+        rel="noreferrer" class="text-brand-500 decoration-brand-200 underline underline-offset-2"
+        :title="field.render(item)" :aria-label="`Open ${field.render(item)} website`">
+        {{ field.render(item) }}
+      </a>
+      <a v-else-if="field.renderHref?.(item)" :href="field.renderHref(item)" target="_blank" rel="noreferrer"
         class="text-brand-500 inline-flex items-center gap-1" :aria-label="`Open ${field.label} for ${item.name}`">
         <AppIcon category="content" name="externalLink" size="sm" />
         <span class="sr-only">Open {{ field.label }}</span>

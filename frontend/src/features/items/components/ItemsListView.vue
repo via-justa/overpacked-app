@@ -33,7 +33,6 @@ defineProps<{
 }>()
 
 defineEmits<{
-  'update:tableDetailMode': [type: string, mode: 'simple' | 'expanded']
   'update:tableSelectionMode': [type: string, value: boolean]
   'toggle:tableItemSelection': [type: string, itemId: string, checked: boolean]
   'toggle:tableSelectAll': [type: string, checked: boolean]
@@ -55,7 +54,6 @@ defineEmits<{
       :selection-mode="section.selectionMode" :selected-item-ids="section.selectedItemIds"
       :total-weight-label="section.totalWeightLabel" :total-value-label="section.totalValueLabel"
       :item-labels-map="section.itemLabelsMap" @edit="$emit('row:edit', $event)"
-      @update:table-detail-mode="$emit('update:tableDetailMode', section.type, $event)"
       @update:selection-mode="$emit('update:tableSelectionMode', section.type, $event)"
       @toggle:item-selection="(itemId, checked) => $emit('toggle:tableItemSelection', section.type, itemId, checked)"
       @toggle:select-all="$emit('toggle:tableSelectAll', section.type, $event)"

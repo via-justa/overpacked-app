@@ -81,7 +81,7 @@ type ItemTableSection = {
 
 const ITEMS_VIEW_MODE_STORAGE_KEY = 'items:view-mode'
 const ITEMS_TYPE_FILTER_STORAGE_KEY = 'items:type-filter'
-const ITEMS_TABLE_DETAIL_MODE_BY_TYPE_STORAGE_KEY = 'items:table-detail-mode-by-type'
+const ITEMS_TABLE_EXPANDED_VIEW_STORAGE_KEY = 'items:table-expanded-view'
 const ITEMS_SHOW_INACTIVE_STORAGE_KEY = 'items:show-inactive'
 
 const isViewMode = (value: string): value is 'cards' | 'table' => value === 'cards' || value === 'table'
@@ -122,30 +122,13 @@ const readStoredShowInactive = (): boolean => {
   return stored === 'true'
 }
 
-const readStoredItemsTableDetailModeByType = (): Record<string, ItemsTableDetailMode> => {
+const readStoredExpandedView = (): boolean => {
   if (globalThis.window === undefined) {
-    return {}
+    return false
   }
 
-  const stored = globalThis.localStorage.getItem(ITEMS_TABLE_DETAIL_MODE_BY_TYPE_STORAGE_KEY)
-  if (!stored) {
-    return {}
-  }
-
-  try {
-    const parsed = JSON.parse(stored) as Record<string, unknown>
-    const next: Record<string, ItemsTableDetailMode> = {}
-
-    for (const [type, rawValue] of Object.entries(parsed)) {
-      if (rawValue === 'simple' || rawValue === 'expanded') {
-        next[type] = rawValue
-      }
-    }
-
-    return next
-  } catch {
-    return {}
-  }
+  const stored = globalThis.localStorage.getItem(ITEMS_TABLE_EXPANDED_VIEW_STORAGE_KEY)
+  return stored === 'true'
 }
 
 const toNumberString = (value?: number | null): string => {
@@ -482,6 +465,18 @@ const manufacturersById = computed(() => {
   return map
 })
 
+const manufacturerWebsitesById = computed(() => {
+  const map = new Map<string, string>()
+  for (const manufacturer of manufacturersQuery.data.value ?? []) {
+    const website = manufacturer.website?.trim()
+    if (website) {
+      map.set(manufacturer.id, website)
+    }
+  }
+
+  return map
+})
+
 const createValues = ref<ItemFormValues>(emptyFormValues())
 const editingItemId = ref<string | null>(null)
 const editValues = ref<ItemFormValues>(emptyFormValues())
@@ -496,7 +491,7 @@ const updateIsMobileViewport = () => {
 
 // On mobile, only the cards view is available regardless of stored preference
 const effectiveViewMode = computed<ItemsViewMode>(() => (isMobileViewport.value ? 'cards' : itemsViewMode.value))
-const itemsTableDetailModeByType = ref<Record<string, ItemsTableDetailMode>>(readStoredItemsTableDetailModeByType())
+const showExpandedView = ref<boolean>(readStoredExpandedView())
 const itemsTableSelectionModeByType = ref<Record<string, boolean>>({})
 const selectedTableItemIdsByType = ref<Record<string, string[]>>({})
 const isCreateOptionsOpen = ref(false)
@@ -638,11 +633,15 @@ const createTableFieldDefinition = (field: TableFieldOption): TableFieldDefiniti
   }
 
   const renderHref = (item: Item): string | undefined => {
-    if (key !== 'source_url') {
-      return undefined
+    if (key === 'source_url') {
+      return item.source_url?.trim() ? item.source_url : undefined
     }
 
-    return item.source_url?.trim() ? item.source_url : undefined
+    if (key === 'manufacturer') {
+      return manufacturerWebsitesById.value.get(item.manufacturer_id)
+    }
+
+    return undefined
   }
 
   const render = (item: Item): string => {
@@ -709,7 +708,7 @@ const itemTableSections = computed<ItemTableSection[]>(() => {
         title: formatType(type),
         items: groupedItems,
         baseFields: commonTableFieldDefinitions,
-        tableDetailMode: itemsTableDetailModeByType.value[type] ?? 'simple',
+        tableDetailMode: showExpandedView.value ? 'expanded' : 'simple',
         selectionMode: itemsTableSelectionModeByType.value[type] ?? false,
         selectedItemIds: selectedTableItemIdsByType.value[type] ?? [],
         totalWeightLabel: formatTotalWeight(getItemsTotalWeightGrams(groupedItems)),
@@ -719,13 +718,6 @@ const itemTableSections = computed<ItemTableSection[]>(() => {
     })
     .filter((section) => section.items.length > 0)
 })
-
-const updateTableDetailMode = (type: string, mode: ItemsTableDetailMode) => {
-  itemsTableDetailModeByType.value = {
-    ...itemsTableDetailModeByType.value,
-    [type]: mode,
-  }
-}
 
 const clearSelectionForType = (type: string) => {
   selectedTableItemIdsByType.value = {
@@ -1164,9 +1156,9 @@ watch(showInactive, (value) => {
   setStoredValue(ITEMS_SHOW_INACTIVE_STORAGE_KEY, String(value))
 })
 
-watch(itemsTableDetailModeByType, (value) => {
-  setStoredValue(ITEMS_TABLE_DETAIL_MODE_BY_TYPE_STORAGE_KEY, JSON.stringify(value))
-}, { deep: true })
+watch(showExpandedView, (value) => {
+  setStoredValue(ITEMS_TABLE_EXPANDED_VIEW_STORAGE_KEY, String(value))
+})
 
 watch(isFormDialogOpen, (value) => {
   if (!value) {
@@ -1507,21 +1499,22 @@ onBeforeUnmount(() => {
       data-element="items-empty-state" />
 
     <div v-else data-element="items-list" class="space-y-3">
-      <div data-element="items-summary" class="grid grid-cols-3 gap-2">
-        <AppSummaryCard label="Gear" :value="filteredSummary.totalItems" />
-        <AppSummaryCard label="Weight" :value="filteredSummary.totalWeightLabel" />
-        <AppSummaryCard label="Value" :value="filteredSummary.totalValueLabel" />
-      </div>
-
       <!-- Click-outside backdrop -->
-      <div class="flex flex-wrap items-center gap-4">
+      <div class="relative flex flex-wrap items-center gap-4 md:justify-center">
         <!-- View Mode Toggle: hidden on mobile (cards view only) -->
         <AppToggleGroup v-if="!isMobileViewport" name="items-view-mode" data-element="items-view-mode"
-          :model-value="itemsViewMode" :options="itemViewOptions" fit-content
+          class="md:absolute md:left-0 md:top-1/2 md:-translate-y-1/2" :model-value="itemsViewMode"
+          :options="itemViewOptions" fit-content
           @update:model-value="(value) => { itemsViewMode = value as ItemsViewMode }" />
 
+        <div data-element="items-summary" class="flex flex-wrap gap-2">
+          <AppSummaryCard class="w-44" label="Gear" :value="filteredSummary.totalItems" />
+          <AppSummaryCard class="w-44" label="Weight" :value="filteredSummary.totalWeightLabel" />
+          <AppSummaryCard class="w-44" label="Value" :value="filteredSummary.totalValueLabel" />
+        </div>
+
         <!-- Settings Button -->
-        <div class="ml-auto">
+        <div class="ml-auto md:absolute md:right-0 md:top-1/2 md:-translate-y-1/2">
           <div data-element="items-settings-menu" class="relative">
             <button type="button"
               class="text-copy-muted hover:text-copy hover:bg-surface-soft inline-flex h-9 w-9 items-center justify-center rounded-full transition"
@@ -1538,6 +1531,10 @@ onBeforeUnmount(() => {
                 <label class="flex cursor-pointer items-center gap-2.5">
                   <input type="checkbox" v-model="showInactive" />
                   <span class="text-copy text-sm font-medium">Show inactive</span>
+                </label>
+                <label class="mt-2.5 flex cursor-pointer items-center gap-2.5">
+                  <input type="checkbox" v-model="showExpandedView" />
+                  <span class="text-copy text-sm font-medium">Expanded view</span>
                 </label>
               </div>
             </div>
@@ -1556,7 +1553,6 @@ onBeforeUnmount(() => {
 
       <ItemsListView v-else :view-mode="effectiveViewMode" :items="filteredItems" :table-sections="itemTableSections"
         :get-image-src="getItemImageSrc" :item-labels-map="itemLabelsMap"
-        @update:table-detail-mode="(type, mode) => updateTableDetailMode(type, mode)"
         @update:table-selection-mode="(type, value) => updateTableSelectionMode(type, value)"
         @toggle:table-item-selection="(type, itemId, checked) => toggleTableItemSelection(type, itemId, checked)"
         @toggle:table-select-all="(type, checked) => toggleTableSelectAll(type, checked)"

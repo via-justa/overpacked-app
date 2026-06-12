@@ -41,7 +41,7 @@ const onLogout = async () => {
     <AppTopNav :nav-items="navItems" :current-path="route.path" @logout="onLogout" />
     <AppActionRail @logout="onLogout" />
 
-    <main data-element="app-layout-content" class="w-full px-4 pb-6 pt-24 sm:px-6 sm:pb-8 sm:pt-28 lg:px-10">
+    <main data-element="app-layout-content" class="w-full px-4 pb-6 pt-32 sm:px-6 sm:pb-8 md:pt-28 lg:px-10">
       <RouterView />
     </main>
   </div>

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import AppToggleGroup from '../../../components/forms/AppToggleGroup.vue'
 import AppBooleanValue from '../../../components/display/AppBooleanValue.vue'
 import AppItemTableRowContent from '../../../components/display/AppItemTableRowContent.vue'
 import { AppIcon } from '../../../components/icons'
@@ -28,7 +27,6 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  'update:tableDetailMode': [mode: 'simple' | 'expanded']
   'update:selectionMode': [value: boolean]
   'toggle:itemSelection': [itemId: string, checked: boolean]
   'toggle:selectAll': [checked: boolean]
@@ -41,11 +39,6 @@ const emit = defineEmits<{
   'row:toggleDefault': [item: Item]
   'row:delete': [item: Item]
 }>()
-
-const detailModeOptions: Array<{ label: string; value: 'simple' | 'expanded' }> = [
-  { label: 'Simple', value: 'simple' },
-  { label: 'Expanded', value: 'expanded' },
-]
 
 const detailRowArrowImageSrc = 'https://assets.streamlinehq.com/image/private/w_300,h_300,ar_1/f_auto/v1/icons/3/long-arrow-down-right-mbokvtnvyn8z8i5oh7j9v.png/long-arrow-down-right-xo63kk83xpiwai9nokmz4a.png?_a=DATAiZAAZAA0'
 
@@ -143,12 +136,6 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-3">
           <h3 class="heading-section">{{ title }}</h3>
-          <div class="hidden md:block">
-            <AppToggleGroup :name="`items-table-detail-mode-${title.toLowerCase().replace(/\s+/g, '-')}`"
-              data-element="items-table-detail-mode" :model-value="tableDetailMode" :options="detailModeOptions"
-              fit-content
-              @update:model-value="(value) => emit('update:tableDetailMode', value as 'simple' | 'expanded')" />
-          </div>
           <template v-if="selectionMode">
             <span class="text-copy-subtle text-xs font-medium">{{ selectedItemIds.length }} selected</span>
             <button type="button"
@@ -210,7 +197,8 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
               }" />
             </th>
             <th class="w-80 px-4 py-3">Name</th>
-            <th v-for="field in visibleFields" :key="field.key" class="whitespace-nowrap px-4 py-3">{{ field.label }}
+            <th v-for="field in visibleFields" :key="field.key" class="whitespace-nowrap px-4 py-3"
+              :class="field.key === 'manufacturer' ? '' : 'text-center'">{{ field.label }}
             </th>
             <th class="w-px px-4 py-3 text-right">
               <span class="sr-only">Row actions</span>
@@ -220,7 +208,7 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
         <tbody class="divide-line divide-y">
           <template v-for="item in items" :key="item.id">
             <tr :data-item-id="item.id" class="group hover:bg-surface-muted" :class="{ 'opacity-50': !item.is_active }">
-              <td class="w-8 px-3 py-3 align-top">
+              <td class="w-8 px-3 py-2 align-middle">
                 <input type="checkbox" :checked="selectionMode && selectedItemIds.includes(item.id)"
                   :aria-label="`Select ${item.name}`" class="transition-opacity" @change="(event) => {
                     const checked = (event.target as HTMLInputElement).checked
@@ -230,7 +218,7 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
               </td>
               <AppItemTableRowContent :item="item" :visible-fields="visibleFields"
                 :item-labels="itemLabelsMap?.get(item.id) ?? []" @edit="emit('row:edit', $event)" />
-              <td class="w-px px-4 py-3 align-top">
+              <td class="w-px px-4 py-2 align-middle">
                 <div data-element="items-row-actions" class="relative flex justify-end">
                   <button type="button"
                     class="text-copy-muted hover:text-copy hover:bg-surface-soft inline-flex h-7 w-7 items-center justify-center rounded-full transition"
