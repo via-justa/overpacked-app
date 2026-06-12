@@ -101,7 +101,9 @@ const onSubmit = handleSubmit(async (values) => {
     <div class="absolute inset-0 bg-black/40" aria-hidden="true"></div>
 
     <form data-element="login-form" class="surface-panel relative z-10 w-full max-w-md p-7" @submit.prevent="onSubmit">
-      <h1 class="text-ink mt-2 text-3xl font-bold">Sign in</h1>
+      <img src="/logo.png" alt="Overpacked" class="mx-auto h-15 w-auto object-contain" />
+
+      <h1 class="text-ink mt-4 text-3xl font-bold">Sign in</h1>
 
       <Message v-if="authNoticeMessage" severity="warn" class="mt-4" :closable="false">
         {{ authNoticeMessage }}
