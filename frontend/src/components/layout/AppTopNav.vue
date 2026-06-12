@@ -90,16 +90,15 @@ const primaryNavItems = props.navItems.filter((item) => item.to !== '/settings')
              negative margins cancel the nav's own left padding. -->
         <div class="flex shrink-0 justify-center md:-ml-6 md:w-16 lg:-ml-10">
           <button ref="actionsButtonRef" type="button" data-element="nav-menu-button"
-            class="inline-flex h-8 w-8 items-center justify-center rounded-lg transition"
-            :class="pinned
+            class="inline-flex h-8 w-8 items-center justify-center rounded-lg transition" :class="pinned
               ? 'bg-surface-inverse text-ink-inverse'
-              : 'text-copy hover:bg-surface-soft hover:text-ink'"
-            aria-label="Menu" :aria-pressed="pinned" @click="onMenuButtonClick">
+              : 'text-copy hover:bg-surface-soft hover:text-ink'" aria-label="Menu" :aria-pressed="pinned"
+            @click="onMenuButtonClick">
             <AppIcon category="navigation" name="menu" size="sm" />
           </button>
         </div>
         <RouterLink to="/trips" class="flex h-10 items-center overflow-hidden" aria-label="Overpacked home">
-          <img src="/logo.png" alt="Overpacked" class="h-full w-44 object-cover object-center" />
+          <img src="/logo.png" alt="Overpacked" class="h-full w-46 object-cover object-center" />
         </RouterLink>
       </div>
 

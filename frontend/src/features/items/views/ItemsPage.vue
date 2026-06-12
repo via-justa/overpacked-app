@@ -708,7 +708,7 @@ const itemTableSections = computed<ItemTableSection[]>(() => {
         title: formatType(type),
         items: groupedItems,
         baseFields: commonTableFieldDefinitions,
-        tableDetailMode: showExpandedView.value ? 'expanded' : 'simple',
+        tableDetailMode: (showExpandedView.value ? 'expanded' : 'simple') as ItemsTableDetailMode,
         selectionMode: itemsTableSelectionModeByType.value[type] ?? false,
         selectedItemIds: selectedTableItemIdsByType.value[type] ?? [],
         totalWeightLabel: formatTotalWeight(getItemsTotalWeightGrams(groupedItems)),
@@ -1499,22 +1499,22 @@ onBeforeUnmount(() => {
       data-element="items-empty-state" />
 
     <div v-else data-element="items-list" class="space-y-3">
-      <!-- Click-outside backdrop -->
-      <div class="relative flex flex-wrap items-center gap-4 md:justify-center">
-        <!-- View Mode Toggle: hidden on mobile (cards view only) -->
-        <AppToggleGroup v-if="!isMobileViewport" name="items-view-mode" data-element="items-view-mode"
-          class="md:absolute md:left-0 md:top-1/2 md:-translate-y-1/2" :model-value="itemsViewMode"
-          :options="itemViewOptions" fit-content
-          @update:model-value="(value) => { itemsViewMode = value as ItemsViewMode }" />
+      <div class="flex flex-wrap items-center gap-4">
+        <!-- Left spacer holds the view-mode toggle (hidden on mobile) and balances the right column to keep the summary centered -->
+        <div class="flex flex-1 justify-start">
+          <AppToggleGroup v-if="!isMobileViewport" name="items-view-mode" data-element="items-view-mode"
+            :model-value="itemsViewMode" :options="itemViewOptions" fit-content
+            @update:model-value="(value) => { itemsViewMode = value as ItemsViewMode }" />
+        </div>
 
-        <div data-element="items-summary" class="flex flex-wrap gap-2">
+        <div data-element="items-summary" class="flex flex-wrap justify-center gap-2">
           <AppSummaryCard class="w-44" label="Gear" :value="filteredSummary.totalItems" />
           <AppSummaryCard class="w-44" label="Weight" :value="filteredSummary.totalWeightLabel" />
           <AppSummaryCard class="w-44" label="Value" :value="filteredSummary.totalValueLabel" />
         </div>
 
         <!-- Settings Button -->
-        <div class="ml-auto md:absolute md:right-0 md:top-1/2 md:-translate-y-1/2">
+        <div class="flex flex-1 justify-end">
           <div data-element="items-settings-menu" class="relative">
             <button type="button"
               class="text-copy-muted hover:text-copy hover:bg-surface-soft inline-flex h-9 w-9 items-center justify-center rounded-full transition"
@@ -1532,7 +1532,7 @@ onBeforeUnmount(() => {
                   <input type="checkbox" v-model="showInactive" />
                   <span class="text-copy text-sm font-medium">Show inactive</span>
                 </label>
-                <label class="mt-2.5 flex cursor-pointer items-center gap-2.5">
+                <label v-if="effectiveViewMode === 'table'" class="mt-2.5 flex cursor-pointer items-center gap-2.5">
                   <input type="checkbox" v-model="showExpandedView" />
                   <span class="text-copy text-sm font-medium">Expanded view</span>
                 </label>
