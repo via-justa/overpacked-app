@@ -84,6 +84,9 @@ func ValidateSeedFile(file SeedFile) error {
 		if err := CheckDuplicates(file.Records, "name"); err != nil {
 			return fmt.Errorf(fileErrorFormat, file.Filename, err)
 		}
+		if err := CheckDuplicates(file.Records, "id"); err != nil {
+			return fmt.Errorf(fileErrorFormat, file.Filename, err)
+		}
 
 		// Validate each record
 		for i, record := range file.Records {
@@ -95,6 +98,9 @@ func ValidateSeedFile(file SeedFile) error {
 	case "manufacturers":
 		// Check for duplicates
 		if err := CheckDuplicates(file.Records, "name"); err != nil {
+			return fmt.Errorf(fileErrorFormat, file.Filename, err)
+		}
+		if err := CheckDuplicates(file.Records, "id"); err != nil {
 			return fmt.Errorf(fileErrorFormat, file.Filename, err)
 		}
 

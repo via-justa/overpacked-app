@@ -3,12 +3,38 @@ package seeds
 import (
 	"fmt"
 	"regexp"
+
+	"github.com/google/uuid"
 )
 
 var hexColorPattern = regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
 
+// validateID ensures a record carries a parseable UUID 'id'. Seed ids are stable
+// so backups can reference seed rows by id across instances.
+func validateID(record map[string]any, index int) error {
+	id, ok := record["id"]
+	if !ok {
+		return fmt.Errorf("record %d: missing required field 'id'", index)
+	}
+
+	idStr, ok := id.(string)
+	if !ok {
+		return fmt.Errorf("record %d: field 'id' must be a string", index)
+	}
+
+	if _, err := uuid.Parse(idStr); err != nil {
+		return fmt.Errorf("record %d: field 'id' must be a valid UUID: %w", index, err)
+	}
+
+	return nil
+}
+
 // ValidateLabelsRecord validates a single labels table record
 func ValidateLabelsRecord(record map[string]any, index int) error {
+	if err := validateID(record, index); err != nil {
+		return err
+	}
+
 	// name is required
 	name, ok := record["name"]
 	if !ok {
@@ -41,6 +67,10 @@ func ValidateLabelsRecord(record map[string]any, index int) error {
 
 // ValidateManufacturersRecord validates a single manufacturers table record
 func ValidateManufacturersRecord(record map[string]any, index int) error {
+	if err := validateID(record, index); err != nil {
+		return err
+	}
+
 	// name is required
 	name, ok := record["name"]
 	if !ok {

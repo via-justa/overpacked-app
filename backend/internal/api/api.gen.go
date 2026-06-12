@@ -20,6 +20,42 @@ const (
 	BearerAuthScopes bearerAuthContextKey = "bearerAuth.Scopes"
 )
 
+// Defines values for BackupConfigLastStatus.
+const (
+	Error   BackupConfigLastStatus = "error"
+	Success BackupConfigLastStatus = "success"
+)
+
+// Valid indicates whether the value is a known member of the BackupConfigLastStatus enum.
+func (e BackupConfigLastStatus) Valid() bool {
+	switch e {
+	case Error:
+		return true
+	case Success:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BackupImportResultMode.
+const (
+	BackupImportResultModeMerge   BackupImportResultMode = "merge"
+	BackupImportResultModeReplace BackupImportResultMode = "replace"
+)
+
+// Valid indicates whether the value is a known member of the BackupImportResultMode enum.
+func (e BackupImportResultMode) Valid() bool {
+	switch e {
+	case BackupImportResultModeMerge:
+		return true
+	case BackupImportResultModeReplace:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ItemBaseDefaultCarryStatus.
 const (
 	ItemBaseDefaultCarryStatusPacked ItemBaseDefaultCarryStatus = "packed"
@@ -830,6 +866,24 @@ func (e TripWithDetailsTripType) Valid() bool {
 	}
 }
 
+// Defines values for ImportBackupMultipartBodyMode.
+const (
+	ImportBackupMultipartBodyModeMerge   ImportBackupMultipartBodyMode = "merge"
+	ImportBackupMultipartBodyModeReplace ImportBackupMultipartBodyMode = "replace"
+)
+
+// Valid indicates whether the value is a known member of the ImportBackupMultipartBodyMode enum.
+func (e ImportBackupMultipartBodyMode) Valid() bool {
+	switch e {
+	case ImportBackupMultipartBodyModeMerge:
+		return true
+	case ImportBackupMultipartBodyModeReplace:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetTripRoutePreviewParamsService.
 const (
 	GetTripRoutePreviewParamsServiceKomoot   GetTripRoutePreviewParamsService = "komoot"
@@ -849,6 +903,40 @@ func (e GetTripRoutePreviewParamsService) Valid() bool {
 	default:
 		return false
 	}
+}
+
+// BackupConfig defines model for BackupConfig.
+type BackupConfig struct {
+	Enabled        bool                    `json:"enabled"`
+	LastError      *string                 `json:"last_error,omitempty"`
+	LastRunAt      *time.Time              `json:"last_run_at,omitempty"`
+	LastStatus     *BackupConfigLastStatus `json:"last_status,omitempty"`
+	RetentionCount int                     `json:"retention_count"`
+	Schedule       string                  `json:"schedule"`
+}
+
+// BackupConfigLastStatus defines model for BackupConfig.LastStatus.
+type BackupConfigLastStatus string
+
+// BackupConfigUpdate defines model for BackupConfigUpdate.
+type BackupConfigUpdate struct {
+	Enabled        bool   `json:"enabled"`
+	RetentionCount int    `json:"retention_count"`
+	Schedule       string `json:"schedule"`
+}
+
+// BackupImportResult defines model for BackupImportResult.
+type BackupImportResult struct {
+	Counts map[string]int         `json:"counts"`
+	Mode   BackupImportResultMode `json:"mode"`
+}
+
+// BackupImportResultMode defines model for BackupImportResult.Mode.
+type BackupImportResultMode string
+
+// BackupRunResult defines model for BackupRunResult.
+type BackupRunResult struct {
+	Path string `json:"path"`
 }
 
 // Item defines model for Item.
@@ -1510,6 +1598,21 @@ type Unauthorized struct {
 // bearerAuthContextKey is the context key for bearerAuth security scheme
 type bearerAuthContextKey string
 
+// ImportBackupMultipartBody defines parameters for ImportBackup.
+type ImportBackupMultipartBody struct {
+	File     openapi_types.File            `json:"file"`
+	Mode     ImportBackupMultipartBodyMode `json:"mode"`
+	Password string                        `json:"password"`
+}
+
+// ImportBackupMultipartBodyMode defines parameters for ImportBackup.
+type ImportBackupMultipartBodyMode string
+
+// ExportItemsParams defines parameters for ExportItems.
+type ExportItemsParams struct {
+	IncludeImages *bool `form:"include_images,omitempty" json:"include_images,omitempty"`
+}
+
 // SearchGlobalParams defines parameters for SearchGlobal.
 type SearchGlobalParams struct {
 	// Q Search query (minimum 2 characters)
@@ -1535,6 +1638,12 @@ type AuthLoginJSONRequestBody = LoginRequest
 
 // AuthRefreshJSONRequestBody defines body for AuthRefresh for application/json ContentType.
 type AuthRefreshJSONRequestBody = RefreshRequest
+
+// UpdateBackupConfigJSONRequestBody defines body for UpdateBackupConfig for application/json ContentType.
+type UpdateBackupConfigJSONRequestBody = BackupConfigUpdate
+
+// ImportBackupMultipartRequestBody defines body for ImportBackup for multipart/form-data ContentType.
+type ImportBackupMultipartRequestBody ImportBackupMultipartBody
 
 // CreateItemTypeJSONRequestBody defines body for CreateItemType for application/json ContentType.
 type CreateItemTypeJSONRequestBody = ItemTypeCreate
@@ -1634,6 +1743,24 @@ type ServerInterface interface {
 	// Refresh JWT tokens
 	// (POST /api/v1/auth/refresh)
 	AuthRefresh(w http.ResponseWriter, r *http.Request)
+	// Get scheduled backup configuration
+	// (GET /api/v1/backup/config)
+	GetBackupConfig(w http.ResponseWriter, r *http.Request)
+	// Update scheduled backup configuration
+	// (PUT /api/v1/backup/config)
+	UpdateBackupConfig(w http.ResponseWriter, r *http.Request)
+	// Download a full backup archive
+	// (GET /api/v1/backup/export)
+	ExportBackup(w http.ResponseWriter, r *http.Request)
+	// Restore data from a backup archive
+	// (POST /api/v1/backup/import)
+	ImportBackup(w http.ResponseWriter, r *http.Request)
+	// Run a scheduled backup now to the configured path
+	// (POST /api/v1/backup/run)
+	RunBackup(w http.ResponseWriter, r *http.Request)
+	// Export items as a denormalized CSV (optionally with images)
+	// (GET /api/v1/export/items)
+	ExportItems(w http.ResponseWriter, r *http.Request, params ExportItemsParams)
 	// List all item types
 	// (GET /api/v1/item-types)
 	ListItemTypes(w http.ResponseWriter, r *http.Request)
@@ -1888,6 +2015,145 @@ func (siw *ServerInterfaceWrapper) AuthRefresh(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AuthRefresh(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetBackupConfig operation middleware
+func (siw *ServerInterfaceWrapper) GetBackupConfig(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetBackupConfig(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateBackupConfig operation middleware
+func (siw *ServerInterfaceWrapper) UpdateBackupConfig(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateBackupConfig(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ExportBackup operation middleware
+func (siw *ServerInterfaceWrapper) ExportBackup(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ExportBackup(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImportBackup operation middleware
+func (siw *ServerInterfaceWrapper) ImportBackup(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImportBackup(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RunBackup operation middleware
+func (siw *ServerInterfaceWrapper) RunBackup(w http.ResponseWriter, r *http.Request) {
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RunBackup(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ExportItems operation middleware
+func (siw *ServerInterfaceWrapper) ExportItems(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ExportItemsParams
+
+	// ------------- Optional query parameter "include_images" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_images", r.URL.Query(), &params.IncludeImages, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_images"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_images", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ExportItems(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4188,6 +4454,12 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/auth/login", wrapper.AuthLogin)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/auth/logout", wrapper.AuthLogout)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/auth/refresh", wrapper.AuthRefresh)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/backup/config", wrapper.GetBackupConfig)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/api/v1/backup/config", wrapper.UpdateBackupConfig)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/backup/export", wrapper.ExportBackup)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/backup/import", wrapper.ImportBackup)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/backup/run", wrapper.RunBackup)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/export/items", wrapper.ExportItems)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/v1/item-types", wrapper.ListItemTypes)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/v1/item-types", wrapper.CreateItemType)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/v1/item-types/{typeId}", wrapper.DeleteItemType)

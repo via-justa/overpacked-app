@@ -4,401 +4,602 @@
 table: manufacturers
 records:
   - name: Patagonia
+    id: b8403e6d-1086-5c6e-8b55-18a231a2cfbd
     website: https://www.patagonia.com
   - name: The North Face
+    id: 84c91a0c-ef7d-56c6-97ff-cd7cc8e93efd
     website: https://www.thenorthface.com
   - name: Arc'teryx
+    id: 421d44a2-4c92-5be0-9c8d-0fb2ad2858bb
     website: https://arcteryx.com
   - name: Columbia Sportswear
+    id: 94d7bfc0-876d-5b74-8d4f-b98e46446865
     website: https://www.columbia.com
   - name: Mammut
+    id: d37a8453-ce10-56bf-a467-f075e961ccad
     website: https://www.mammut.com
   - name: Fjällräven
+    id: 499d2a4d-3ce2-5b39-9105-81a1b541a6c3
     website: https://www.fjallraven.com
   - name: Salomon
+    id: 22c8655e-4c77-565a-9163-d164c9bfab64
     website: https://www.salomon.com
   - name: Mountain Hardwear
+    id: 98f18965-11b7-5080-af9b-2a94964f010a
     website: https://www.mountainhardwear.com
   - name: Black Diamond
+    id: 237dbbf8-5e40-5f40-82e1-7318dc482ad7
     website: https://www.blackdiamondequipment.com
   - name: Outdoor Research
+    id: 1ef3105b-cb52-5010-9d15-496a32291f97
     website: https://www.outdoorresearch.com
   - name: Rab
+    id: f636fe9e-f6c5-5c9c-8989-7e51d9639c95
     website: https://rab.equipment
   - name: Marmot
+    id: 8c0ab96a-f40a-5733-8b50-9fd9a3ddb04e
     website: https://www.marmot.com
   - name: Helly Hansen
+    id: 9a4e3df0-b6c9-5719-98a5-8204142278fc
     website: https://www.hellyhansen.com
   - name: Jack Wolfskin
+    id: 722f0664-1e78-5f54-b5b3-c2b1fa576462
     website: https://www.jack-wolfskin.com
   - name: Haglöfs
+    id: 4c63c848-796f-550c-a874-40c0baa08fad
     website: https://www.haglofs.com
   - name: Norrona
+    id: ef624925-04ec-570c-bcaf-9c1a096d2397
     website: https://www.norrona.com
   - name: Millet
+    id: 298d389c-adf1-5a78-af6c-b45f974c45a9
     website: https://www.millet.com
   - name: Vaude
+    id: 717f1785-572a-52d0-8560-f28f48746e3e
     website: https://www.vaude.com
   - name: Montbell
+    id: 520c4035-f47d-5710-aade-da710fd81fcc
     website: https://en.montbell.jp
   - name: Mountain Equipment
+    id: 58e3efcb-01fa-522d-bc8f-b82d4d1c477e
     website: https://www.mountain-equipment.com
   - name: Klättermusen
+    id: d3da05fa-45c7-525d-a17a-f2b87c891002
     website: https://www.klattermusen.com
   - name: Lundhags
+    id: 0f80ab93-09e3-5720-8d00-8b0ab2458253
     website: https://www.lundhags.com
   - name: Berghaus
+    id: 19078c4d-623f-5b12-a664-c3a925d864c5
     website: https://www.berghaus.com
   - name: Cotopaxi
+    id: 386379bd-8ac8-595b-8f96-e1e673c3e792
     website: https://www.cotopaxi.com
   - name: REI Co-op
+    id: 4276c18a-9c4e-5860-b9bd-1eb5f3a9afd4
     website: https://www.rei.com
   - name: Osprey
+    id: 0f4d1907-c41f-5827-bc05-de2d32c5af68
     website: https://www.osprey.com
   - name: Deuter
+    id: ce8e9d7d-9aa4-54c8-8fe4-00e2ba26e9e5
     website: https://www.deuter.com
   - name: Gregory
+    id: 885f8c34-9992-5660-8139-446d7c008f2d
     website: https://www.gregory.com
   - name: Mystery Ranch
+    id: a5adbe54-9396-58e9-8837-5672d76df4fc
     website: https://www.mysteryranch.com
   - name: Hyperlite Mountain Gear
+    id: 017fa773-a1fb-539e-b877-5baed5846517
     website: https://www.hyperlitemountaingear.com
   - name: Exped
+    id: 47eb3565-c2b8-5d9e-85e0-4457717635c6
     website: https://www.exped.com
   - name: MSR
+    id: feda1388-2722-56ec-b5de-50a1d4619aa0
     website: https://www.msrgear.com
   - name: Sea to Summit
+    id: 56fd1654-f587-5f2e-93db-24cb602f8992
     website: https://seatosummit.com
   - name: Big Agnes
+    id: 204f2bbd-ac4a-55e5-8343-11d9ea306fbd
     website: https://www.bigagnes.com
   - name: Nemo Equipment
+    id: a32c1d27-442f-5d90-9056-5142087c32d4
     website: https://www.nemoequipment.com
   - name: Therm-a-Rest
+    id: f0fa119f-ab46-5906-9967-05fb0973bb06
     website: https://www.thermarest.com
   - name: Scarpa
+    id: a57d1df2-91d5-5a3b-bc89-3b7abfc35567
     website: https://www.scarpa.com
   - name: La Sportiva
+    id: d76840b8-5d4e-5ede-98e9-4da313b6442f
     website: https://www.lasportiva.com
   - name: LOWA
+    id: b8715603-c61b-523c-9448-86fe641e1b13
     website: https://www.lowa.com
   - name: Hanwag
+    id: 201b23f6-d6a8-5ee3-9602-c6968ac82b86
     website: https://www.hanwag.com
   - name: Meindl
+    id: a7690f88-d3c2-5712-9b7a-7b13e043933a
     website: https://meindl.de
   - name: Danner
+    id: 59088d43-6dff-5501-bf18-56214ef5452b
     website: https://www.danner.com
   - name: KEEN
+    id: b9216a1b-544f-50e3-97f5-408aee32e1d4
     website: https://www.keenfootwear.com
   - name: Smartwool
+    id: 818ccdb4-5018-5c26-a2ee-4dcae7463ba2
     website: https://www.smartwool.com
   - name: Icebreaker
+    id: 88cab963-a1a2-5160-8398-fce7872aba23
     website: https://www.icebreaker.com
   - name: Kuhl
+    id: 1a543663-8127-5f8d-ae64-3110b4579972
     website: https://www.kuhl.com
   - name: Kathmandu
+    id: 99339df3-70aa-5be4-b025-56f53f92727c
     website: https://www.kathmanduoutdoor.com
   - name: Fjord Nansen
+    id: 27ffaf72-d648-59a3-9efa-0c8d4ef61fe9
     website: https://fjordnansen.com
   - name: Peak Performance
+    id: cf4a18c5-2deb-55f6-be43-11458a2d0fa2
     website: https://www.peakperformance.com
   - name: Ortovox
+    id: 7b9cc19c-b560-55d8-8ad1-fd2495f4f54c
     website: https://www.ortovox.com
   - name: Prana
+    id: 0e32cacc-2ad5-5160-8065-7eb35f27f39e
     website: https://www.prana.com
   - name: Royal Robbins
+    id: 5742d3f8-3d76-588c-bf02-ef6b6d37e0a3
     website: https://www.royalrobbins.com
   - name: Trew Gear
+    id: 4a0b1537-c55a-56fd-aa50-2452f185b08e
     website: https://trewgear.com
   - name: Houdini Sportswear
+    id: 3085f67e-a765-5666-a59c-dc7301c8bdc6
     website: https://houdinisportswear.com
   - name: Swanndri
+    id: adc81386-65fc-5f28-9ecb-792c8d95d648
     website: https://www.swanndri.co.nz
   - name: Craghoppers
+    id: 9b8eab0b-7a7f-50b5-a775-c149df74dfb5
     website: https://www.craghoppers.com
   - name: Sherpa Adventure Gear
+    id: cb149875-6294-50b0-ab94-64a769d8ad17
     website: https://www.sherpaadventuregear.com
   - name: Montane
+    id: 272f44b1-11c0-5ba1-92b2-8475d3609a32
     website: https://montane.com
   - name: Alpkit
+    id: eb212193-c31f-5b74-90e8-8259c5bc875d
     website: https://alpkit.com
   - name: YETI
+    id: 61e8f458-9b98-552d-a159-fb7f614e8096
     website: https://www.yeti.com
   - name: Stanley
+    id: 11708482-8a67-51c4-819b-0051681f1a72
     website: https://www.stanley1913.com
   - name: Hydro Flask
+    id: e43039bb-6f08-5a11-a8fd-0f18c57c6711
     website: https://www.hydroflask.com
   - name: CamelBak
+    id: daa3e1af-44d3-529f-9d75-1f10d18242b6
     website: https://www.camelbak.com
   - name: Platypus
+    id: 2da429ad-8930-5950-91fe-e0cf3b4ea029
     website: https://www.platy.com
   - name: GSI Outdoors
+    id: ed8291eb-a8bf-58e1-8299-12118f197c0a
     website: https://gsioutdoors.com
   - name: Primus
+    id: 02ad6a80-1902-55ba-b8e7-b5beb9a6c9f7
     website: https://primusequipment.com
   - name: Snow Peak
+    id: 8fac29de-9efa-5210-ae01-defef336c9bc
     website: https://www.snowpeak.com
   - name: BioLite
+    id: 00be4068-0f6a-5747-ba8d-4b4caf825252
     website: https://www.bioliteenergy.com
   - name: Jetboil
+    id: bda34357-d923-5a36-9c12-6e20d802a03a
     website: https://jetboil.johnsonoutdoors.com
   - name: Kelty
+    id: c8a504bb-e602-522c-ae85-e090ec0ebd76
     website: https://www.kelty.com
   - name: Sierra Designs
+    id: 1c3ce278-9b86-5f5e-ad55-14aad6a4f623
     website: https://sierradesigns.com
   - name: Eureka!
+    id: 7e10eb9c-bf7e-54b2-9737-78e68a5a5eb2
     website: https://eurekacamping.johnsonoutdoors.com
   - name: Hilleberg
+    id: 70b9ca09-c310-5093-94e6-b4504a0e4ae8
     website: https://hilleberg.com
   - name: Snugpak
+    id: a85949b9-8551-5400-8b1b-c8502a933a7a
     website: https://snugpak.com
   - name: Vango
+    id: 08ad3af8-58cf-58e5-bf62-d471b2ca017c
     website: https://www.vango.co.uk
   - name: Terra Nova Equipment
+    id: 75a6ad98-87e6-597c-975e-b4650eba324e
     website: https://www.terra-nova.co.uk
   - name: Inov-8
+    id: d2d83027-54ee-58ba-87f0-f76ca229798b
     website: https://www.inov-8.com
   - name: Altra Running
+    id: 7315941e-3078-55b5-96ee-a9e9dc1279fb
     website: https://www.altrarunning.com
   - name: HOKA
+    id: 779af5a0-1426-54d5-926b-c8fa350d1143
     website: https://www.hoka.com
   - name: Merrell
+    id: be2599dc-de37-5f29-b584-15070f64ab38
     website: https://www.merrell.com
   - name: Vasque
+    id: 238fde6f-3793-584b-9132-bd7e58cd6c63
     website: https://www.vasque.com
   - name: Zamberlan
+    id: 32879770-4630-5e1e-8859-a31091da4a36
     website: https://www.zamberlanusa.com
   - name: Aku
+    id: 1ae6b651-15b2-5009-af5b-f09dcd04b61d
     website: https://akuoutdoor.us
   - name: Garmont
+    id: 74371716-06a5-5c4a-9079-5cf4dd089a60
     website: https://www.garmont.com
   - name: Tecnica
+    id: 353e6ffd-ad28-5dc6-881b-89a765ae4a4d
     website: https://www.blizzard-tecnica.com
   - name: Dynafit
+    id: 196f70e9-d74b-5453-a43d-053b61d96d62
     website: https://www.dynafit.com
   - name: Scarpa North America
+    id: 1be6f262-aefb-59b8-8ecd-b4fb3d5223b8
     website: https://us.scarpa.com
   - name: Julbo
+    id: 1667c021-15c0-5777-bd0d-a8ea2b19668f
     website: https://www.julbo.com
   - name: Smith Optics
+    id: 8a994275-a072-5a86-8d04-22f80ece9c04
     website: https://www.smithoptics.com
   - name: Petzl
+    id: d4cd8a11-f923-56cb-ac33-8b89f90801a3
     website: https://www.petzl.com
   - name: Edelrid
+    id: 4c223cd6-d11a-5f3e-a641-fd8dec3d1262
     website: https://edelrid.com
   - name: CAMP
+    id: 04c4ac91-2af4-5b74-83ce-a61b29a7f01b
     website: https://www.camp.it
   - name: Grivel
+    id: c2915171-b9ec-5e1f-98e2-9d7d2d5a6def
     website: https://grivel.com
   - name: Silva
+    id: 874967ab-f6b9-5c6e-91ea-0878d26e2a02
     website: https://silvasweden.com
   - name: Suunto
+    id: 503f44bb-74d2-58a7-a549-0f91d616fa75
     website: https://www.suunto.com
   - name: Garmin
+    id: 0273dd8c-1d0d-565f-bc42-4f3db5519d29
     website: https://www.garmin.com
   - name: Buff
+    id: e9f189f1-1db8-57df-a098-161103d2c122
     website: https://www.buff.com
   - name: Devold
+    id: faf957bc-bc80-5a43-95c4-365053805f73
     website: https://www.devold.com
   - name: Jöttnar
+    id: 6a25e62c-c397-5be2-817e-35d7e7e290c9
     website: https://www.jottnar.com
   - name: Paramo
+    id: a4a943a3-2a4d-54c1-ae2c-03d398cac3da
     website: https://www.paramo-clothing.com
   - name: Keela
+    id: b1a5badf-d5ac-530f-8701-f73c0c51c968
     website: https://keelaoutdoors.com
   - name: Páramo Directional Clothing
+    id: dbb4a0f9-1a3c-5256-8357-d782f08bc378
     website: https://www.paramo-clothing.com
   - name: Aclima
+    id: 3bef19ef-44c7-505b-aa43-93c36c5e1acb
     website: https://aclima.com
   - name: Brynje
+    id: 17e2841c-74c2-59af-acfa-b7883d8b1ca2
     website: https://www.brynje.no
   - name: Isbjörn of Sweden
+    id: d69370a7-eed2-5304-a061-96c7414e6905
     website: https://isbjornofsweden.com
   - name: North Bend
+    id: c9bdf3ae-682b-5ad7-bdc9-01e3449c1dc7
     website: https://www.northbend.com
   - name: Pinewood
+    id: 46b08537-fbb7-59cd-8aca-0f3700c09e80
     website: https://www.pinewood.eu
   - name: RevolutionRace
+    id: 04705463-9482-564d-9954-0c403cd176db
     website: https://www.revolutionrace.com
   - name: Direct Alpine
+    id: 2292ab50-011d-5dba-99bd-3b656c8a29dd
     website: https://www.directalpine.com
   - name: Tilak
+    id: 95a0ed97-f9df-55c8-9869-50e731cfc28d
     website: https://www.tilak.cz
   - name: High Point
+    id: 2ba526e6-eab7-5e80-b71e-9ee6a658523d
     website: https://www.highpoint.cz
   - name: Ocún
+    id: b60e59a7-4bb9-51bf-8f31-282959c4b994
     website: https://www.ocun.com
   - name: Rock Empire
+    id: d0ce7f42-5c6a-50d9-8420-e041615a23aa
     website: https://www.rockempire.com
   - name: Maier Sports
+    id: 4f428d6f-4efd-5835-966b-86b763c51a6a
     website: https://www.maier-sports.com
   - name: Schöffel
+    id: 61b4d6c6-87f6-5071-9dba-6ab5a50047a0
     website: https://www.schoeffel.com
   - name: Maloja
+    id: 98883dc9-af42-5814-b74f-f2c213242426
     website: https://www.maloja.com
   - name: Zanier
+    id: eb222a40-220c-500b-b771-ad752607a519
     website: https://www.zanier.com
   - name: UYN
+    id: 3000bac3-17d7-57e5-9831-c8fbf90cb49d
     website: https://www.uynsports.com
   - name: Quechua
+    id: a8eef8d6-0132-5d3e-9f00-6567dc27078f
     website: https://www.quechua.com
   - name: Forclaz
+    id: 87bcf221-90ca-5dac-9cd2-b1b0f237f6bc
     website: https://www.forclaz.com
   - name: Wedze
+    id: e063a80b-f5a9-58ca-92bf-686b9f73f4d1
     website: https://www.wedze.com
   - name: Regatta
+    id: 1fb7059d-7639-54fa-870b-8cb053bf4b15
     website: https://www.regatta.com
   - name: Dare 2b
+    id: bb29e9e4-d5d6-588d-b4b9-2ee980811f61
     website: https://www.dare2b.com
   - name: Trespass
+    id: b1120bfe-eebd-5eff-89bd-6901213b575c
     website: https://www.trespass.com
   - name: Mountain Warehouse
+    id: 97b264b0-4cdd-504f-99a9-94e6e07c860e
     website: https://www.mountainwarehouse.com
   - name: Hi-Tec
+    id: b149bfd5-8b2c-54d7-a918-8fbc3790a743
     website: https://hi-tec.com
   - name: Karrimor
+    id: 347746dd-edfd-57af-8ae1-16bb721a8c38
     website: https://www.karrimor.com
   - name: Gelert
+    id: 82f7f8ba-30ba-5e8c-a873-d5abdd57bcaa
     website: https://www.gelert.com
   - name: Highlander
+    id: b01877ad-c181-5a8e-835b-6da17fcf019d
     website: https://highlander-outdoor.com
   - name: Naturehike
+    id: f56eef65-2bd9-5bc9-885c-4d316aa3cbf4
     website: https://www.naturehike.com
   - name: 3F UL Gear
+    id: 4da7ea51-098f-5f14-849e-9ff0b2737925
     website: https://3fulgear.com
   - name: OneTigris
+    id: 6c1eba7c-1c93-518a-896a-4dc2146af31d
     website: https://www.onetigris.com
   - name: Aonijie
+    id: 0ec8dc8a-a3af-5cf1-bb44-0c61e9207584
     website: https://www.aonijie.com
   - name: Tatonka
+    id: dd1b800d-6a0c-5bd6-b6a2-04d6b7e743c0
     website: https://www.tatonka.com
   - name: Campus
+    id: 8963a77c-654e-5ab3-82af-00cb3b3cde3f
     website: https://campusoutdoor.com
   - name: Elbrus
+    id: 5e31870b-eea9-5382-9e55-a5b0e3bdfb9e
     website: https://www.elbrus.com.pl
   - name: Viking Outdoor Footwear
+    id: 36f78ab4-a86a-5202-a5e6-729aacadb5d4
     website: https://www.vikingoutdoorfootwear.com
   - name: Hannah
+    id: ab141703-aacf-5b0e-aada-4f2bc948f033
     website: https://www.hannahoutdoor.com
   - name: Loap
+    id: 80261531-8ff1-5097-8361-4e9187f61bd9
     website: https://www.loap.cz
   - name: Northfinder
+    id: f33de75c-2d6e-5b2a-b587-311ebb6b972e
     website: https://northfinder.com
   - name: Kilpi
+    id: 7c19d7a7-9af6-514b-b795-5472505a1549
     website: https://www.kilpi.com
   - name: Trimm
+    id: 63e7d15b-9331-596c-8daa-c674bd152b55
     website: https://www.trimm.cz
   - name: Husky
+    id: 883a517b-9242-5172-8c24-d28d6599c126
     website: https://www.huskyeu.eu
   - name: Ferrino
+    id: 8a0fa3e4-46e2-531d-b6eb-82405308ea6c
     website: https://www.ferrino.it
   - name: Rockland
+    id: 05f3b474-7e4b-59a4-8328-25acf1f5c1e4
     website: https://rockland.eu
   - name: Iguana
+    id: 35b6078e-4b0f-5c17-a6ce-46b540269c95
     website: https://iguana-sports.com
   - name: Brugi
+    id: 6c3b03c9-b2fd-59ae-97d3-d22fff56682f
     website: https://www.brugi.it
   - name: McKinley
+    id: dea6fd9f-6247-50d6-89d5-1206a1bd7076
     website: https://www.mckinley.eu
   - name: Unbranded
+    id: 982c1aad-e7c4-5aa6-8e16-bf0bac73bfc8
   - name: Sawyer
+    id: e668490a-1df7-5324-a3cb-22c970b292cc
     website: https://sawyer.com
   - name: Trekology
+    id: 122b13fb-27b0-5c72-98f9-c97719e852ce
     website: https://trekology.com
   - name: Racktime
+    id: f79fe4c3-b3af-54a1-bd3e-0f940d8bad3c
     website: https://www.racktime.com
   - name: Aeropress
+    id: 323fad81-80d7-565c-b69c-66a377afb7a0
     website: https://aeropress.com
   - name: Arkel
+    id: c6e7a5b0-fdc6-5e3e-9e5e-6ce3ef892291
     website: https://www.arkel-od.com
   - name: Falke
+    id: 0f822aef-8c83-58b1-bae9-349efc97e0cd
     website: https://www.falke.com
   - name: Topeak
+    id: 2f6d5f2c-f39f-525b-9799-c64c22fa5f60
     website: https://www.topeak.com
   - name: Canon
+    id: 21b82aa8-5beb-51e0-9af2-241fb789a7ca
     website: https://www.canon.com
   - name: Tamrac
+    id: 66ec34a7-2ee1-59b9-abc9-b44e1b54f078
     website: https://www.tamrac.com
   - name: Alpina
+    id: 5159330d-77c3-5b5b-8d8d-2eddb1ed385f
     website: https://www.alpina-sports.com
   - name: Amazon
+    id: 9ca8ce91-b80e-5383-a874-f18919caf2f6
     website: https://www.amazon.com
   - name: BTWIN
+    id: 8c0bfa90-30f0-57f3-934b-a9248d60010e
     website: https://www.btwin.com
   - name: Schwalbe
+    id: e09ac86b-d1bc-52d4-b9b3-e9f7d553ef34
     website: https://www.schwalbe.com
   - name: Optimus
+    id: 22a14908-9f5e-57cc-be7b-b3f76160e0c4
     website: https://optimusstoves.com
   - name: BiC
+    id: acd4db7f-a1be-5e65-b415-190a400f978f
     website: https://www.bic.com
   - name: Sony
+    id: 35329cc6-bf41-5642-927d-d281bef46016
     website: https://www.sony.com
   - name: Rolling Square
+    id: bedbdc48-02f8-5d1d-9d15-a8bcbb20b820
     website: https://rollingsquare.com
   - name: Apple
+    id: 2b12c81c-94f8-53e6-a0d9-e6089dfca290
     website: https://www.apple.com
   - name: Spigen
+    id: 1c19f6e0-2d42-56dc-8829-eae580e918d8
     website: https://www.spigen.com
   - name: Eider
+    id: b313ef32-8c11-5f83-9ec7-8a42dc0bdb85
     website: https://www.eider.com
   - name: Anker
+    id: be89f7ef-1d54-5ecc-93aa-804643b0858b
     website: https://www.anker.com
   - name: Ortlieb
+    id: c6d9e982-f8a8-5546-bab2-6c053453cd78
     website: https://www.ortlieb.com
   - name: Castelli
+    id: a4ec4a6e-708e-50a9-971d-fbc7bf54e20d
     website: https://www.castelli-cycling.com
   - name: Scott
+    id: b9333295-4f89-54c3-9961-2de508ff708e
     website: https://www.scott-sports.com
   - name: Hammerhead
+    id: 1ab16c0d-20e9-5aef-9f4a-0683a785034a
     website: https://www.hammerhead.io
   - name: Northwave
+    id: 41a513b6-8bf5-54ad-8eb5-20ece2a8f0ae
     website: https://www.northwave.com
   - name: Abus
+    id: cf0e6166-fd84-5781-bc68-170d0c2b0783
     website: https://www.abus.com
   - name: Nitecore
+    id: c80bb916-1a44-5015-85b9-9490f7b809c3
     website: https://www.nitecore.com
   - name: AfterShokz
+    id: 86d2f402-cb9c-5c99-a9a3-c463bc6b69e0
     website: https://shokz.com
   - name: PackTowl
+    id: 022f55ae-4d68-5167-920c-90723355bbe5
     website: https://www.packtowl.com
   - name: Darn Tough
+    id: 167bdaa7-56da-5f21-a8ae-969b3cc559ca
     website: https://darntough.com
   - name: DJI
+    id: 4d26dbee-b351-5868-b928-801e1fe4afc4
     website: https://www.dji.com
   - name: VIVOBAREFOOT
+    id: 718a2f6e-9f4f-51e0-a407-589c67114cba
     website: https://www.vivobarefoot.com
   - name: Lixada
+    id: cce95fd7-342e-529c-a829-3026a8334836
   - name: Uniqlo
+    id: de33ae46-cc22-5093-a1a4-dfb82facfcd4
     website: https://www.uniqlo.com
   - name: Salt Of The Earth
+    id: 68ab44bd-f2ef-5bc0-836b-49e95f852107
     website: https://saltoftheearthnatural.com
   - name: Mykita
+    id: a05c81ba-76f3-518c-b043-19b89fd99e55
     website: https://mykita.com
   - name: BSN
+    id: 5fbf0f56-6f00-5c2e-a86f-dfa10ddbd471
     website: https://www.bsnmedical.com
   - name: Get Out Gear
+    id: a6ecf651-9a73-5183-bd06-b474ed6af92b
     website: https://shopgogear.com
   - name: Cocoon
+    id: b214ca07-c9c8-5100-b213-41ec5ee3c1e5
     website: https://www.cocoon.at
   - name: Decathlon
+    id: 381e9d89-7085-5b76-a1de-e34dadff07c7
     website: https://www.decathlon.com
   - name: Beurer
+    id: bcf568b3-82a9-5768-9eee-61d064ad616f
     website: https://www.beurer.com
   - name: Philips
+    id: 38d4b677-2aa7-5e32-ad9c-59d168253b94
     website: https://www.philips.com
   - name: Arcade
+    id: d16f2997-4b02-59ae-8dd3-cb5b20748f52
     website: https://arcadebelts.com
   - name: Loop
+    id: 6f5890f6-04b7-5d0c-ac18-eb1d99e59e9a
     website: https://www.loopearplugs.com
   - name: Matador
+    id: 078f885a-7547-5d94-83c1-30c08693b308
     website: https://matadorequipment.com
   - name: Truetape
+    id: 06667d2d-3162-5076-9a4e-c30feb0237c1
   - name: Xero
+    id: 2c545e87-0850-58b8-b7ac-39fa25e721c8
     website: https://www.xeroshoes.com
   - name: Foldies
+    id: 6eee71bd-d378-52de-8505-2305f44684ac
     website: https://www.foldies.com
   - name: Tooletries
+    id: 2f22b412-a75b-5f6d-a34f-b085d93166e2
     website: https://tooletries.com.au
   - name: Compeed
+    id: 897508a7-a958-5ec9-a620-503732d2dc93
     website: https://www.compeed.com
   - name: Outdoor Edge
+    id: d321ac9b-0a58-51d6-9fbc-23c846c77e82
     website: https://www.outdooredge.com

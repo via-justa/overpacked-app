@@ -8,3 +8,10 @@ export type SettingsUpdate = components['schemas']['SettingsUpdate']
 export type WeightUnit = Settings['weight_unit']
 export type VolumeUnit = Settings['volume_unit']
 export type Currency = Settings['currency']
+
+// Backup feature types (single source of truth: generated OpenAPI schema).
+export type BackupConfig = components['schemas']['BackupConfig']
+export type BackupConfigUpdate = components['schemas']['BackupConfigUpdate']
+export type BackupImportResult = components['schemas']['BackupImportResult']
+export type BackupRunResult = components['schemas']['BackupRunResult']
+export type BackupImportMode = BackupImportResult['mode']

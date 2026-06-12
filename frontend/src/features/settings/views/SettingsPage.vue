@@ -5,6 +5,8 @@ import { getSettings, patchSettings, startFresh } from '../api/settingsApi'
 import { useMutationWithToast } from '../../../composables/useMutationWithToast'
 import SettingsDangerZoneCard from '../components/SettingsDangerZoneCard.vue'
 import SettingsDisplaySettingsCard from '../components/SettingsDisplaySettingsCard.vue'
+import SettingsExportCard from '../components/SettingsExportCard.vue'
+import SettingsBackupCard from '../components/SettingsBackupCard.vue'
 import type { Settings, SettingsUpdate } from '../types'
 
 const editableSettings = ref<Settings | null>(null)
@@ -206,6 +208,10 @@ const isFieldDirty = (
       :is-loading-settings="isLoadingSettings" :editable-settings="editableSettings" :field-configs="fieldConfigs"
       :is-saving-settings="isSavingSettings" :is-dirty="isDirty" :is-field-dirty="isFieldDirty" @save="onSave"
       @reset="onReset" @update-field="({ key, value }) => setFieldValue(key, value)" />
+
+    <SettingsExportCard />
+
+    <SettingsBackupCard />
 
     <SettingsDangerZoneCard :is-pending="startFreshMutation.isPending.value"
       :close-dialog-token="startFreshSuccessToken" @start-fresh="onConfirmStartFresh" />

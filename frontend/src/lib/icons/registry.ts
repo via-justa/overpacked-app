@@ -23,6 +23,7 @@ export const actionIcons = {
   refresh: 'pi-refresh',
   reset: 'pi-refresh',
   upload: 'pi-upload',
+  download: 'pi-download',
   duplicate: 'pi-file-edit',
   menu: 'pi-ellipsis-h',
   menuBars: 'pi-bars',

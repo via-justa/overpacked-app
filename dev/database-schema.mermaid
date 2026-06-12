@@ -36,6 +36,16 @@ erDiagram
         string volume_unit "ml, fl_oz"
     }
 
+    BACKUP_CONFIG {
+        int id PK "always 1"
+        bool enabled
+        string schedule "cron expression"
+        int retention_count
+        timestamptz last_run_at
+        string last_status "success, error"
+        string last_error
+    }
+
     PERSONS {
         uuid id PK
         string name "required"

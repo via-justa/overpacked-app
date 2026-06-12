@@ -76,6 +76,12 @@ func (s *Service) Logout(_ string) error {
 	return nil
 }
 
+// ValidateAccessToken returns ErrInvalidToken unless raw is a valid, unexpired access token.
+func (s *Service) ValidateAccessToken(raw string) error {
+	_, err := s.parseAndValidate(raw, "access")
+	return err
+}
+
 func (s *Service) issueTokens(username string) (*TokenPair, error) {
 	accessToken, err := s.signToken(username, "access", accessTokenTTL)
 	if err != nil {

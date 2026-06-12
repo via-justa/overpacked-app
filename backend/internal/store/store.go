@@ -14,6 +14,7 @@ type Store struct {
 	PackingLists  *PackingListStore
 	Trips         *TripStore
 	Search        *SearchStore
+	BackupConfig  *BackupConfigStore
 }
 
 func New(db *sql.DB) *Store {
@@ -29,5 +30,6 @@ func New(db *sql.DB) *Store {
 		PackingLists:  NewPackingListStore(db),
 		Trips:         NewTripStore(db),
 		Search:        NewSearchStore(db),
+		BackupConfig:  NewBackupConfigStore(db),
 	}
 }

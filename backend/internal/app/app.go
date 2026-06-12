@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/via-justa/overpacked-app/backend/internal/auth"
+	"github.com/via-justa/overpacked-app/backend/internal/backup"
 	"github.com/via-justa/overpacked-app/backend/internal/config"
 	"github.com/via-justa/overpacked-app/backend/internal/db"
 	"github.com/via-justa/overpacked-app/backend/internal/http/handlers"
@@ -19,10 +20,11 @@ import (
 )
 
 type App struct {
-	cfg    *config.Config
-	db     *sql.DB
-	server *http.Server
-	Store  *store.Store
+	cfg       *config.Config
+	db        *sql.DB
+	server    *http.Server
+	Store     *store.Store
+	scheduler *backup.Scheduler
 }
 
 func New(ctx context.Context, cfg *config.Config) (*App, error) {
@@ -44,16 +46,22 @@ func New(ctx context.Context, cfg *config.Config) (*App, error) {
 	authHandler := handlers.NewAuthHandler(authService)
 	st := store.New(database)
 
+	backupService := backup.NewService(database, cfg.BackupBaseDir)
+	scheduler := backup.NewScheduler(backupService, st.BackupConfig)
+	backupHandler := handlers.NewBackupHandler(backupService, st, scheduler, cfg.AppPassword)
+
 	router := chi.NewRouter()
 	router.Use(chimiddleware.Recoverer)
 	router.Use(chimiddleware.RequestID)
 	router.Use(chimiddleware.Logger)
-	router.Mount("/", setupRoutes(authHandler, st, cfg.AppPassword))
+	router.Use(requireAuth(authService))
+	router.Mount("/", setupRoutes(authHandler, st, cfg.AppPassword, backupHandler))
 
 	app := &App{
-		cfg:   cfg,
-		db:    database,
-		Store: st,
+		cfg:       cfg,
+		db:        database,
+		Store:     st,
+		scheduler: scheduler,
 		server: &http.Server{
 			Addr:              cfg.ServerAddr,
 			Handler:           router,
@@ -72,10 +80,17 @@ func (a *App) Start() error {
 	return a.server.ListenAndServe()
 }
 
+// StartScheduler launches the background backup scheduler. Call only on the server
+// path, not for one-shot CLI commands.
+func (a *App) StartScheduler(ctx context.Context) error {
+	return a.scheduler.Start(ctx)
+}
+
 func (a *App) Shutdown(ctx context.Context) error {
 	if err := a.server.Shutdown(ctx); err != nil {
 		return fmt.Errorf("shutdown server: %w", err)
 	}
+	a.scheduler.Stop()
 	if err := a.db.Close(); err != nil {
 		return fmt.Errorf("close db: %w", err)
 	}

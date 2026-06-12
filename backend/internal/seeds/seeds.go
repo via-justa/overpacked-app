@@ -59,78 +59,68 @@ func Run(ctx context.Context, db *sql.DB) error {
 	return nil
 }
 
-// seedLabels seeds the labels table
+// seedLabels seeds the labels table. Each record carries a stable id so the same
+// label resolves to the same UUID on every instance, which lets backups reference
+// seed rows by id across machines. Re-running is idempotent via ON CONFLICT.
 func seedLabels(ctx context.Context, db *sql.DB, records []map[string]any) (inserted, skipped int, err error) {
 	for _, record := range records {
 		name := record["name"].(string)
-
-		// Check if label already exists
-		var exists bool
-		err := db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM labels WHERE name = $1)", name).Scan(&exists)
+		id, err := uuid.Parse(record["id"].(string))
 		if err != nil {
-			return inserted, skipped, fmt.Errorf("check existing label '%s': %w", name, err)
+			return inserted, skipped, fmt.Errorf("parse label id for '%s': %w", name, err)
 		}
 
-		if exists {
-			skipped++
-			continue
-		}
-
-		// Insert new label
-		id := uuid.New()
 		var color *string
 		if colorVal, ok := record["color"]; ok && colorVal != nil {
 			colorStr := colorVal.(string)
 			color = &colorStr
 		}
 
-		_, err = db.ExecContext(ctx,
-			"INSERT INTO labels (id, name, color) VALUES ($1, $2, $3)",
+		res, err := db.ExecContext(ctx,
+			"INSERT INTO labels (id, name, color) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING",
 			id, name, color,
 		)
 		if err != nil {
 			return inserted, skipped, fmt.Errorf("insert label '%s': %w", name, err)
 		}
 
+		if affected, _ := res.RowsAffected(); affected == 0 {
+			skipped++
+			continue
+		}
 		inserted++
 	}
 
 	return inserted, skipped, nil
 }
 
-// seedManufacturers seeds the manufacturers table
+// seedManufacturers seeds the manufacturers table. See seedLabels for the id rationale.
 func seedManufacturers(ctx context.Context, db *sql.DB, records []map[string]any) (inserted, skipped int, err error) {
 	for _, record := range records {
 		name := record["name"].(string)
-
-		// Check if manufacturer already exists
-		var exists bool
-		err := db.QueryRowContext(ctx, "SELECT EXISTS(SELECT 1 FROM manufacturers WHERE name = $1)", name).Scan(&exists)
+		id, err := uuid.Parse(record["id"].(string))
 		if err != nil {
-			return inserted, skipped, fmt.Errorf("check existing manufacturer '%s': %w", name, err)
+			return inserted, skipped, fmt.Errorf("parse manufacturer id for '%s': %w", name, err)
 		}
 
-		if exists {
-			skipped++
-			continue
-		}
-
-		// Insert new manufacturer
-		id := uuid.New()
 		var website *string
 		if websiteVal, ok := record["website"]; ok && websiteVal != nil {
 			websiteStr := websiteVal.(string)
 			website = &websiteStr
 		}
 
-		_, err = db.ExecContext(ctx,
-			"INSERT INTO manufacturers (id, name, website) VALUES ($1, $2, $3)",
+		res, err := db.ExecContext(ctx,
+			"INSERT INTO manufacturers (id, name, website) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING",
 			id, name, website,
 		)
 		if err != nil {
 			return inserted, skipped, fmt.Errorf("insert manufacturer '%s': %w", name, err)
 		}
 
+		if affected, _ := res.RowsAffected(); affected == 0 {
+			skipped++
+			continue
+		}
 		inserted++
 	}
 

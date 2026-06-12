@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/via-justa/overpacked-app/backend/internal/auth"
+	"github.com/via-justa/overpacked-app/backend/internal/backup"
 	"github.com/via-justa/overpacked-app/backend/internal/http/handlers"
 	"github.com/via-justa/overpacked-app/backend/internal/store"
 )
@@ -21,7 +22,12 @@ func newTestRouter(t *testing.T) http.Handler {
 	}
 	authHandler := handlers.NewAuthHandler(authService)
 
-	return setupRoutes(authHandler, store.New(nil), "pw123")
+	st := store.New(nil)
+	backupService := backup.NewService(nil, "")
+	scheduler := backup.NewScheduler(backupService, st.BackupConfig)
+	backupHandler := handlers.NewBackupHandler(backupService, st, scheduler, "pw123")
+
+	return setupRoutes(authHandler, st, "pw123", backupHandler)
 }
 
 func TestRoutesHealth(t *testing.T) {

@@ -9,9 +9,16 @@ let authFailureHandler: ((reason: 'session_expired') => void) | null = null
 
 const RETRY_HEADER = 'x-packing-auth-retry'
 
+// Base URL shared with manual fetch calls (binary downloads, multipart uploads)
+// that can't go through the typed openapi-fetch client.
+export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
+
 export const setApiAuthToken = (token: string | null) => {
   authToken = token
 }
+
+// getApiAuthToken exposes the current bearer token for manual fetch calls.
+export const getApiAuthToken = () => authToken
 
 export const setApiAuthRefreshHandler = (handler: (() => Promise<string | null>) | null) => {
   refreshTokenHandler = handler
@@ -22,7 +29,7 @@ export const setApiAuthFailureHandler = (handler: ((reason: 'session_expired') =
 }
 
 export const apiClient = createClient<paths>({
-  baseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
+  baseUrl: apiBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },

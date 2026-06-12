@@ -49,6 +49,16 @@ func main() {
 		log.Fatalf("migration up failed: %v", err)
 	}
 
+	if cfg.EnableSeedData {
+		if err := application.RunSeeds(ctx); err != nil {
+			log.Fatalf("seed on startup failed: %v", err)
+		}
+	}
+
+	if err := application.StartScheduler(ctx); err != nil {
+		log.Fatalf("start backup scheduler failed: %v", err)
+	}
+
 	go func() {
 		if err := application.Start(); err != nil {
 			log.Printf("server error: %v", err)

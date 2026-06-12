@@ -1,4 +1,4 @@
-.PHONY: help install install-backend install-frontend up down logs backend frontend build build-backend build-frontend test test-backend test-backend-container test-api-curl-compose test-frontend check-api-gen check-api-gen-go gen-api gen-api-go clean-frontend seed seed-compose test-data
+.PHONY: help install install-backend install-frontend up down logs backend frontend build build-backend build-frontend test test-backend test-backend-container test-api-curl-compose test-frontend check-api-gen check-api-gen-go gen-api gen-api-go clean-frontend seed test-data
 
 COMPOSE ?= docker compose -f dev/docker-compose.yml
 
@@ -23,8 +23,7 @@ help:
 	@echo "  make gen-api-go        		Regenerate Go API types from OpenAPI spec"
 	@echo "  make gen-api           		Regenerate frontend OpenAPI types"
 	@echo "  make seed              		Run database seeds (local)"
-	@echo "  make seed-compose      		Run database seeds (docker-compose)"
-	@echo "  make test-data         		Load dev test data (runs seeds first, docker-compose)"
+	@echo "  make test-data         		Load dev test data (backend auto-seeds on startup, docker-compose)"
 	@echo "  make clean-frontend    		Remove frontend dist output"
 
 install: install-backend install-frontend
@@ -79,7 +78,9 @@ check-api-gen-go:
 
 test-backend-container:
 	$(COMPOSE) up -d db
-	$(COMPOSE) run --rm -e RUN_CONTAINERIZED_TESTS=true -e JWT_SECRET=test-secret backend go test ./...
+	# -p 1 serializes package test binaries: integration tests across packages share one
+	# database, so running them concurrently lets one package's TRUNCATE/migrations clobber another's.
+	$(COMPOSE) run --rm -e RUN_CONTAINERIZED_TESTS=true -e JWT_SECRET=test-secret backend go test -p 1 ./...
 
 test-api-curl-compose:
 	./dev/scripts/run_full_api_curl_test_with_compose.sh
@@ -106,9 +107,6 @@ gen-api:
 
 seed:
 	cd backend && go run ./cmd/api seed
-
-seed-compose:
-	$(COMPOSE) run --rm seed
 
 test-data:
 	$(COMPOSE) run --rm test-data

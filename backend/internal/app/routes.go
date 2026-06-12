@@ -29,6 +29,7 @@ type apiServer struct {
 	packingLists  *handlers.PackingListsHandler
 	trips         *handlers.TripsHandler
 	search        *handlers.SearchHandler
+	backup        *handlers.BackupHandler
 }
 
 func (s *apiServer) AuthLogin(w http.ResponseWriter, r *http.Request)   { s.auth.Login(w, r) }
@@ -256,7 +257,21 @@ func (s *apiServer) SearchGlobal(w http.ResponseWriter, r *http.Request, params 
 	s.search.SearchGlobal(w, r, params)
 }
 
-func NewRouter(authHandler *handlers.AuthHandler, st *store.Store, appPassword string) chi.Router {
+// Backup and export handlers
+func (s *apiServer) ExportBackup(w http.ResponseWriter, r *http.Request) { s.backup.ExportBackup(w, r) }
+func (s *apiServer) ImportBackup(w http.ResponseWriter, r *http.Request) { s.backup.ImportBackup(w, r) }
+func (s *apiServer) GetBackupConfig(w http.ResponseWriter, r *http.Request) {
+	s.backup.GetBackupConfig(w, r)
+}
+func (s *apiServer) UpdateBackupConfig(w http.ResponseWriter, r *http.Request) {
+	s.backup.UpdateBackupConfig(w, r)
+}
+func (s *apiServer) RunBackup(w http.ResponseWriter, r *http.Request) { s.backup.RunBackup(w, r) }
+func (s *apiServer) ExportItems(w http.ResponseWriter, r *http.Request, params api.ExportItemsParams) {
+	s.backup.ExportItems(w, r, params)
+}
+
+func NewRouter(authHandler *handlers.AuthHandler, st *store.Store, appPassword string, backupHandler *handlers.BackupHandler) chi.Router {
 	r := chi.NewRouter()
 
 	h := api.HandlerWithOptions(&apiServer{
@@ -271,6 +286,7 @@ func NewRouter(authHandler *handlers.AuthHandler, st *store.Store, appPassword s
 		packingLists:  handlers.NewPackingListsHandler(st.PackingLists, st.Labels),
 		trips:         handlers.NewTripsHandler(st),
 		search:        handlers.NewSearchHandler(st),
+		backup:        backupHandler,
 	}, api.StdHTTPServerOptions{
 		ErrorHandlerFunc: handleOpenAPIError,
 	})
@@ -280,8 +296,8 @@ func NewRouter(authHandler *handlers.AuthHandler, st *store.Store, appPassword s
 	return r
 }
 
-func setupRoutes(authHandler *handlers.AuthHandler, st *store.Store, appPassword string) chi.Router {
-	return NewRouter(authHandler, st, appPassword)
+func setupRoutes(authHandler *handlers.AuthHandler, st *store.Store, appPassword string, backupHandler *handlers.BackupHandler) chi.Router {
+	return NewRouter(authHandler, st, appPassword, backupHandler)
 }
 
 func handleOpenAPIError(w http.ResponseWriter, _ *http.Request, err error) {

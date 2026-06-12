@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/via-justa/overpacked-app/backend/internal/app"
 	"github.com/via-justa/overpacked-app/backend/internal/auth"
+	"github.com/via-justa/overpacked-app/backend/internal/backup"
 	"github.com/via-justa/overpacked-app/backend/internal/http/handlers"
 	"github.com/via-justa/overpacked-app/backend/internal/store"
 	"gopkg.in/yaml.v3"
@@ -93,7 +94,11 @@ func main() {
 	if err != nil {
 		panic(fmt.Errorf("init auth service: %w", err))
 	}
-	router := app.NewRouter(handlers.NewAuthHandler(authService), store.New(nil), "openapi")
+	st := store.New(nil)
+	backupService := backup.NewService(nil, "")
+	scheduler := backup.NewScheduler(backupService, st.BackupConfig)
+	backupHandler := handlers.NewBackupHandler(backupService, st, scheduler, "openapi")
+	router := app.NewRouter(handlers.NewAuthHandler(authService), st, "openapi", backupHandler)
 
 	routes, err := collectRoutes(router)
 	if err != nil {
