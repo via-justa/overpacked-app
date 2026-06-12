@@ -24,7 +24,7 @@ func (s *ItemStore) Create(ctx context.Context, item *domain.Item) error {
 		INSERT INTO items (
 			manufacturer_id, type_id, name, is_active, description, source_url,
 			price, weight_grams, volume_ml, default_quantity, default_carry_status, is_default,
-			image_path, image_mime_type, image_size_bytes, image_width_px, image_height_px,
+			image_blob, image_mime_type, image_size_bytes, image_width_px, image_height_px,
 			attributes_json
 		) VALUES (
 			$1, $2, $3, $4, $5, $6,
@@ -57,7 +57,7 @@ func (s *ItemStore) Create(ctx context.Context, item *domain.Item) error {
 		item.DefaultQuantity,
 		string(item.DefaultCarryStatus),
 		item.IsDefault,
-		toNullString(item.ImagePath),
+		toNullBytes(item.ImageBlob),
 		toNullString(item.ImageMimeType),
 		toNullInt(item.ImageSizeBytes),
 		toNullInt(item.ImageWidthPX),
@@ -76,7 +76,7 @@ func (s *ItemStore) GetByID(ctx context.Context, id uuid.UUID) (*domain.Item, er
 		SELECT
 			id, manufacturer_id, type_id, name, is_active, description, source_url,
 			price, weight_grams, volume_ml, default_quantity, default_carry_status,
-			is_default, image_path, image_mime_type, image_size_bytes, image_width_px, image_height_px, attributes_json,
+			is_default, image_blob, image_mime_type, image_size_bytes, image_width_px, image_height_px, attributes_json,
 			created_at, updated_at
 		FROM items
 		WHERE id = $1`
@@ -87,7 +87,7 @@ func (s *ItemStore) GetByID(ctx context.Context, id uuid.UUID) (*domain.Item, er
 	var price sql.NullFloat64
 	var weightGrams sql.NullFloat64
 	var volumeML sql.NullFloat64
-	var imagePath sql.NullString
+	var imageBlob []byte
 	var imageMimeType sql.NullString
 	var imageSizeBytes sql.NullInt64
 	var imageWidthPX sql.NullInt64
@@ -109,7 +109,7 @@ func (s *ItemStore) GetByID(ctx context.Context, id uuid.UUID) (*domain.Item, er
 		&item.DefaultQuantity,
 		&defaultCarryStatus,
 		&item.IsDefault,
-		&imagePath,
+		&imageBlob,
 		&imageMimeType,
 		&imageSizeBytes,
 		&imageWidthPX,
@@ -130,7 +130,7 @@ func (s *ItemStore) GetByID(ctx context.Context, id uuid.UUID) (*domain.Item, er
 	item.Price = floatPtr(price)
 	item.WeightGrams = floatPtr(weightGrams)
 	item.VolumeML = floatPtr(volumeML)
-	item.ImagePath = strPtr(imagePath)
+	item.ImageBlob = toNullBytes(imageBlob)
 	item.ImageMimeType = strPtr(imageMimeType)
 	item.ImageSizeBytes = intPtrFromNull(imageSizeBytes)
 	item.ImageWidthPX = intPtrFromNull(imageWidthPX)
@@ -150,7 +150,7 @@ func (s *ItemStore) List(ctx context.Context) ([]domain.Item, error) {
 		SELECT
 			id, manufacturer_id, type_id, name, is_active, description, source_url,
 			price, weight_grams, volume_ml, default_quantity, default_carry_status,
-			is_default, image_path, image_mime_type, image_size_bytes, image_width_px, image_height_px, attributes_json,
+			is_default, image_blob, image_mime_type, image_size_bytes, image_width_px, image_height_px, attributes_json,
 			created_at, updated_at
 		FROM items
 		ORDER BY name ASC`
@@ -169,7 +169,7 @@ func (s *ItemStore) List(ctx context.Context) ([]domain.Item, error) {
 		var price sql.NullFloat64
 		var weightGrams sql.NullFloat64
 		var volumeML sql.NullFloat64
-		var imagePath sql.NullString
+		var imageBlob []byte
 		var imageMimeType sql.NullString
 		var imageSizeBytes sql.NullInt64
 		var imageWidthPX sql.NullInt64
@@ -191,7 +191,7 @@ func (s *ItemStore) List(ctx context.Context) ([]domain.Item, error) {
 			&item.DefaultQuantity,
 			&defaultCarryStatus,
 			&item.IsDefault,
-			&imagePath,
+			&imageBlob,
 			&imageMimeType,
 			&imageSizeBytes,
 			&imageWidthPX,
@@ -208,7 +208,7 @@ func (s *ItemStore) List(ctx context.Context) ([]domain.Item, error) {
 		item.Price = floatPtr(price)
 		item.WeightGrams = floatPtr(weightGrams)
 		item.VolumeML = floatPtr(volumeML)
-		item.ImagePath = strPtr(imagePath)
+		item.ImageBlob = toNullBytes(imageBlob)
 		item.ImageMimeType = strPtr(imageMimeType)
 		item.ImageSizeBytes = intPtrFromNull(imageSizeBytes)
 		item.ImageWidthPX = intPtrFromNull(imageWidthPX)
@@ -244,7 +244,7 @@ func (s *ItemStore) Update(ctx context.Context, item *domain.Item) error {
 			default_quantity = $11,
 			default_carry_status = $12,
 			is_default = $13,
-			image_path = $14,
+			image_blob = $14,
 			image_mime_type = $15,
 			image_size_bytes = $16,
 			image_width_px = $17,
@@ -279,7 +279,7 @@ func (s *ItemStore) Update(ctx context.Context, item *domain.Item) error {
 		item.DefaultQuantity,
 		string(item.DefaultCarryStatus),
 		item.IsDefault,
-		toNullString(item.ImagePath),
+		toNullBytes(item.ImageBlob),
 		toNullString(item.ImageMimeType),
 		toNullInt(item.ImageSizeBytes),
 		toNullInt(item.ImageWidthPX),
@@ -296,71 +296,19 @@ func (s *ItemStore) Update(ctx context.Context, item *domain.Item) error {
 	return nil
 }
 
-// Delete removes the item and returns the image path it referenced (if any) so
-// the caller can clean up the orphaned file on disk.
-func (s *ItemStore) Delete(ctx context.Context, id uuid.UUID) (oldPath *string, err error) {
-	var imagePath sql.NullString
-	err = s.db.QueryRowContext(ctx, "DELETE FROM items WHERE id = $1 RETURNING image_path", id).Scan(&imagePath)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, domain.ErrNotFound
-	}
+func (s *ItemStore) Delete(ctx context.Context, id uuid.UUID) error {
+	result, err := s.db.ExecContext(ctx, "DELETE FROM items WHERE id = $1", id)
 	if err != nil {
-		return nil, fmt.Errorf("delete item: %w", err)
+		return fmt.Errorf("delete item: %w", err)
 	}
 
-	return strPtr(imagePath), nil
-}
-
-// SetImage records an item's image path and metadata, returning the previous
-// image path (if any) so the caller can remove the replaced file.
-func (s *ItemStore) SetImage(ctx context.Context, id uuid.UUID, path, mimeType string, sizeBytes, width, height int) (oldPath *string, err error) {
-	query := `
-		WITH old AS (SELECT image_path FROM items WHERE id = $1)
-		UPDATE items
-		SET image_path = $2,
-			image_mime_type = $3,
-			image_size_bytes = $4,
-			image_width_px = $5,
-			image_height_px = $6,
-			updated_at = NOW()
-		WHERE id = $1
-		RETURNING (SELECT image_path FROM old)`
-
-	var previous sql.NullString
-	err = s.db.QueryRowContext(ctx, query, id, path, mimeType, sizeBytes, width, height).Scan(&previous)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, domain.ErrNotFound
-	}
+	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return nil, fmt.Errorf("set item image: %w", err)
+		return fmt.Errorf("rows affected on delete item: %w", err)
+	}
+	if rowsAffected == 0 {
+		return domain.ErrNotFound
 	}
 
-	return strPtr(previous), nil
-}
-
-// ClearImage removes an item's image metadata, returning the previous image
-// path (if any) so the caller can delete the file.
-func (s *ItemStore) ClearImage(ctx context.Context, id uuid.UUID) (oldPath *string, err error) {
-	query := `
-		WITH old AS (SELECT image_path FROM items WHERE id = $1)
-		UPDATE items
-		SET image_path = NULL,
-			image_mime_type = NULL,
-			image_size_bytes = NULL,
-			image_width_px = NULL,
-			image_height_px = NULL,
-			updated_at = NOW()
-		WHERE id = $1
-		RETURNING (SELECT image_path FROM old)`
-
-	var previous sql.NullString
-	err = s.db.QueryRowContext(ctx, query, id).Scan(&previous)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, domain.ErrNotFound
-	}
-	if err != nil {
-		return nil, fmt.Errorf("clear item image: %w", err)
-	}
-
-	return strPtr(previous), nil
+	return nil
 }

@@ -10,10 +10,6 @@
 
 /api
 
-# Uploaded item images (stored on disk at runtime, not in the repo)
-/data/
-/uploads/
-
 # Test binary, built with `go test -c`
 *.test
 

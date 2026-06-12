@@ -26,6 +26,14 @@ func toNullInt(v *int) sql.NullInt64 {
 	return sql.NullInt64{Int64: int64(*v), Valid: true}
 }
 
+func toNullBytes(v []byte) []byte {
+	if len(v) == 0 {
+		return nil
+	}
+
+	return append([]byte(nil), v...)
+}
+
 func strPtr(v sql.NullString) *string {
 	if !v.Valid {
 		return nil

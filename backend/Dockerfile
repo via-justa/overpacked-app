@@ -33,9 +33,6 @@ COPY --from=builder /app/api .
 COPY --from=builder /app/internal/migrations/sql ./internal/migrations/sql
 COPY --from=builder /app/internal/seeds/data ./internal/seeds/data
 
-# Directory for uploaded item images (mount a volume here to persist them).
-RUN mkdir -p /app/uploads
-
 RUN chown -R app:app /app
 
 USER app

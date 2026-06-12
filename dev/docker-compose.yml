@@ -78,7 +78,6 @@ services:
       APP_PASSWORD: ${APP_PASSWORD:-pw123}
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
       SERVER_ADDR: ${SERVER_ADDR:-0.0.0.0:8000}
-      IMAGES_DIR: ${IMAGES_DIR:-/workspace/backend/data/images}
     volumes:
       - ../:/workspace
       - ${HOME}/go/pkg/mod:/go/pkg/mod

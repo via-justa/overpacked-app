@@ -21,7 +21,7 @@ func newTestRouter(t *testing.T) http.Handler {
 	}
 	authHandler := handlers.NewAuthHandler(authService)
 
-	return setupRoutes(authHandler, store.New(nil), nil, "pw123")
+	return setupRoutes(authHandler, store.New(nil), "pw123")
 }
 
 func TestRoutesHealth(t *testing.T) {

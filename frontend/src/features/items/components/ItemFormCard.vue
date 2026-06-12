@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed } from 'vue'
 import Button from 'primevue/button'
 import { iconRegistry } from '../../../lib/icons'
 import AppSelect from '../../../components/forms/AppSelect.vue'
@@ -181,40 +181,13 @@ const validationErrors = computed<Record<string, string>>(() => {
   return errors
 })
 
-// A newly picked file is previewed via an object URL; an already-saved image
-// is previewed via its server URL unless the user has flagged it for removal.
-const objectUrl = ref<string | null>(null)
-
-watch(
-  () => props.values.imageFile,
-  (file) => {
-    if (objectUrl.value) {
-      URL.revokeObjectURL(objectUrl.value)
-      objectUrl.value = null
-    }
-    if (file) {
-      objectUrl.value = URL.createObjectURL(file)
-    }
-  },
-  { immediate: true },
-)
-
-onBeforeUnmount(() => {
-  if (objectUrl.value) {
-    URL.revokeObjectURL(objectUrl.value)
-  }
-})
-
 const imagePreviewSrc = computed(() => {
-  if (props.values.imageFile && objectUrl.value) {
-    return objectUrl.value
+  if (!props.values.image_blob) {
+    return ''
   }
 
-  if (!props.values.imageRemoved && props.values.image_url) {
-    return props.values.image_url
-  }
-
-  return ''
+  const mimeType = props.values.image_mime_type || 'image/*'
+  return `data:${mimeType};base64,${props.values.image_blob}`
 })
 
 const updateField = <K extends keyof ItemFormValues>(key: K, value: ItemFormValues[K]) => {
@@ -244,17 +217,27 @@ const onImageChange = (event: Event) => {
     return
   }
 
-  updateFields({
-    imageFile: file,
-    imageRemoved: false,
-  })
+  const reader = new FileReader()
+  reader.onload = () => {
+    const result = typeof reader.result === 'string' ? reader.result : ''
+    const base64 = result.includes(',') ? result.split(',')[1] ?? '' : ''
+
+    updateFields({
+      image_blob: base64,
+      image_mime_type: file.type,
+      image_size_bytes: String(file.size),
+    })
+  }
+
+  reader.readAsDataURL(file)
   input.value = ''
 }
 
 const clearImage = () => {
   updateFields({
-    imageFile: null,
-    imageRemoved: true,
+    image_blob: '',
+    image_mime_type: '',
+    image_size_bytes: '',
   })
 }
 

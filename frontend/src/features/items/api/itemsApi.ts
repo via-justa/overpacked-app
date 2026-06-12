@@ -17,30 +17,6 @@ export const updateItem = async (itemId: string, payload: ItemUpdate): Promise<I
 export const removeItem = async (itemId: string): Promise<void> =>
   ensureApiResponse(apiClient.DELETE('/api/v1/items/{itemId}', { params: { path: { itemId } } }), 'Unable to delete item')
 
-export const uploadItemImage = async (itemId: string, file: File): Promise<Item> =>
-  unwrapApiResponse(
-    apiClient.POST('/api/v1/items/{itemId}/image', {
-      params: { path: { itemId } },
-      // The generated body type models the binary field as a string; the real
-      // upload is the File, sent as multipart. openapi-fetch returns the
-      // FormData unchanged and drops the JSON Content-Type so the browser sets
-      // the multipart boundary itself.
-      body: { file: file as unknown as string },
-      bodySerializer: () => {
-        const formData = new FormData()
-        formData.set('file', file)
-        return formData
-      },
-    }),
-    'Unable to upload item image',
-  )
-
-export const deleteItemImage = async (itemId: string): Promise<void> =>
-  ensureApiResponse(
-    apiClient.DELETE('/api/v1/items/{itemId}/image', { params: { path: { itemId } } }),
-    'Unable to delete item image',
-  )
-
 export const listManufacturers = async (): Promise<Manufacturer[]> =>
   unwrapApiResponse(apiClient.GET('/api/v1/manufacturers'), 'Unable to load manufacturers')
 

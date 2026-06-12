@@ -8,7 +8,6 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/via-justa/overpacked-app/backend/internal/api"
 	"github.com/via-justa/overpacked-app/backend/internal/http/handlers"
-	"github.com/via-justa/overpacked-app/backend/internal/storage"
 	"github.com/via-justa/overpacked-app/backend/internal/store"
 )
 
@@ -67,15 +66,6 @@ func (s *apiServer) GetItem(w http.ResponseWriter, r *http.Request, itemId opena
 }
 func (s *apiServer) UpdateItem(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID) {
 	s.items.UpdateItem(w, r, itemId)
-}
-func (s *apiServer) GetItemImage(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID) {
-	s.items.GetItemImage(w, r, itemId)
-}
-func (s *apiServer) UploadItemImage(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID) {
-	s.items.UploadItemImage(w, r, itemId)
-}
-func (s *apiServer) DeleteItemImage(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID) {
-	s.items.DeleteItemImage(w, r, itemId)
 }
 
 func (s *apiServer) ListItemTypes(w http.ResponseWriter, r *http.Request) {
@@ -266,7 +256,7 @@ func (s *apiServer) SearchGlobal(w http.ResponseWriter, r *http.Request, params 
 	s.search.SearchGlobal(w, r, params)
 }
 
-func NewRouter(authHandler *handlers.AuthHandler, st *store.Store, images *storage.ImageStore, appPassword string) chi.Router {
+func NewRouter(authHandler *handlers.AuthHandler, st *store.Store, appPassword string) chi.Router {
 	r := chi.NewRouter()
 
 	h := api.HandlerWithOptions(&apiServer{
@@ -274,7 +264,7 @@ func NewRouter(authHandler *handlers.AuthHandler, st *store.Store, images *stora
 		persons:       handlers.NewPersonsHandler(st),
 		settings:      handlers.NewSettingsHandler(st, appPassword),
 		manufacturers: handlers.NewManufacturersHandler(st),
-		items:         handlers.NewItemsHandler(st, images),
+		items:         handlers.NewItemsHandler(st),
 		itemTypes:     handlers.NewItemTypesHandler(st),
 		labels:        handlers.NewLabelsHandler(st),
 		sets:          handlers.NewSetsHandler(st),
@@ -290,8 +280,8 @@ func NewRouter(authHandler *handlers.AuthHandler, st *store.Store, images *stora
 	return r
 }
 
-func setupRoutes(authHandler *handlers.AuthHandler, st *store.Store, images *storage.ImageStore, appPassword string) chi.Router {
-	return NewRouter(authHandler, st, images, appPassword)
+func setupRoutes(authHandler *handlers.AuthHandler, st *store.Store, appPassword string) chi.Router {
+	return NewRouter(authHandler, st, appPassword)
 }
 
 func handleOpenAPIError(w http.ResponseWriter, _ *http.Request, err error) {

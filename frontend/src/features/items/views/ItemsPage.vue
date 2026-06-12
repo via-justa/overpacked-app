@@ -15,7 +15,7 @@ import AppSummaryCard from '../../../components/layout/AppSummaryCard.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { queryClient } from '../../../lib/query/client'
 import { getStoredValue, setStoredValue } from '../../../lib/storage/localStorage'
-import { listItems, listItemTypeFields, listItemTypes, listManufacturers, removeItem, updateItem, createItem, uploadItemImage, deleteItemImage, listItemLabels, listLabels, createLabel, addItemLabel, removeItemLabel } from '../api/itemsApi'
+import { listItems, listItemTypeFields, listItemTypes, listManufacturers, removeItem, updateItem, createItem, listItemLabels, listLabels, createLabel, addItemLabel, removeItemLabel } from '../api/itemsApi'
 import { useMutationWithToast } from '../../../composables/useMutationWithToast'
 import { useInlineMutation } from '../../../composables/useInlineMutation'
 import { useSettings } from '../../../composables/useSettings'
@@ -191,9 +191,9 @@ const emptyFormValues = (): ItemFormValues => ({
   is_default: true,
   weight_value: '',
   volume_value: '',
-  imageFile: null,
-  image_url: null,
-  imageRemoved: false,
+  image_blob: '',
+  image_mime_type: '',
+  image_size_bytes: '',
   attributes: {},
   label_ids: [],
 })
@@ -242,9 +242,9 @@ const toFormValues = (item: Item): ItemFormValues => ({
     typeof item.volume_ml === 'number'
       ? toRoundedString(mlToInput(item.volume_ml, volumeInputUnit.value))
       : '',
-  imageFile: null,
-  image_url: item.image_url ?? null,
-  imageRemoved: false,
+  image_blob: item.image_blob ?? '',
+  image_mime_type: item.image_mime_type ?? '',
+  image_size_bytes: toIntegerString(item.image_size_bytes),
   attributes: toFormAttributes(item.attributes),
   label_ids: [],
 })
@@ -283,6 +283,22 @@ const applyCommonPayloadFields = (payload: ItemCreate | ItemUpdate, values: Item
     if (parsedVolume !== undefined) {
       payload.volume_ml = Math.round(inputToMl(parsedVolume, volumeInputUnit.value) * 100) / 100
     }
+  }
+}
+
+const applyImagePayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
+  if (!values.image_blob.trim()) {
+    return
+  }
+
+  payload.image_blob = values.image_blob.trim()
+  if (values.image_mime_type.trim()) {
+    payload.image_mime_type = values.image_mime_type.trim()
+  }
+
+  const parsedImageSize = parseInteger(values.image_size_bytes)
+  if (parsedImageSize !== undefined) {
+    payload.image_size_bytes = parsedImageSize
   }
 }
 
@@ -333,6 +349,7 @@ const toPayload = (values: ItemFormValues, dynamicFields: ItemTypeField[]): Item
   }
 
   applyCommonPayloadFields(payload, values)
+  applyImagePayloadFields(payload, values)
 
   const dynamicAttributes = toDynamicAttributes(values, dynamicFields)
   if (dynamicAttributes !== undefined) {
@@ -384,7 +401,13 @@ const formatText = (value?: string | null) => {
   return formatTextDisplay(value)
 }
 
-const getItemImageSrc = (item: Item) => item.image_url ?? ''
+const getItemImageSrc = (item: Item) => {
+  if (!item.image_blob) {
+    return ''
+  }
+
+  return `data:${item.image_mime_type ?? 'image/*'};base64,${item.image_blob}`
+}
 
 const getCardSummaryEntries = (item: Item) => {
   const entries = [
@@ -815,8 +838,7 @@ const onRowDuplicate = async (item: Item) => {
       }
 
       await withItemsRefresh(async () => {
-        const created = await createItem(payload)
-        await copyItemImage(item, created.id)
+        await createItem(payload)
       })
     },
     {
@@ -1173,54 +1195,9 @@ onBeforeUnmount(() => {
   }
 })
 
-// Image bytes live on disk and are managed through dedicated endpoints, so the
-// upload/removal happens after the item itself is saved.
-const syncItemImage = async (itemId: string, values: ItemFormValues) => {
-  try {
-    if (values.imageFile) {
-      await uploadItemImage(itemId, values.imageFile)
-    } else if (values.imageRemoved && values.image_url) {
-      await deleteItemImage(itemId)
-    }
-  } catch (err) {
-    // Log but let the item save succeed; the image can be retried later.
-    // eslint-disable-next-line no-console
-    console.error('Failed to sync item image:', err)
-    toast.add({
-      severity: 'warn',
-      summary: 'Image not saved',
-      detail: 'Item saved but its image could not be updated.',
-      life: 3500,
-    })
-  }
-}
-
-// Duplicating an item also copies its image: fetch the source bytes and
-// re-upload them to the new item (image bytes no longer travel in the payload).
-const copyItemImage = async (source: Item, targetId: string) => {
-  if (!source.image_url) {
-    return
-  }
-
-  try {
-    const response = await fetch(source.image_url)
-    if (!response.ok) {
-      return
-    }
-    const blob = await response.blob()
-    const file = new File([blob], 'image', { type: source.image_mime_type ?? blob.type })
-    await uploadItemImage(targetId, file)
-  } catch (err) {
-    // eslint-disable-next-line no-console
-    console.error('Failed to copy item image:', err)
-  }
-}
-
 const onCreate = async () => {
   const payload = toPayload(createValues.value, itemFormDynamicFields.value) as ItemCreate
   const createdItem = await createMutation.mutateAsync(payload)
-
-  await syncItemImage(createdItem.id, createValues.value)
 
   // Save label associations
   if (createSelectedLabels.value.length > 0) {
@@ -1324,8 +1301,6 @@ const onSaveEdit = async () => {
 
   const payload = toPayload(editValues.value, itemFormDynamicFields.value)
   await updateMutation.mutateAsync({ itemId: editingItemId.value, payload })
-
-  await syncItemImage(editingItemId.value, editValues.value)
 
   // Sync label associations
   try {

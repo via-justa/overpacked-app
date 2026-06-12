@@ -59,11 +59,11 @@ erDiagram
         int default_quantity
         string default_carry_status "packed, worn"
         boolean is_default "auto-add to new packs"
-        string image_path "optional; relative path to image on disk"
-        string image_mime_type "required when image_path is set"
-        int image_size_bytes "required when image_path is set"
-        int image_width_px "required when image_path is set"
-        int image_height_px "required when image_path is set"
+        bytes image_blob "optional"
+        string image_mime_type "required when image_blob is set"
+        int image_size_bytes "required when image_blob is set"
+        int image_width_px "required when image_blob is set"
+        int image_height_px "required when image_blob is set"
         json attributes_json "dynamic fields for custom item types"
         datetime created_at
         datetime updated_at
