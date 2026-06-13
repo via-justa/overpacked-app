@@ -61,44 +61,58 @@ const (
 	maxTotalUncompressedBytes int64 = 1 << 30   // 1 GiB across the whole archive
 )
 
+// archiveContents accumulates the decoded parts of a backup archive.
+type archiveContents struct {
+	snap     *Snapshot
+	manifest *Manifest
+	images   map[string][]byte
+}
+
 func readArchive(zr *zip.Reader) (*Snapshot, *Manifest, map[string][]byte, error) {
-	var snap *Snapshot
-	var manifest *Manifest
-	images := map[string][]byte{}
+	contents := archiveContents{images: map[string][]byte{}}
 	remaining := maxTotalUncompressedBytes
 
 	for _, f := range zr.File {
-		switch {
-		case f.Name == dataFilename:
-			s, err := readJSONEntry[Snapshot](f, &remaining)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			snap = s
-		case f.Name == manifestFilename:
-			m, err := readJSONEntry[Manifest](f, &remaining)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			manifest = m
-		case strings.HasPrefix(f.Name, imagesDir+"/") && !f.FileInfo().IsDir():
-			data, err := readZipEntry(f, &remaining)
-			if err != nil {
-				return nil, nil, nil, err
-			}
-			images[path.Base(f.Name)] = data
+		if err := contents.readEntry(f, &remaining); err != nil {
+			return nil, nil, nil, err
 		}
 	}
 
-	if snap == nil {
+	if contents.snap == nil {
 		return nil, nil, nil, fmt.Errorf("%w: missing %s", ErrInvalidArchive, dataFilename)
 	}
-	if manifest != nil && manifest.FormatVersion > FormatVersion {
+	if contents.manifest != nil && contents.manifest.FormatVersion > FormatVersion {
 		return nil, nil, nil, fmt.Errorf("%w: archive is version %d, this build supports %d",
-			ErrUnsupportedVersion, manifest.FormatVersion, FormatVersion)
+			ErrUnsupportedVersion, contents.manifest.FormatVersion, FormatVersion)
 	}
 
-	return snap, manifest, images, nil
+	return contents.snap, contents.manifest, contents.images, nil
+}
+
+// readEntry decodes a single recognized archive entry into the contents,
+// enforcing the cumulative decompression budget.
+func (c *archiveContents) readEntry(f *zip.File, remaining *int64) error {
+	switch {
+	case f.Name == dataFilename:
+		s, err := readJSONEntry[Snapshot](f, remaining)
+		if err != nil {
+			return err
+		}
+		c.snap = s
+	case f.Name == manifestFilename:
+		m, err := readJSONEntry[Manifest](f, remaining)
+		if err != nil {
+			return err
+		}
+		c.manifest = m
+	case strings.HasPrefix(f.Name, imagesDir+"/") && !f.FileInfo().IsDir():
+		data, err := readZipEntry(f, remaining)
+		if err != nil {
+			return err
+		}
+		c.images[path.Base(f.Name)] = data
+	}
+	return nil
 }
 
 // readZipEntry fully decompresses a single archive entry while enforcing the
@@ -162,27 +176,45 @@ func wipeUserContent(ctx context.Context, tx *sql.Tx) error {
 
 // applySnapshot inserts/upserts the snapshot in FK dependency order.
 func applySnapshot(ctx context.Context, tx *sql.Tx, snap *Snapshot, images map[string][]byte) error {
-	if err := applySettings(ctx, tx, snap.Settings); err != nil {
-		return err
-	}
-
-	manuMap, err := applyManufacturers(ctx, tx, snap.Manufacturers)
+	manuMap, labelMap, err := applyCatalog(ctx, tx, snap)
 	if err != nil {
 		return err
+	}
+	if err := applyContent(ctx, tx, snap, images, manuMap, labelMap); err != nil {
+		return err
+	}
+	return applyTripsData(ctx, tx, snap)
+}
+
+// applyCatalog upserts the shared catalog (settings, manufacturers, labels, item
+// types/fields, persons) and returns the manufacturer and label ID maps used by
+// later phases.
+func applyCatalog(ctx context.Context, tx *sql.Tx, snap *Snapshot) (map[uuid.UUID]uuid.UUID, map[uuid.UUID]uuid.UUID, error) {
+	if err := applySettings(ctx, tx, snap.Settings); err != nil {
+		return nil, nil, err
+	}
+	manuMap, err := applyManufacturers(ctx, tx, snap.Manufacturers)
+	if err != nil {
+		return nil, nil, err
 	}
 	labelMap, err := applyLabels(ctx, tx, snap.Labels)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	if err := applyItemTypes(ctx, tx, snap.ItemTypes); err != nil {
-		return err
+		return nil, nil, err
 	}
 	if err := applyItemTypeFields(ctx, tx, snap.ItemTypeFields); err != nil {
-		return err
+		return nil, nil, err
 	}
 	if err := applyPersons(ctx, tx, snap.Persons); err != nil {
-		return err
+		return nil, nil, err
 	}
+	return manuMap, labelMap, nil
+}
+
+// applyContent upserts items and the collections that reference them.
+func applyContent(ctx context.Context, tx *sql.Tx, snap *Snapshot, images map[string][]byte, manuMap, labelMap map[uuid.UUID]uuid.UUID) error {
 	if err := applyItems(ctx, tx, snap.Items, manuMap, images); err != nil {
 		return err
 	}
@@ -204,9 +236,11 @@ func applySnapshot(ctx context.Context, tx *sql.Tx, snap *Snapshot, images map[s
 	if err := applyPackingLists(ctx, tx, snap.PackingLists); err != nil {
 		return err
 	}
-	if err := applyPackingListLabels(ctx, tx, snap.PackingListLabels, labelMap); err != nil {
-		return err
-	}
+	return applyPackingListLabels(ctx, tx, snap.PackingListLabels, labelMap)
+}
+
+// applyTripsData upserts trips and their per-person packs and items.
+func applyTripsData(ctx context.Context, tx *sql.Tx, snap *Snapshot) error {
 	if err := applyTrips(ctx, tx, snap.Trips); err != nil {
 		return err
 	}

@@ -24,7 +24,7 @@ const planner = provideTripPlanner()
 
 onMounted(() => {
     if (props.tripId) {
-        void planner.loadExisting(props.tripId)
+        planner.loadExisting(props.tripId)
     }
 })
 
@@ -40,7 +40,7 @@ const saveMutation = useMutationWithToast({
     errorMessage: { summary: 'Save failed', detail: 'Unable to save trip.' },
     invalidateQueries: [['trips'], ['trips-details']],
     onSuccess: () => {
-        void router.push('/trips')
+        router.push('/trips')
     },
 })
 
@@ -55,7 +55,7 @@ const goToStep1 = () => {
 }
 
 const onCancel = () => {
-    void router.push('/trips')
+    router.push('/trips')
 }
 
 const onSave = () => {

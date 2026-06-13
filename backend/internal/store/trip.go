@@ -10,6 +10,8 @@ import (
 	"github.com/via-justa/overpacked-app/backend/internal/domain"
 )
 
+const errGetRowsAffected = "get rows affected"
+
 type TripStore struct {
 	db *sql.DB
 }
@@ -175,7 +177,7 @@ func (s *TripStore) Delete(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("delete trip: %w", err)
 	}
 
-	return rowsAffectedOrNotFound(result, "get rows affected")
+	return rowsAffectedOrNotFound(result, errGetRowsAffected)
 }
 
 // TripPerson operations
@@ -245,7 +247,7 @@ func (s *TripStore) RemovePerson(ctx context.Context, tripID, personID uuid.UUID
 		return fmt.Errorf("remove person from trip: %w", err)
 	}
 
-	return rowsAffectedOrNotFound(result, "get rows affected")
+	return rowsAffectedOrNotFound(result, errGetRowsAffected)
 }
 
 // TripPersonPack operations
@@ -300,7 +302,7 @@ func (s *TripStore) RemovePersonPack(ctx context.Context, tripPersonID, packID u
 		return fmt.Errorf("remove pack from person: %w", err)
 	}
 
-	return rowsAffectedOrNotFound(result, "get rows affected")
+	return rowsAffectedOrNotFound(result, errGetRowsAffected)
 }
 
 // TripPersonItem operations
@@ -430,5 +432,5 @@ func (s *TripStore) RemovePersonItem(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("remove item from person: %w", err)
 	}
 
-	return rowsAffectedOrNotFound(result, "get rows affected")
+	return rowsAffectedOrNotFound(result, errGetRowsAffected)
 }

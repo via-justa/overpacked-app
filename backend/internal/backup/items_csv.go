@@ -97,16 +97,9 @@ func (s *Service) writeItemRows(ctx context.Context, cw *csv.Writer, zw *zip.Wri
 			return fmt.Errorf("scan item row for csv: %w", err)
 		}
 
-		imageFile := ""
-		if zw != nil && len(imageBlob) > 0 && mimeType.Valid {
-			imageFile = uniqueImageName(usedNames, name, imageExtForMime(mimeType.String))
-			f, err := zw.Create(path.Join(imagesDir, imageFile))
-			if err != nil {
-				return fmt.Errorf("create image entry %s: %w", imageFile, err)
-			}
-			if _, err := f.Write(imageBlob); err != nil {
-				return fmt.Errorf("write image entry %s: %w", imageFile, err)
-			}
+		imageFile, err := writeImageEntry(zw, usedNames, name, imageBlob, mimeType)
+		if err != nil {
+			return err
 		}
 
 		record := []string{
@@ -125,6 +118,23 @@ func (s *Service) writeItemRows(ctx context.Context, cw *csv.Writer, zw *zip.Wri
 	}
 
 	return rows.Err()
+}
+
+// writeImageEntry writes an item's image blob into the archive when present and
+// zw is non-nil, returning the archive filename (or "" when no image is written).
+func writeImageEntry(zw *zip.Writer, used map[string]int, name string, blob []byte, mime sql.NullString) (string, error) {
+	if zw == nil || len(blob) == 0 || !mime.Valid {
+		return "", nil
+	}
+	imageFile := uniqueImageName(used, name, imageExtForMime(mime.String))
+	f, err := zw.Create(path.Join(imagesDir, imageFile))
+	if err != nil {
+		return "", fmt.Errorf("create image entry %s: %w", imageFile, err)
+	}
+	if _, err := f.Write(blob); err != nil {
+		return "", fmt.Errorf("write image entry %s: %w", imageFile, err)
+	}
+	return imageFile, nil
 }
 
 func uniqueImageName(used map[string]int, itemName, ext string) string {

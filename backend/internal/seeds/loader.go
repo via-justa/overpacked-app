@@ -80,40 +80,27 @@ func LoadSeedFiles() ([]SeedFile, error) {
 func ValidateSeedFile(file SeedFile) error {
 	switch file.Table {
 	case "labels":
-		// Check for duplicates
-		if err := CheckDuplicates(file.Records, "name"); err != nil {
-			return fmt.Errorf(fileErrorFormat, file.Filename, err)
-		}
-		if err := CheckDuplicates(file.Records, "id"); err != nil {
-			return fmt.Errorf(fileErrorFormat, file.Filename, err)
-		}
-
-		// Validate each record
-		for i, record := range file.Records {
-			if err := ValidateLabelsRecord(record, i); err != nil {
-				return fmt.Errorf(fileErrorFormat, file.Filename, err)
-			}
-		}
-
+		return validateSeedRecords(file, ValidateLabelsRecord)
 	case "manufacturers":
-		// Check for duplicates
-		if err := CheckDuplicates(file.Records, "name"); err != nil {
-			return fmt.Errorf(fileErrorFormat, file.Filename, err)
-		}
-		if err := CheckDuplicates(file.Records, "id"); err != nil {
-			return fmt.Errorf(fileErrorFormat, file.Filename, err)
-		}
-
-		// Validate each record
-		for i, record := range file.Records {
-			if err := ValidateManufacturersRecord(record, i); err != nil {
-				return fmt.Errorf(fileErrorFormat, file.Filename, err)
-			}
-		}
-
+		return validateSeedRecords(file, ValidateManufacturersRecord)
 	default:
 		return fmt.Errorf("%s: unsupported table '%s'", file.Filename, file.Table)
 	}
+}
 
+// validateSeedRecords enforces name/id uniqueness and runs a per-record
+// validator, wrapping any failure with the file name for context.
+func validateSeedRecords(file SeedFile, validate func(record map[string]any, index int) error) error {
+	if err := CheckDuplicates(file.Records, "name"); err != nil {
+		return fmt.Errorf(fileErrorFormat, file.Filename, err)
+	}
+	if err := CheckDuplicates(file.Records, "id"); err != nil {
+		return fmt.Errorf(fileErrorFormat, file.Filename, err)
+	}
+	for i, record := range file.Records {
+		if err := validate(record, i); err != nil {
+			return fmt.Errorf(fileErrorFormat, file.Filename, err)
+		}
+	}
 	return nil
 }

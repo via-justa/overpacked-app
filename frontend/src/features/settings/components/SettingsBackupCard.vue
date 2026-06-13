@@ -117,7 +117,7 @@ const onSave = () => {
   if (!isScheduleValid.value) {
     return
   }
-  void updateMutation.mutateAsync({
+  updateMutation.mutate({
     enabled: enabled.value,
     schedule: resolvedSchedule.value,
     retention_count: retentionCount.value,
@@ -125,7 +125,7 @@ const onSave = () => {
 }
 
 const onImport = (params: ImportBackupParams) => {
-  void importMutation.mutateAsync(params)
+  importMutation.mutate(params)
 }
 </script>
 

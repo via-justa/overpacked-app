@@ -75,7 +75,7 @@ export const selectPassThrough = {
 // Turns a component's <option> default slot into PrimeVue option objects.
 export const useSelectOptions = (slots: Slots): { parsedOptions: ComputedRef<ParsedSelectOption[]> } => {
   const parsedOptions = computed<ParsedSelectOption[]>(() =>
-    parseOptionNodes((slots.default?.() ?? []) as VNode[]),
+    parseOptionNodes(slots.default?.() ?? []),
   )
 
   return { parsedOptions }

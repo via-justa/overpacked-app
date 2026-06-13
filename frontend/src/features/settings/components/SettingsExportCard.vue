@@ -21,7 +21,7 @@ const exportMutation = useMutationWithToast<void, Error, boolean>({
 })
 
 const onExport = () => {
-  void exportMutation.mutateAsync(includeImages.value)
+  exportMutation.mutate(includeImages.value)
 }
 </script>
 

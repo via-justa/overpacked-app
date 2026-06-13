@@ -34,7 +34,10 @@ jobs:
       # found" and runs a reduced TypeScript analysis.
       - name: Install frontend dependencies
         working-directory: frontend
-        run: npm ci
+        # --ignore-scripts: analysis only needs node_modules present (so the
+        # tsconfig "extends" resolves); we never build here, so skip dependency
+        # lifecycle scripts to avoid running third-party code in CI.
+        run: npm ci --ignore-scripts
 
       - name: Set up Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5

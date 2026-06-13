@@ -57,11 +57,11 @@ const canShowEmptyState = computed(
 // ─── Create / edit navigation ────────────────────────────────────────────────
 
 const openCreateDialog = () => {
-    void router.push('/trips/new')
+    router.push('/trips/new')
 }
 
 const onStartEdit = (trip: Trip) => {
-    void router.push(`/trips/${trip.id}/edit`)
+    router.push(`/trips/${trip.id}/edit`)
 }
 
 // ─── Delete ──────────────────────────────────────────────────────────────────

@@ -160,7 +160,7 @@ function createTripPlannerContext(): TripPlannerContext {
 
     // Item → labels map powers the packing-list label panel and pool filtering.
     const itemLabelsQuery = useQuery({
-        queryKey: computed(() => ['items-labels', availableItems.value.map((item) => item.id).sort().join(',')]),
+        queryKey: computed(() => ['items-labels', availableItems.value.map((item) => item.id).sort((a, b) => a.localeCompare(b)).join(',')]),
         queryFn: async () => {
             const list = availableItems.value
             if (list.length === 0) {
@@ -370,9 +370,7 @@ function createTripPlannerContext(): TripPlannerContext {
         }
         const localId = nextLocalId('pack')
         person.packs.push({ localId, name: name.trim() || `Pack ${person.packs.length + 1}`, items: [] })
-        if (person.mainPackLocalId === null) {
-            person.mainPackLocalId = localId
-        }
+        person.mainPackLocalId ??= localId
     }
 
     function removePack(personId: string, packLocalId: string): void {
@@ -403,7 +401,7 @@ function createTripPlannerContext(): TripPlannerContext {
 
     function setMainPack(personId: string, packLocalId: string): void {
         const person = findPerson(personId)
-        if (person && person.packs.some((pack) => pack.localId === packLocalId)) {
+        if (person?.packs.some((pack) => pack.localId === packLocalId)) {
             person.mainPackLocalId = packLocalId
         }
     }
@@ -451,7 +449,8 @@ function createTripPlannerContext(): TripPlannerContext {
             return
         }
         // Snapshot first: autoAssignToPerson mutates unassigned as it goes.
-        for (const placement of [...(placements ?? unassigned.value)]) {
+        const snapshot = [...(placements ?? unassigned.value)]
+        for (const placement of snapshot) {
             autoAssignToPerson(personId, placement)
         }
     }

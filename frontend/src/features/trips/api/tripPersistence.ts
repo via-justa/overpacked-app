@@ -81,9 +81,8 @@ type OriginalItem = { item_id: string; quantity: number; carry_status: string }
 // True when a staged item differs from its original counterpart (or has no counterpart).
 function itemChanged(staged: StagedItem, original?: OriginalItem): boolean {
     return (
-        !original
-        || original.quantity !== staged.quantity
-        || original.carry_status !== staged.carryStatus
+        original?.quantity !== staged.quantity
+        || original?.carry_status !== staged.carryStatus
     )
 }
 

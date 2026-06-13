@@ -67,60 +67,31 @@ func (s *Service) collect(ctx context.Context) (*Snapshot, map[string][]byte, er
 	snap := &Snapshot{}
 	images := map[string][]byte{}
 
-	var err error
-	if snap.Settings, err = s.querySettings(ctx); err != nil {
-		return nil, nil, err
+	// Each loader fills one section of the snapshot, in FK dependency order.
+	loaders := []func() error{
+		func() (err error) { snap.Settings, err = s.querySettings(ctx); return },
+		func() (err error) { snap.Manufacturers, err = s.queryManufacturers(ctx); return },
+		func() (err error) { snap.Labels, err = s.queryLabels(ctx); return },
+		func() (err error) { snap.ItemTypes, err = s.queryItemTypes(ctx); return },
+		func() (err error) { snap.ItemTypeFields, err = s.queryItemTypeFields(ctx); return },
+		func() (err error) { snap.Persons, err = s.queryPersons(ctx); return },
+		func() (err error) { snap.Items, err = s.queryItems(ctx, images); return },
+		func() (err error) { snap.ItemLabels, err = s.queryItemLabels(ctx); return },
+		func() (err error) { snap.Sets, err = s.querySets(ctx); return },
+		func() (err error) { snap.SetItems, err = s.querySetItems(ctx); return },
+		func() (err error) { snap.Packs, err = s.queryPacks(ctx); return },
+		func() (err error) { snap.PackItems, err = s.queryPackItems(ctx); return },
+		func() (err error) { snap.PackingLists, err = s.queryPackingLists(ctx); return },
+		func() (err error) { snap.PackingListLabels, err = s.queryPackingListLabels(ctx); return },
+		func() (err error) { snap.Trips, err = s.queryTrips(ctx); return },
+		func() (err error) { snap.TripPersons, err = s.queryTripPersons(ctx); return },
+		func() (err error) { snap.TripPersonPacks, err = s.queryTripPersonPacks(ctx); return },
+		func() (err error) { snap.TripPersonItems, err = s.queryTripPersonItems(ctx); return },
 	}
-	if snap.Manufacturers, err = s.queryManufacturers(ctx); err != nil {
-		return nil, nil, err
-	}
-	if snap.Labels, err = s.queryLabels(ctx); err != nil {
-		return nil, nil, err
-	}
-	if snap.ItemTypes, err = s.queryItemTypes(ctx); err != nil {
-		return nil, nil, err
-	}
-	if snap.ItemTypeFields, err = s.queryItemTypeFields(ctx); err != nil {
-		return nil, nil, err
-	}
-	if snap.Persons, err = s.queryPersons(ctx); err != nil {
-		return nil, nil, err
-	}
-	if snap.Items, err = s.queryItems(ctx, images); err != nil {
-		return nil, nil, err
-	}
-	if snap.ItemLabels, err = s.queryItemLabels(ctx); err != nil {
-		return nil, nil, err
-	}
-	if snap.Sets, err = s.querySets(ctx); err != nil {
-		return nil, nil, err
-	}
-	if snap.SetItems, err = s.querySetItems(ctx); err != nil {
-		return nil, nil, err
-	}
-	if snap.Packs, err = s.queryPacks(ctx); err != nil {
-		return nil, nil, err
-	}
-	if snap.PackItems, err = s.queryPackItems(ctx); err != nil {
-		return nil, nil, err
-	}
-	if snap.PackingLists, err = s.queryPackingLists(ctx); err != nil {
-		return nil, nil, err
-	}
-	if snap.PackingListLabels, err = s.queryPackingListLabels(ctx); err != nil {
-		return nil, nil, err
-	}
-	if snap.Trips, err = s.queryTrips(ctx); err != nil {
-		return nil, nil, err
-	}
-	if snap.TripPersons, err = s.queryTripPersons(ctx); err != nil {
-		return nil, nil, err
-	}
-	if snap.TripPersonPacks, err = s.queryTripPersonPacks(ctx); err != nil {
-		return nil, nil, err
-	}
-	if snap.TripPersonItems, err = s.queryTripPersonItems(ctx); err != nil {
-		return nil, nil, err
+	for _, load := range loaders {
+		if err := load(); err != nil {
+			return nil, nil, err
+		}
 	}
 
 	return snap, images, nil

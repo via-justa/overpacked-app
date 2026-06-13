@@ -24,6 +24,11 @@ const (
 )
 
 const (
+	headerContentType        = "Content-Type"
+	headerContentDisposition = "Content-Disposition"
+)
+
+const (
 	backupErrConfigLoad   = "failed to load backup config"
 	backupErrConfigSave   = "failed to save backup config"
 	backupErrPassword     = "password confirmation failed"
@@ -48,8 +53,8 @@ func NewBackupHandler(service *backup.Service, st *store.Store, scheduler *backu
 // ExportBackup streams a full backup ZIP as a download.
 func (h *BackupHandler) ExportBackup(w http.ResponseWriter, r *http.Request) {
 	filename := fmt.Sprintf("overpacked-backup-%s.zip", time.Now().UTC().Format("20060102-150405"))
-	w.Header().Set("Content-Type", "application/zip")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+	w.Header().Set(headerContentType, "application/zip")
+	w.Header().Set(headerContentDisposition, fmt.Sprintf("attachment; filename=%q", filename))
 
 	if err := h.service.BuildArchive(r.Context(), w); err != nil {
 		// Headers are already sent; surface the failure in logs via the panic-free path.
@@ -195,11 +200,11 @@ func (h *BackupHandler) ExportItems(w http.ResponseWriter, r *http.Request, para
 	includeImages := params.IncludeImages != nil && *params.IncludeImages
 
 	if includeImages {
-		w.Header().Set("Content-Type", "application/zip")
-		w.Header().Set("Content-Disposition", `attachment; filename="items-export.zip"`)
+		w.Header().Set(headerContentType, "application/zip")
+		w.Header().Set(headerContentDisposition, `attachment; filename="items-export.zip"`)
 	} else {
-		w.Header().Set("Content-Type", "text/csv")
-		w.Header().Set("Content-Disposition", `attachment; filename="items.csv"`)
+		w.Header().Set(headerContentType, "text/csv")
+		w.Header().Set(headerContentDisposition, `attachment; filename="items.csv"`)
 	}
 
 	if err := h.service.ExportItemsCSV(r.Context(), w, includeImages); err != nil {
