@@ -115,7 +115,7 @@ const primaryNavItems = props.navItems.filter((item) => item.to !== '/settings')
       </nav>
 
       <!-- Global search sits on the right on desktop and wraps to full width on mobile -->
-      <div data-element="top-nav-search" class="flex w-full justify-end md:w-auto md:max-w-md md:flex-1">
+      <div data-element="top-nav-search" class="flex w-full justify-end md:w-auto md:max-w-[16rem] md:flex-1">
         <AppGlobalSearch />
       </div>
     </div>

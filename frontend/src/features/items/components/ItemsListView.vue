@@ -64,7 +64,7 @@ defineEmits<{
       @row:toggle-default="$emit('row:toggleDefault', $event)" @row:delete="$emit('row:delete', $event)" />
   </div>
 
-  <div v-else data-element="items-card-view" class="grid gap-4 sm:grid-cols-3 xl:grid-cols-4">
+  <div v-else data-element="items-card-view" class="grid gap-2 sm:gap-4 sm:grid-cols-3 xl:grid-cols-5">
     <ItemCard v-for="item in items" :key="item.id" :item="item" :image-src="getImageSrc(item)"
       :item-labels="itemLabelsMap.get(item.id) ?? []" @edit="$emit('row:edit', $event)">
       <template #additional-info>
