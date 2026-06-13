@@ -15,6 +15,7 @@ import AppSummaryCard from '../../../components/layout/AppSummaryCard.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { queryClient } from '../../../lib/query/client'
 import { getStoredValue, setStoredValue } from '../../../lib/storage/localStorage'
+import { safeHttpUrl } from '../../../lib/navigation/url'
 import { listItems, listItemTypeFields, listItemTypes, listManufacturers, removeItem, updateItem, createItem, listItemLabels, listLabels, createLabel, addItemLabel, removeItemLabel } from '../api/itemsApi'
 import { useMutationWithToast } from '../../../composables/useMutationWithToast'
 import { useInlineMutation } from '../../../composables/useInlineMutation'
@@ -634,11 +635,11 @@ const createTableFieldDefinition = (field: TableFieldOption): TableFieldDefiniti
 
   const renderHref = (item: Item): string | undefined => {
     if (key === 'source_url') {
-      return item.source_url?.trim() ? item.source_url : undefined
+      return safeHttpUrl(item.source_url)
     }
 
     if (key === 'manufacturer') {
-      return manufacturerWebsitesById.value.get(item.manufacturer_id)
+      return safeHttpUrl(manufacturerWebsitesById.value.get(item.manufacturer_id))
     }
 
     return undefined

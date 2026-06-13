@@ -53,34 +53,38 @@ func (s *Service) Import(ctx context.Context, zr *zip.Reader, mode Mode) (Import
 	return ImportResult{Mode: mode, Counts: snap.counts()}, nil
 }
 
+// Caps on decompressed archive content. The upload itself is already capped by
+// the handler; these bound how far a malicious (zip-bomb) archive can amplify in
+// memory once each entry is decompressed.
+const (
+	maxEntryUncompressedBytes int64 = 256 << 20 // 256 MiB per entry
+	maxTotalUncompressedBytes int64 = 1 << 30   // 1 GiB across the whole archive
+)
+
 func readArchive(zr *zip.Reader) (*Snapshot, *Manifest, map[string][]byte, error) {
 	var snap *Snapshot
 	var manifest *Manifest
 	images := map[string][]byte{}
+	remaining := maxTotalUncompressedBytes
 
 	for _, f := range zr.File {
 		switch {
 		case f.Name == dataFilename:
-			s, err := readJSONEntry[Snapshot](f)
+			s, err := readJSONEntry[Snapshot](f, &remaining)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			snap = s
 		case f.Name == manifestFilename:
-			m, err := readJSONEntry[Manifest](f)
+			m, err := readJSONEntry[Manifest](f, &remaining)
 			if err != nil {
 				return nil, nil, nil, err
 			}
 			manifest = m
 		case strings.HasPrefix(f.Name, imagesDir+"/") && !f.FileInfo().IsDir():
-			rc, err := f.Open()
+			data, err := readZipEntry(f, &remaining)
 			if err != nil {
-				return nil, nil, nil, fmt.Errorf("%w: open %s", ErrInvalidArchive, f.Name)
-			}
-			data, err := io.ReadAll(rc)
-			_ = rc.Close()
-			if err != nil {
-				return nil, nil, nil, fmt.Errorf("%w: read %s", ErrInvalidArchive, f.Name)
+				return nil, nil, nil, err
 			}
 			images[path.Base(f.Name)] = data
 		}
@@ -97,15 +101,42 @@ func readArchive(zr *zip.Reader) (*Snapshot, *Manifest, map[string][]byte, error
 	return snap, manifest, images, nil
 }
 
-func readJSONEntry[T any](f *zip.File) (*T, error) {
+// readZipEntry fully decompresses a single archive entry while enforcing the
+// per-entry and cumulative size caps, then decrements remaining by the bytes
+// consumed. It rejects (rather than silently truncates) anything over the cap.
+func readZipEntry(f *zip.File, remaining *int64) ([]byte, error) {
+	limit := maxEntryUncompressedBytes
+	if *remaining < limit {
+		limit = *remaining
+	}
+
 	rc, err := f.Open()
 	if err != nil {
 		return nil, fmt.Errorf("%w: open %s", ErrInvalidArchive, f.Name)
 	}
 	defer rc.Close()
 
+	// Read one byte past the limit so we can tell "exactly at limit" from "over".
+	data, err := io.ReadAll(io.LimitReader(rc, limit+1))
+	if err != nil {
+		return nil, fmt.Errorf("%w: read %s", ErrInvalidArchive, f.Name)
+	}
+	if int64(len(data)) > limit {
+		return nil, fmt.Errorf("%w: %s", ErrArchiveTooLarge, f.Name)
+	}
+
+	*remaining -= int64(len(data))
+	return data, nil
+}
+
+func readJSONEntry[T any](f *zip.File, remaining *int64) (*T, error) {
+	data, err := readZipEntry(f, remaining)
+	if err != nil {
+		return nil, err
+	}
+
 	var out T
-	if err := json.NewDecoder(rc).Decode(&out); err != nil {
+	if err := json.Unmarshal(data, &out); err != nil {
 		return nil, fmt.Errorf("%w: decode %s: %v", ErrInvalidArchive, f.Name, err)
 	}
 	return &out, nil

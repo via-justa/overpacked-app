@@ -16,6 +16,9 @@ var (
 	ErrUnsupportedVersion = errors.New("unsupported backup format version")
 	// ErrInvalidArchive means the uploaded file is not a readable backup archive.
 	ErrInvalidArchive = errors.New("invalid backup archive")
+	// ErrArchiveTooLarge means the archive's decompressed contents exceed the
+	// allowed size, guarding against decompression-bomb uploads.
+	ErrArchiveTooLarge = errors.New("backup archive contents exceed the maximum allowed size")
 )
 
 // Service builds and restores backup archives and writes scheduled backups to disk.

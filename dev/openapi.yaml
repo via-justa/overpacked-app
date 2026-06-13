@@ -26,6 +26,10 @@ paths:
       tags:
         - auth
       summary: Login with app credentials
+      description: >-
+        On success the access token is returned in the body and the refresh
+        token is set in an HttpOnly `op_refresh` cookie (never exposed to
+        JavaScript).
       operationId: authLogin
       requestBody:
         required: true
@@ -36,6 +40,11 @@ paths:
       responses:
         '200':
           description: Authentication successful
+          headers:
+            Set-Cookie:
+              description: HttpOnly refresh token cookie (`op_refresh`).
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -50,22 +59,23 @@ paths:
       tags:
         - auth
       summary: Refresh JWT tokens
+      description: >-
+        Rotates the session using the refresh token in the HttpOnly
+        `op_refresh` cookie set at login. Takes no request body; a fresh access
+        token is returned in the body and a rotated refresh cookie is set.
       operationId: authRefresh
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RefreshRequest'
       responses:
         '200':
           description: Tokens refreshed
+          headers:
+            Set-Cookie:
+              description: Rotated HttpOnly refresh token cookie (`op_refresh`).
+              schema:
+                type: string
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TokenResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
 
@@ -2215,25 +2225,14 @@ components:
         password:
           type: string
 
-    RefreshRequest:
-      type: object
-      required:
-        - refresh_token
-      properties:
-        refresh_token:
-          type: string
-
     TokenResponse:
       type: object
       required:
         - access_token
-        - refresh_token
         - token_type
         - expires_in
       properties:
         access_token:
-          type: string
-        refresh_token:
           type: string
         token_type:
           type: string

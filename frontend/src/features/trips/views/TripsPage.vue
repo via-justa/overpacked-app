@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import AppConfirmDialog from '../../../components/dialogs/AppConfirmDialog.vue'
 import AppQueryError from '../../../components/feedback/AppQueryError.vue'

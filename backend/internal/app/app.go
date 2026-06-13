@@ -54,6 +54,8 @@ func New(ctx context.Context, cfg *config.Config) (*App, error) {
 	router.Use(chimiddleware.Recoverer)
 	router.Use(chimiddleware.RequestID)
 	router.Use(chimiddleware.Logger)
+	router.Use(securityHeaders)
+	router.Use(limitBody)
 	router.Use(requireAuth(authService))
 	router.Mount("/", setupRoutes(authHandler, st, cfg.AppPassword, backupHandler))
 

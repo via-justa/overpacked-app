@@ -1303,11 +1303,6 @@ type PersonUpdateConditioningLevel string
 // PersonUpdateGender defines model for PersonUpdate.Gender.
 type PersonUpdateGender string
 
-// RefreshRequest defines model for RefreshRequest.
-type RefreshRequest struct {
-	RefreshToken string `json:"refresh_token"`
-}
-
 // SearchEntityType defines model for SearchEntityType.
 type SearchEntityType string
 
@@ -1400,10 +1395,9 @@ type StartFreshRequest struct {
 
 // TokenResponse defines model for TokenResponse.
 type TokenResponse struct {
-	AccessToken  string `json:"access_token"`
-	ExpiresIn    int    `json:"expires_in"`
-	RefreshToken string `json:"refresh_token"`
-	TokenType    string `json:"token_type"`
+	AccessToken string `json:"access_token"`
+	ExpiresIn   int    `json:"expires_in"`
+	TokenType   string `json:"token_type"`
 }
 
 // Trip defines model for Trip.
@@ -1635,9 +1629,6 @@ type GetTripRoutePreviewParamsService string
 
 // AuthLoginJSONRequestBody defines body for AuthLogin for application/json ContentType.
 type AuthLoginJSONRequestBody = LoginRequest
-
-// AuthRefreshJSONRequestBody defines body for AuthRefresh for application/json ContentType.
-type AuthRefreshJSONRequestBody = RefreshRequest
 
 // UpdateBackupConfigJSONRequestBody defines body for UpdateBackupConfig for application/json ContentType.
 type UpdateBackupConfigJSONRequestBody = BackupConfigUpdate

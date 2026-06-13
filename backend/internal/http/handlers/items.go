@@ -23,6 +23,9 @@ type ItemsHandler struct {
 
 const itemsErrNotFound = "item not found"
 
+// maxImageBytes bounds a stored item image to guard against storage/DoS abuse.
+const maxImageBytes = 5 << 20 // 5 MiB
+
 func NewItemsHandler(st *store.Store) *ItemsHandler {
 	return &ItemsHandler{store: st}
 }
@@ -49,6 +52,11 @@ func (h *ItemsHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer r.Body.Close()
+
+	if err := validateOptionalHTTPURL(req.SourceUrl); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 
 	item := &domain.Item{
 		ID:                 uuid.New(),
@@ -96,6 +104,11 @@ func (h *ItemsHandler) UpdateItem(w http.ResponseWriter, r *http.Request, itemId
 		return
 	}
 	defer r.Body.Close()
+
+	if err := validateOptionalHTTPURL(req.SourceUrl); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 
 	item, err := h.store.Items.GetByID(r.Context(), uuid.UUID(itemId))
 	if errors.Is(err, domain.ErrNotFound) {
@@ -244,6 +257,12 @@ func applyImage(item *domain.Item, imageBlob *[]byte, mimeType *string, sizeByte
 	}
 	if mimeType == nil || sizeBytes == nil {
 		return errors.New("image metadata is required when image is provided")
+	}
+	if len(*imageBlob) > maxImageBytes {
+		return errors.New("image exceeds maximum allowed size")
+	}
+	if *sizeBytes != len(*imageBlob) {
+		return errors.New("image size does not match image content")
 	}
 
 	width, height, err := decodeImageDimensions(*imageBlob)

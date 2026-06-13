@@ -41,7 +41,7 @@ services:
       - test-data
 
   backend:
-    image: golang:1.26-alpine
+    image: golang:1.26.4-alpine
     depends_on:
       db:
         condition: service_healthy

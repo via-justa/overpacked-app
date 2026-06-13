@@ -102,6 +102,8 @@ func (h *BackupHandler) ImportBackup(w http.ResponseWriter, r *http.Request) {
 
 func (h *BackupHandler) writeImportError(w http.ResponseWriter, err error) {
 	switch {
+	case errors.Is(err, backup.ErrArchiveTooLarge):
+		writeError(w, http.StatusRequestEntityTooLarge, err.Error())
 	case errors.Is(err, backup.ErrInvalidMode),
 		errors.Is(err, backup.ErrInvalidArchive),
 		errors.Is(err, backup.ErrUnsupportedVersion):

@@ -7,6 +7,7 @@ import { useSettings } from '../../../composables/useSettings'
 import { formatDisplayWeight, toRoundedString } from '../../../lib/units/conversions'
 import { formatValue } from '../../../lib/format/display'
 import { formatDate } from '../../../lib/format/date'
+import { safeHttpUrl } from '../../../lib/navigation/url'
 import { getRoutePreview } from '../api/tripsApi'
 import {
     ROUTE_SERVICE_ICONS,
@@ -31,6 +32,8 @@ const emit = defineEmits<{
 const { weightUnit, currency } = useSettings()
 
 const routeUrl = computed(() => getTripRouteUrl(props.trip))
+// Only expose the route link if it is a safe http(s) URL (stored-XSS guard).
+const safeRouteHref = computed(() => safeHttpUrl(routeUrl.value))
 const routeService = computed(() => getTripRouteService(props.trip))
 const routeIconName = computed(() => ROUTE_SERVICE_ICONS[routeService.value])
 
@@ -109,7 +112,7 @@ const dateLabel = computed(() => {
                 <p v-if="trip.notes" class="text-copy-subtle line-clamp-2 text-sm">{{ trip.notes }}</p>
 
                 <div class="mt-auto flex items-center justify-between gap-2 pt-2">
-                    <a v-if="routeUrl" :href="routeUrl" target="_blank" rel="noopener noreferrer"
+                    <a v-if="safeRouteHref" :href="safeRouteHref" target="_blank" rel="noopener noreferrer"
                         class="text-brand-600 hover:text-brand-700 inline-flex items-center gap-1 text-sm" @click.stop>
                         <AppIcon category="content" :name="routeIconName" size="sm" />
                         <span>Route</span>

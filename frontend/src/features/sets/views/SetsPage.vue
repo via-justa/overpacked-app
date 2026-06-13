@@ -12,6 +12,7 @@ import SetDetailsDialog from '../components/SetDetailsDialog.vue'
 import SetFormDialog from '../components/SetFormDialog.vue'
 import SetsCollectionView from '../components/SetsCollectionView.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
+import { safeHttpUrl } from '../../../lib/navigation/url'
 import { queryClient } from '../../../lib/query/client'
 import { listItemTypes, listItems, listManufacturers, listItemLabels } from '../../items/api/itemsApi'
 import { useSettings } from '../../../composables/useSettings'
@@ -242,7 +243,7 @@ const itemTableFields = computed<AppItemTableField[]>(() => {
       key: 'source_url',
       label: 'URL',
       render: (item: Item) => (item.source_url?.trim() ? 'URL' : 'Not set'),
-      renderHref: (item: Item) => (item.source_url?.trim() ? item.source_url : undefined),
+      renderHref: (item: Item) => safeHttpUrl(item.source_url),
     },
   ]
 })

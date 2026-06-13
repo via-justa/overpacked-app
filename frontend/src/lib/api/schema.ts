@@ -30,7 +30,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Login with app credentials */
+        /**
+         * Login with app credentials
+         * @description On success the access token is returned in the body and the refresh token is set in an HttpOnly `op_refresh` cookie (never exposed to JavaScript).
+         */
         post: operations["authLogin"];
         delete?: never;
         options?: never;
@@ -47,7 +50,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Refresh JWT tokens */
+        /**
+         * Refresh JWT tokens
+         * @description Rotates the session using the refresh token in the HttpOnly `op_refresh` cookie set at login. Takes no request body; a fresh access token is returned in the body and a rotated refresh cookie is set.
+         */
         post: operations["authRefresh"];
         delete?: never;
         options?: never;
@@ -802,12 +808,8 @@ export interface components {
             username: string;
             password: string;
         };
-        RefreshRequest: {
-            refresh_token: string;
-        };
         TokenResponse: {
             access_token: string;
-            refresh_token: string;
             token_type: string;
             expires_in: number;
         };
@@ -1457,6 +1459,8 @@ export interface operations {
             /** @description Authentication successful */
             200: {
                 headers: {
+                    /** @description HttpOnly refresh token cookie (`op_refresh`). */
+                    "Set-Cookie"?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -1474,22 +1478,19 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RefreshRequest"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Tokens refreshed */
             200: {
                 headers: {
+                    /** @description Rotated HttpOnly refresh token cookie (`op_refresh`). */
+                    "Set-Cookie"?: string;
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["TokenResponse"];
                 };
             };
-            400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
         };
     };

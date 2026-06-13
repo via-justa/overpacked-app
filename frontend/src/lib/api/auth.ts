@@ -9,13 +9,8 @@ type LoginRequest = {
   password: string
 }
 
-type RefreshRequest = {
-  refresh_token: string
-}
-
 export type TokenResponse = {
   access_token: string
-  refresh_token: string
   token_type: string
   expires_in: number
 }
@@ -37,9 +32,12 @@ const extractErrorMessage = async (response: Response) => {
   }
 }
 
+// credentials: 'include' ensures the HttpOnly refresh cookie is stored on login
+// and sent back on refresh/logout (the refresh token is never held in JS).
 export const loginAuth = async (payload: LoginRequest): Promise<TokenResponse> => {
   const response = await fetch(buildUrl('/api/v1/auth/login'), {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
     },
@@ -53,13 +51,11 @@ export const loginAuth = async (payload: LoginRequest): Promise<TokenResponse> =
   return (await response.json()) as TokenResponse
 }
 
-export const refreshAuth = async (payload: RefreshRequest): Promise<TokenResponse> => {
+// refreshAuth carries no body: the refresh token travels in the HttpOnly cookie.
+export const refreshAuth = async (): Promise<TokenResponse> => {
   const response = await fetch(buildUrl('/api/v1/auth/refresh'), {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
+    credentials: 'include',
   })
 
   if (!response.ok) {
@@ -72,6 +68,7 @@ export const refreshAuth = async (payload: RefreshRequest): Promise<TokenRespons
 export const logoutAuth = async (accessToken: string) => {
   const response = await fetch(buildUrl('/api/v1/auth/logout'), {
     method: 'POST',
+    credentials: 'include',
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -307,11 +308,17 @@ func handleOpenAPIError(w http.ResponseWriter, _ *http.Request, err error) {
 		return
 	}
 
-	writeJSONError(w, http.StatusBadRequest, err.Error())
+	// Avoid echoing the raw binding error: it can contain attacker-supplied
+	// input and internal parser details. Return a fixed, generic message.
+	writeJSONError(w, http.StatusBadRequest, "invalid request parameter")
 }
 
 func writeJSONError(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", jsonContentType)
 	w.WriteHeader(status)
-	_, _ = w.Write([]byte(`{"error":"` + message + `"}`))
+	body, err := json.Marshal(map[string]string{"error": message})
+	if err != nil {
+		body = []byte(`{"error":"request failed"}`)
+	}
+	_, _ = w.Write(body)
 }

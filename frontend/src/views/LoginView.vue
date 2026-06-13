@@ -10,6 +10,7 @@ import { z } from 'zod'
 import { iconRegistry } from '../lib/icons'
 import { loginAuth } from '../lib/api/auth'
 import { buildTypedSchema } from '../lib/validation/schema'
+import { safeRedirectPath } from '../lib/navigation/redirect'
 import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
@@ -59,13 +60,7 @@ const loginMutation = useMutation({
 const isSubmitting = computed(() => loginMutation.isPending.value)
 
 const redirectPath = computed(() => {
-  const redirect = route.query.redirect
-
-  if (typeof redirect === 'string' && redirect.startsWith('/')) {
-    return redirect
-  }
-
-  return '/trips'
+  return safeRedirectPath(route.query.redirect) ?? '/trips'
 })
 
 const { defineField, handleSubmit, errors, meta } = useForm({

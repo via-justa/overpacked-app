@@ -45,6 +45,11 @@ func (h *ManufacturersHandler) CreateManufacturer(w http.ResponseWriter, r *http
 	}
 	defer r.Body.Close()
 
+	if err := validateOptionalHTTPURL(req.Website); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	manufacturer := &domain.Manufacturer{
 		ID:   uuid.New(),
 		Name: req.Name,
@@ -90,6 +95,11 @@ func (h *ManufacturersHandler) UpdateManufacturer(w http.ResponseWriter, r *http
 	}
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to get manufacturer")
+		return
+	}
+
+	if err := validateOptionalHTTPURL(req.Website); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 

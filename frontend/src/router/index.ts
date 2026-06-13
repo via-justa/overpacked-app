@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { pinia } from '../stores'
+import { safeRedirectPath } from '../lib/navigation/redirect'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -99,9 +100,9 @@ router.beforeEach(async (to) => {
   }
 
   if (guestOnly && authStore.isAuthenticated) {
-    const redirectQuery = to.query.redirect
-    if (typeof redirectQuery === 'string' && redirectQuery.startsWith('/')) {
-      return redirectQuery
+    const target = safeRedirectPath(to.query.redirect)
+    if (target) {
+      return target
     }
 
     return { name: 'trips' }

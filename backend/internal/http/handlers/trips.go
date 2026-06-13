@@ -224,6 +224,11 @@ func (h *TripsHandler) CreateTrip(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	if err := validateOptionalHTTPURLs(req.TripKomootUrl, req.TripStravaUrl, req.TripWandererUrl); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
 	trip := &domain.Trip{
 		ID:       uuid.New(),
 		Name:     req.Name,
@@ -285,6 +290,11 @@ func (h *TripsHandler) UpdateTrip(w http.ResponseWriter, r *http.Request, tripId
 		return
 	}
 	defer r.Body.Close()
+
+	if err := validateOptionalHTTPURLs(req.TripKomootUrl, req.TripStravaUrl, req.TripWandererUrl); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 
 	trip, err := h.store.Trips.GetByID(r.Context(), uuid.UUID(tripId))
 	if errors.Is(err, domain.ErrNotFound) {
