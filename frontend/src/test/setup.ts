@@ -24,10 +24,10 @@ afterAll(() => server.resetHandlers())
 //   - matchMedia: useIsMobile reads it (and window resize).
 if (!('ResizeObserver' in globalThis)) {
   globalThis.ResizeObserver = class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  } as unknown as typeof ResizeObserver
+    observe() {/* no-op */}
+    unobserve() {/* no-op */}
+    disconnect() {/* no-op */}
+  }
 }
 
 if (!('matchMedia' in globalThis)) {
@@ -40,5 +40,5 @@ if (!('matchMedia' in globalThis)) {
     addListener: () => {},
     removeListener: () => {},
     dispatchEvent: () => false,
-  })) as unknown as typeof globalThis.matchMedia
+  }))
 }

@@ -3,7 +3,7 @@ import { useRowActionsMenu } from './useRowActionsMenu'
 import { withSetup } from '../test/withSetup'
 
 const rect = (over: Partial<DOMRect>): DOMRect =>
-  ({ top: 80, bottom: 100, left: 480, right: 500, width: 20, height: 20, x: 480, y: 80, toJSON() {}, ...over }) as DOMRect
+  ({ top: 80, bottom: 100, left: 480, right: 500, width: 20, height: 20, x: 480, y: 80, toJSON() {}, ...over })
 
 const makeTrigger = (r: DOMRect): HTMLButtonElement => {
   const btn = document.createElement('button')
@@ -20,7 +20,7 @@ afterEach(() => {
 
 describe('useRowActionsMenu', () => {
   it('opens below the trigger, right-aligned, when there is room', () => {
-    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 1000 })
+    Object.defineProperty(globalThis, 'innerHeight', { configurable: true, value: 1000 })
     const { result, unmount } = withSetup(() => useRowActionsMenu({ dataElement: 'row' }))
 
     result.toggleActions('1', clickEvent(makeTrigger(rect({}))))
@@ -32,7 +32,7 @@ describe('useRowActionsMenu', () => {
   })
 
   it('flips upward when too close to the viewport bottom', () => {
-    Object.defineProperty(window, 'innerHeight', { configurable: true, value: 120 })
+    Object.defineProperty(globalThis, 'innerHeight', { configurable: true, value: 120 })
     const { result, unmount } = withSetup(() => useRowActionsMenu({ dataElement: 'row' }))
 
     result.toggleActions('1', clickEvent(makeTrigger(rect({ top: 80, bottom: 100 }))))
@@ -63,7 +63,7 @@ describe('useRowActionsMenu', () => {
 
   it('navigates menu items with the keyboard and closes on Escape', async () => {
     const menu = document.createElement('div')
-    menu.setAttribute('data-element', 'row-menu')
+    menu.dataset.element = 'row-menu'
     const b1 = document.createElement('button')
     const b2 = document.createElement('button')
     menu.append(b1, b2)
@@ -84,7 +84,7 @@ describe('useRowActionsMenu', () => {
 
   it('supports ArrowUp/Home/End/Tab navigation and wraps around', async () => {
     const menu = document.createElement('div')
-    menu.setAttribute('data-element', 'row-menu')
+    menu.dataset.element = 'row-menu'
     const buttons = [0, 1, 2].map(() => document.createElement('button'))
     menu.append(...buttons)
     document.body.appendChild(menu)

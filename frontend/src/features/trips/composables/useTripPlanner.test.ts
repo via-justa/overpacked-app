@@ -79,7 +79,7 @@ describe('useTripPlanner', () => {
 
     result.splitPlacement(result.unassigned.value[0]) // peel one unit off
     expect(result.unassigned.value).toHaveLength(2)
-    expect(result.unassigned.value.map((p) => p.quantity).sort()).toEqual([1, 2])
+    expect(result.unassigned.value.map((p) => p.quantity).sort((a, b) => a - b)).toEqual([1, 2])
 
     result.setPlacementQuantity(result.unassigned.value[0], 5)
     expect(result.unassigned.value[0].quantity).toBe(5)

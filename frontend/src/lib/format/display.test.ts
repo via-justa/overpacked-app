@@ -9,7 +9,7 @@ import {
 describe('formatNumber', () => {
   it('falls back to "Not set" for non-numbers', () => {
     expect(formatNumber(null)).toBe('Not set')
-    expect(formatNumber(undefined)).toBe('Not set')
+    expect(formatNumber()).toBe('Not set')
   })
 
   it('stringifies, optionally via a custom formatter', () => {

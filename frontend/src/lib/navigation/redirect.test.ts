@@ -14,7 +14,7 @@ describe('safeRedirectPath', () => {
   it('rejects off-origin and protocol-relative paths (open-redirect guard)', () => {
     expect(safeRedirectPath('https://evil.com')).toBeNull()
     expect(safeRedirectPath('//evil.com')).toBeNull()
-    expect(safeRedirectPath('/\\evil.com')).toBeNull()
+    expect(safeRedirectPath(String.raw`/\evil.com`)).toBeNull()
     expect(safeRedirectPath('relative')).toBeNull()
   })
 })

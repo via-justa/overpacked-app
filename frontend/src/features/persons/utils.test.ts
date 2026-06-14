@@ -16,7 +16,7 @@ afterEach(() => vi.useRealTimers())
 describe('formatAge', () => {
   it('returns "Not set" for missing or invalid dates', () => {
     expect(formatAge(null)).toBe('Not set')
-    expect(formatAge(undefined)).toBe('Not set')
+    expect(formatAge()).toBe('Not set')
     expect(formatAge('garbage')).toBe('Not set')
   })
 
@@ -55,7 +55,7 @@ describe('calculateRecommendedMaxWeightGrams', () => {
     ['2019-01-01', 0.75], // age 7  (5-8)
     ['2015-01-01', 0.85], // age 11 (9-12)
     ['2012-01-01', 0.95], // age 14 (13-15)
-    ['2009-01-01', 1.0], // age 17 (16-18)
+    ['2009-01-01', 1], // age 17 (16-18)
     ['1996-01-01', 1.1], // age 30 (19-50 peak)
     ['1966-01-01', 0.9], // age 60 (50+)
   ])('uses the right age factor for birthdate %s', (birthdate, ageFactor) => {
@@ -67,7 +67,7 @@ describe('calculateRecommendedMaxWeightGrams', () => {
   it.each([
     ['male', 1.05],
     ['female', 0.95],
-    ['other', 1.0],
+    ['other', 1],
   ])('uses the right gender factor for %s', (gender, genderFactor) => {
     const result = calculateRecommendedMaxWeightGrams(10000, '1996-01-01', gender, 'average')
     expect(result).toBeCloseTo(10 * 0.12 * 1.1 * genderFactor * 1 * 1000, 0)
@@ -75,7 +75,7 @@ describe('calculateRecommendedMaxWeightGrams', () => {
 
   it.each([
     ['sedentary', 0.85],
-    ['average', 1.0],
+    ['average', 1],
     ['athletic', 1.15],
     ['military', 1.2],
   ] as const)('uses the right conditioning factor for %s', (level, factor) => {

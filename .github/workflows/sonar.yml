@@ -53,7 +53,7 @@ jobs:
       - name: Run frontend tests with coverage
         working-directory: frontend
         run: |
-          npm ci
+          npm ci --ignore-scripts
           npm run coverage
 
       - name: Set up Go
