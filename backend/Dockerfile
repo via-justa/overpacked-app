@@ -35,6 +35,11 @@ COPY --from=builder /app/internal/seeds/data ./internal/seeds/data
 
 RUN chown -R app:app /app
 
+# Pre-create the default backup directory owned by the runtime user. A fresh
+# Docker named volume mounted here inherits this ownership, so the non-root
+# process can write backups. (On Kubernetes the PVC is made writable via fsGroup.)
+RUN mkdir -p /workspace/.backups && chown -R app:app /workspace
+
 USER app
 
 EXPOSE 8000

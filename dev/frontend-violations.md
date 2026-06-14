@@ -49,15 +49,3 @@ Status key: `open` (needs fixing) · `fixed` · `wontfix` (with reason).
 | # | File:line | Type | Status | Note |
 |---|-----------|------|--------|------|
 | _(none open)_ | | | | |
-
-### Inline `style="…"` triage — complete (2026-06-14)
-
-All inline-style sites were triaged for type 3 (themeable literals). The literal label-color
-values — contrast text `#ffffff`/`#111827`, the `#6b7280` background fallback, and a stray
-`backgroundColor: 'white'` — were replaced with theme tokens (`text-ink`/`text-ink-inverse`
-classes, `var(--color-label-fallback)`, `var(--color-surface-base)`) across
-`AppItemTableRowContent.vue`, `ItemLabel.vue`, `SetsCollectionView.vue`, `SetsSection.vue`, and
-`AppActionsMenu.vue`. The remaining inline styles are legitimate: computed menu/tooltip
-positioning, user-chosen `label.color` values, and fixed translucent border overlays
-(`rgba(255,255,255,0.2)` / `rgba(0,0,0,0.1)`) that intentionally film over any label color
-regardless of theme.

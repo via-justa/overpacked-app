@@ -1,0 +1,36 @@
+# Minimal configuration: smallest footprint for small self-hosted instance.
+# In-cluster CloudNativePG (single instance)
+
+backend:
+  backup:
+    baseDir: /data/backups
+  auth:
+    username: admin
+    password: ""
+    jwtSecret: ""
+
+ingress:
+  enabled: true
+  className: ""
+  annotations: {}
+  hosts:
+    - host: overpacked.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - overpacked.example.com
+      secretName: overpacked-tls
+
+database:
+  auth:
+    # PostgreSQL application username.
+    username: app
+    # PostgreSQL application password. Required: install fails if empty.
+    password: ""
+  superuser:
+    # CloudNativePG superuser name.
+    username: postgres
+    # CloudNativePG superuser password. Required (cloudnativepg mode): install fails if empty.
+    password: ""

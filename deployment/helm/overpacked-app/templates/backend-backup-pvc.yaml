@@ -1,0 +1,18 @@
+{{- if .Values.backend.backup.enabled }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ printf "%s-backups" (include "overpacked-app.backend.fullname" .) }}
+  labels:
+    {{- include "overpacked-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.backend.backup.size | quote }}
+  {{- if .Values.backend.backup.storageClass }}
+  storageClassName: {{ .Values.backend.backup.storageClass | quote }}
+  {{- end }}
+{{- end }}

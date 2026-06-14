@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "overpacked-app values",
+  "description": "Quality/format validation for overpacked-app values. Presence of secrets is enforced at render time via the `required` template function (which is conditional on backend.existingSecret and database.mode); this schema only validates types, enums, and the JWT secret strength.",
+  "type": "object",
+  "properties": {
+    "backend": {
+      "type": "object",
+      "properties": {
+        "replicaCount": { "type": "integer", "minimum": 0 },
+        "containerPort": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "existingSecret": { "type": "string" },
+        "auth": {
+          "type": "object",
+          "properties": {
+            "username": { "type": "string" },
+            "password": { "type": "string" },
+            "jwtSecret": {
+              "type": "string",
+              "description": "JWT signing secret. Must be at least 32 characters when set inline. Leave empty only when supplying the Secret via backend.existingSecret.",
+              "anyOf": [
+                { "maxLength": 0 },
+                { "minLength": 32 }
+              ]
+            }
+          }
+        },
+        "seed": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "command": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "backup": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "baseDir": { "type": "string", "minLength": 1 },
+            "size": { "type": "string", "minLength": 1 },
+            "storageClass": { "type": "string" }
+          }
+        },
+        "service": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "enum": ["ClusterIP", "NodePort", "LoadBalancer"] },
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+          }
+        },
+        "podDisruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "minAvailable": { "type": ["integer", "string"] }
+          }
+        }
+      }
+    },
+    "frontend": {
+      "type": "object",
+      "properties": {
+        "replicaCount": { "type": "integer", "minimum": 0 },
+        "containerPort": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "service": {
+          "type": "object",
+          "properties": {
+            "type": { "type": "string", "enum": ["ClusterIP", "NodePort", "LoadBalancer"] },
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 }
+          }
+        },
+        "podDisruptionBudget": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "minAvailable": { "type": ["integer", "string"] }
+          }
+        }
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" }
+      }
+    },
+    "database": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["cloudnativepg", "external"]
+        },
+        "external": {
+          "type": "object",
+          "properties": {
+            "host": { "type": "string" },
+            "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+            "sslmode": {
+              "type": "string",
+              "enum": ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]
+            }
+          }
+        },
+        "auth": {
+          "type": "object",
+          "properties": {
+            "username": { "type": "string" },
+            "password": { "type": "string" },
+            "database": { "type": "string" }
+          }
+        },
+        "superuser": {
+          "type": "object",
+          "properties": {
+            "username": { "type": "string" },
+            "password": { "type": "string" }
+          }
+        },
+        "cloudnativepg": {
+          "type": "object",
+          "properties": {
+            "instances": { "type": "integer", "minimum": 1 },
+            "sslmode": {
+              "type": "string",
+              "enum": ["disable", "allow", "prefer", "require", "verify-ca", "verify-full"]
+            },
+            "imageName": { "type": "string" }
+          }
+        }
+      }
+    },
+    "cloudnativePgOperator": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean" }
+      }
+    }
+  }
+}
