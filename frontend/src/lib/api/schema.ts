@@ -1148,25 +1148,11 @@ export interface components {
             /** @enum {string} */
             trip_type: "day_hike" | "overnight" | "multi_day" | "thru_hike";
             /** Format: uuid */
-            person_id?: string | null;
+            person_id: string;
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */
             updated_at: string;
-        };
-        PackCreate: {
-            name: string;
-            /** @enum {string} */
-            trip_type: "day_hike" | "overnight" | "multi_day" | "thru_hike";
-            /** Format: uuid */
-            person_id?: string;
-        };
-        PackUpdate: {
-            name?: string;
-            /** @enum {string} */
-            trip_type?: "day_hike" | "overnight" | "multi_day" | "thru_hike";
-            /** Format: uuid */
-            person_id?: string;
         };
         PackItem: {
             /** Format: uuid */

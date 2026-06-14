@@ -441,12 +441,12 @@ func applySetItems(ctx context.Context, tx *sql.Tx, sis []setItemDTO) error {
 func applyPacks(ctx context.Context, tx *sql.Tx, packs []packDTO) error {
 	for _, d := range packs {
 		_, err := tx.ExecContext(ctx, `
-			INSERT INTO packs (id, person_id, name, trip_type, notes, is_template)
-			VALUES ($1, $2, $3, $4, $5, $6)
+			INSERT INTO packs (id, person_id, name, trip_type, notes)
+			VALUES ($1, $2, $3, $4, $5)
 			ON CONFLICT (id) DO UPDATE SET person_id = EXCLUDED.person_id, name = EXCLUDED.name,
-				trip_type = EXCLUDED.trip_type, notes = EXCLUDED.notes, is_template = EXCLUDED.is_template,
+				trip_type = EXCLUDED.trip_type, notes = EXCLUDED.notes,
 				updated_at = NOW()`,
-			d.ID, uuidPtrArg(d.PersonID), d.Name, nullStr(d.TripType), nullStr(d.Notes), d.IsTemplate)
+			d.ID, uuidPtrArg(d.PersonID), d.Name, nullStr(d.TripType), nullStr(d.Notes))
 		if err != nil {
 			return fmt.Errorf("apply pack %q: %w", d.Name, err)
 		}

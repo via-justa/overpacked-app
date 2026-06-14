@@ -57,12 +57,12 @@ the code; the notes below reflect current behavior.)
   multiple types and images. Weight and volume are stored canonically (**grams**, **ml**).
 - **Sets:** builder helpers. Assigning a set to a pack **inflates its items into `pack_items`**;
   pack quantities are then edited independently. The set→pack association is **not persisted** —
-  there is no `pack_sets` table (the `PackStore` methods referencing one are incomplete/dead code).
+  there is no `pack_sets` table.
 - **Packs:** managed **only through the trip → person → pack hierarchy** via the API — there are no
   standalone pack routes; the only creation path is
-  `POST /api/v1/trips/{tripId}/persons/{personId}/packs`. Note the *database* is looser
-  (`packs.person_id` is nullable, plus an `is_template` flag), so enforce the hierarchy at the
-  API/handler layer, not as a DB invariant.
+  `POST /api/v1/trips/{tripId}/persons/{personId}/packs`. The schema enforces this too:
+  `packs.person_id` is `NOT NULL` with `ON DELETE CASCADE`, so a pack always belongs to a person and
+  is removed with them.
 - **Trips:** organize multi-person journeys via junctions `trip_persons`, `trip_person_packs`,
   `trip_person_items`; pack items carry `carry_status` (`packed`/`worn`); trip `type` is one of
   `day_hike`, `overnight`, `multi_day`, `thru_hike`. (Trip sets were removed.)

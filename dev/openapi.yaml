@@ -2984,6 +2984,7 @@ components:
       type: object
       required:
         - id
+        - person_id
         - name
         - trip_type
         - created_at
@@ -3000,40 +3001,12 @@ components:
         person_id:
           type: string
           format: uuid
-          nullable: true
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
-
-    PackCreate:
-      type: object
-      required:
-        - name
-        - trip_type
-      properties:
-        name:
-          type: string
-        trip_type:
-          type: string
-          enum: [day_hike, overnight, multi_day, thru_hike]
-        person_id:
-          type: string
-          format: uuid
-
-    PackUpdate:
-      type: object
-      properties:
-        name:
-          type: string
-        trip_type:
-          type: string
-          enum: [day_hike, overnight, multi_day, thru_hike]
-        person_id:
-          type: string
-          format: uuid
 
     PackItem:
       type: object

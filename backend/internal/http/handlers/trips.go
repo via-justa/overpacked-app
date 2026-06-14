@@ -439,7 +439,7 @@ func (h *TripsHandler) AddTripPersonPack(w http.ResponseWriter, r *http.Request,
 		Name:     req.Name,
 		TripType: &tripType,
 		Notes:    req.Notes,
-		PersonID: (*uuid.UUID)(&personId),
+		PersonID: uuid.UUID(personId),
 	}
 
 	if err := h.store.Packs.Create(r.Context(), pack); err != nil {

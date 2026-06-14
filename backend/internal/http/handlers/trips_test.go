@@ -195,7 +195,7 @@ func insertTripTestData(t *testing.T, dbConn *sql.DB) (manufacturerID, personID,
 
 	// Insert pack
 	packID = types.UUID(uuid.New())
-	if _, err := dbConn.ExecContext(context.Background(), "INSERT INTO packs (id, name, trip_type, is_template) VALUES ($1, $2, $3, $4)", packID, "Test Pack", "overnight", false); err != nil {
+	if _, err := dbConn.ExecContext(context.Background(), "INSERT INTO packs (id, person_id, name, trip_type) VALUES ($1, $2, $3, $4)", packID, personID, "Test Pack", "overnight"); err != nil {
 		t.Fatalf("insert pack: %v", err)
 	}
 

@@ -35,16 +35,12 @@ The **code and SQL are the source of truth.** These are places where documentati
 `AGENTS.md`, historically) or an intended rule differs from what the code actually does. Keep them
 in mind and reconcile when you touch the area.
 
-- **Packs — API rule vs DB schema:** the API enforces the trip → person → pack hierarchy (no
-  standalone pack routes; only `AddTripPersonPack`), but the *database* is looser:
-  `packs.person_id` is nullable (`ON DELETE SET NULL`) and there's an `is_template` flag. Don't
-  rely on "a pack always has a person" as a DB invariant — the hierarchy is enforced at the
-  API/handler layer. (`backend/internal/store/pack.go`, schema)
+_(None currently tracked — append as found.)_
 
 ## Logged violations (running)
 
-Status key: `open` · `fixed` · `wontfix` (with reason). (No cross-cutting instances logged yet
-beyond the known drifts above — append as found.)
+Status key: `open` · `fixed` · `wontfix` (with reason). (No cross-cutting instances logged yet —
+append as found.)
 
 | # | File:line | Type | Status | Note |
 |---|-----------|------|--------|------|

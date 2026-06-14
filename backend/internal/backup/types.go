@@ -164,12 +164,11 @@ type setItemDTO struct {
 }
 
 type packDTO struct {
-	ID         uuid.UUID  `json:"id"`
-	PersonID   *uuid.UUID `json:"person_id,omitempty"`
-	Name       string     `json:"name"`
-	TripType   *string    `json:"trip_type,omitempty"`
-	Notes      *string    `json:"notes,omitempty"`
-	IsTemplate bool       `json:"is_template"`
+	ID       uuid.UUID  `json:"id"`
+	PersonID *uuid.UUID `json:"person_id,omitempty"`
+	Name     string     `json:"name"`
+	TripType *string    `json:"trip_type,omitempty"`
+	Notes    *string    `json:"notes,omitempty"`
 }
 
 type packItemDTO struct {

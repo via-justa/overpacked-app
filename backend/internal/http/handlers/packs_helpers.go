@@ -17,14 +17,11 @@ func packToAPI(p *domain.Pack) api.Pack {
 
 	resp := api.Pack{
 		Id:        types.UUID(p.ID),
+		PersonId:  types.UUID(p.PersonID),
 		Name:      p.Name,
 		TripType:  tripType,
 		CreatedAt: p.CreatedAt,
 		UpdatedAt: p.UpdatedAt,
-	}
-	if p.PersonID != nil {
-		pid := types.UUID(*p.PersonID)
-		resp.PersonId = &pid
 	}
 	return resp
 }

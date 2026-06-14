@@ -1184,12 +1184,12 @@ type ManufacturerUpdate struct {
 
 // Pack defines model for Pack.
 type Pack struct {
-	CreatedAt time.Time           `json:"created_at"`
-	Id        openapi_types.UUID  `json:"id"`
-	Name      string              `json:"name"`
-	PersonId  *openapi_types.UUID `json:"person_id,omitempty"`
-	TripType  PackTripType        `json:"trip_type"`
-	UpdatedAt time.Time           `json:"updated_at"`
+	CreatedAt time.Time          `json:"created_at"`
+	Id        openapi_types.UUID `json:"id"`
+	Name      string             `json:"name"`
+	PersonId  openapi_types.UUID `json:"person_id"`
+	TripType  PackTripType       `json:"trip_type"`
+	UpdatedAt time.Time          `json:"updated_at"`
 }
 
 // PackTripType defines model for Pack.TripType.

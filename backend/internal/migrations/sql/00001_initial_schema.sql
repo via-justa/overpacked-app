@@ -15,6 +15,19 @@ CREATE TABLE settings (
 INSERT INTO settings (id, weight_unit, distance_unit, temperature_unit, volume_unit)
 VALUES (1, 'g', 'km', 'c', 'ml');
 
+CREATE TABLE backup_config (
+    id INT PRIMARY KEY CHECK (id = 1),
+    enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    schedule TEXT NOT NULL DEFAULT '0 2 * * *',
+    retention_count INT NOT NULL DEFAULT 7 CHECK (retention_count > 0),
+    last_run_at TIMESTAMPTZ,
+    last_status TEXT CHECK (last_status IN ('success', 'error')),
+    last_error TEXT,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO backup_config (id) VALUES (1);
+
 CREATE TABLE persons (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
@@ -151,11 +164,10 @@ CREATE TABLE set_items (
 
 CREATE TABLE packs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    person_id UUID REFERENCES persons(id) ON DELETE SET NULL,
+    person_id UUID NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     trip_type TEXT CHECK (trip_type IN ('day_hike', 'overnight', 'multi_day', 'thru_hike')),
     notes TEXT,
-    is_template BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -260,6 +272,7 @@ CREATE TABLE packing_list_labels (
 CREATE INDEX idx_items_type_active ON items (type_id, is_active);
 CREATE INDEX idx_set_items_set_id ON set_items (set_id);
 CREATE INDEX idx_pack_items_pack_id ON pack_items (pack_id);
+CREATE INDEX idx_packs_person_id ON packs(person_id);
 CREATE INDEX idx_item_sets_set_category ON item_sets(set_category);
 CREATE INDEX idx_trips_trip_type ON trips(trip_type);
 CREATE INDEX idx_trip_persons_trip_id ON trip_persons(trip_id);
@@ -339,6 +352,7 @@ DROP TABLE IF EXISTS manufacturers;
 DROP TABLE IF EXISTS item_types;
 DROP TABLE IF EXISTS persons;
 DROP TABLE IF EXISTS settings;
+DROP TABLE IF EXISTS backup_config;
 
 DROP EXTENSION IF EXISTS "pg_trgm";
 -- +goose StatementEnd

@@ -353,7 +353,7 @@ func (s *Service) querySetItems(ctx context.Context) ([]setItemDTO, error) {
 
 func (s *Service) queryPacks(ctx context.Context) ([]packDTO, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT id, person_id, name, trip_type, notes, is_template FROM packs ORDER BY name`)
+		SELECT id, person_id, name, trip_type, notes FROM packs ORDER BY name`)
 	if err != nil {
 		return nil, fmt.Errorf("query packs: %w", err)
 	}
@@ -364,7 +364,7 @@ func (s *Service) queryPacks(ctx context.Context) ([]packDTO, error) {
 		var d packDTO
 		var personID sql.NullString
 		var tripType, notes sql.NullString
-		if err := rows.Scan(&d.ID, &personID, &d.Name, &tripType, &notes, &d.IsTemplate); err != nil {
+		if err := rows.Scan(&d.ID, &personID, &d.Name, &tripType, &notes); err != nil {
 			return nil, fmt.Errorf("scan pack: %w", err)
 		}
 		if personID.Valid {

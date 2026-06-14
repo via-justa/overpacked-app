@@ -20,14 +20,9 @@ func NewPackStore(db *sql.DB) *PackStore {
 
 func (s *PackStore) Create(ctx context.Context, pack *domain.Pack) error {
 	query := `
-		INSERT INTO packs (person_id, name, trip_type, notes, is_template)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO packs (person_id, name, trip_type, notes)
+		VALUES ($1, $2, $3, $4)
 		RETURNING id, created_at, updated_at`
-
-	var personID any
-	if pack.PersonID != nil {
-		personID = *pack.PersonID
-	}
 
 	var tripType sql.NullString
 	if pack.TripType != nil {
@@ -37,11 +32,10 @@ func (s *PackStore) Create(ctx context.Context, pack *domain.Pack) error {
 	err := s.db.QueryRowContext(
 		ctx,
 		query,
-		personID,
+		pack.PersonID,
 		pack.Name,
 		tripType,
 		toNullString(pack.Notes),
-		pack.IsTemplate,
 	).Scan(&pack.ID, &pack.CreatedAt, &pack.UpdatedAt)
 	if err != nil {
 		return fmt.Errorf("create pack: %w", err)
@@ -52,22 +46,20 @@ func (s *PackStore) Create(ctx context.Context, pack *domain.Pack) error {
 
 func (s *PackStore) GetByID(ctx context.Context, id uuid.UUID) (*domain.Pack, error) {
 	query := `
-		SELECT id, person_id, name, trip_type, notes, is_template, created_at, updated_at
+		SELECT id, person_id, name, trip_type, notes, created_at, updated_at
 		FROM packs
 		WHERE id = $1`
 
 	var pack domain.Pack
-	var personID sql.NullString
 	var tripType sql.NullString
 	var notes sql.NullString
 
 	err := s.db.QueryRowContext(ctx, query, id).Scan(
 		&pack.ID,
-		&personID,
+		&pack.PersonID,
 		&pack.Name,
 		&tripType,
 		&notes,
-		&pack.IsTemplate,
 		&pack.CreatedAt,
 		&pack.UpdatedAt,
 	)
@@ -78,13 +70,6 @@ func (s *PackStore) GetByID(ctx context.Context, id uuid.UUID) (*domain.Pack, er
 		return nil, fmt.Errorf("get pack by id: %w", err)
 	}
 
-	if personID.Valid {
-		parsed, parseErr := uuid.Parse(personID.String)
-		if parseErr != nil {
-			return nil, fmt.Errorf("parse pack person_id: %w", parseErr)
-		}
-		pack.PersonID = &parsed
-	}
 	if tripType.Valid {
 		t := domain.TripType(tripType.String)
 		pack.TripType = &t
@@ -96,7 +81,7 @@ func (s *PackStore) GetByID(ctx context.Context, id uuid.UUID) (*domain.Pack, er
 
 func (s *PackStore) List(ctx context.Context) ([]domain.Pack, error) {
 	query := `
-		SELECT id, person_id, name, trip_type, notes, is_template, created_at, updated_at
+		SELECT id, person_id, name, trip_type, notes, created_at, updated_at
 		FROM packs
 		ORDER BY created_at DESC`
 
@@ -109,30 +94,21 @@ func (s *PackStore) List(ctx context.Context) ([]domain.Pack, error) {
 	packs := make([]domain.Pack, 0)
 	for rows.Next() {
 		var pack domain.Pack
-		var personID sql.NullString
 		var tripType sql.NullString
 		var notes sql.NullString
 
 		if err := rows.Scan(
 			&pack.ID,
-			&personID,
+			&pack.PersonID,
 			&pack.Name,
 			&tripType,
 			&notes,
-			&pack.IsTemplate,
 			&pack.CreatedAt,
 			&pack.UpdatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan pack: %w", err)
 		}
 
-		if personID.Valid {
-			parsed, parseErr := uuid.Parse(personID.String)
-			if parseErr != nil {
-				return nil, fmt.Errorf("parse pack person_id: %w", parseErr)
-			}
-			pack.PersonID = &parsed
-		}
 		if tripType.Valid {
 			t := domain.TripType(tripType.String)
 			pack.TripType = &t
@@ -155,15 +131,9 @@ func (s *PackStore) Update(ctx context.Context, pack *domain.Pack) error {
 			name = $3,
 			trip_type = $4,
 			notes = $5,
-			is_template = $6,
 			updated_at = NOW()
 		WHERE id = $1
 		RETURNING updated_at`
-
-	var personID any
-	if pack.PersonID != nil {
-		personID = *pack.PersonID
-	}
 
 	var tripType sql.NullString
 	if pack.TripType != nil {
@@ -174,11 +144,10 @@ func (s *PackStore) Update(ctx context.Context, pack *domain.Pack) error {
 		ctx,
 		query,
 		pack.ID,
-		personID,
+		pack.PersonID,
 		pack.Name,
 		tripType,
 		toNullString(pack.Notes),
-		pack.IsTemplate,
 	).Scan(&pack.UpdatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.ErrNotFound

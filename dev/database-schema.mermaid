@@ -147,11 +147,10 @@ erDiagram
 
     PACKS {
         uuid id PK
-        uuid person_id FK "optional; who carries this pack"
+        uuid person_id FK "required; who carries this pack; ON DELETE CASCADE"
         string name
         string trip_type "day_hike, overnight, multi_day, thru_hike"
         string notes
-        boolean is_template
         datetime created_at
         datetime updated_at
     }

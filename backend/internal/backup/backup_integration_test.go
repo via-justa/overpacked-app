@@ -186,8 +186,8 @@ func seedFullDataset(t *testing.T, dbConn *sql.DB) {
 		VALUES ($1, 'Seed Set', 'desc', TRUE, 'consumable')`, setID)
 	exec(`INSERT INTO set_items (set_id, item_id, quantity, notes, sort_order) VALUES ($1, $2, 2, 'note', 1)`, setID, itemID)
 
-	exec(`INSERT INTO packs (id, person_id, name, trip_type, notes, is_template)
-		VALUES ($1, $2, 'Seed Pack', 'overnight', 'note', FALSE)`, packID, personID)
+	exec(`INSERT INTO packs (id, person_id, name, trip_type, notes)
+		VALUES ($1, $2, 'Seed Pack', 'overnight', 'note')`, packID, personID)
 	exec(`INSERT INTO pack_items (pack_id, item_id, quantity, carry_status, notes) VALUES ($1, $2, 3, 'packed', 'note')`, packID, itemID)
 
 	exec(`INSERT INTO packing_lists (id, name, description) VALUES ($1, 'Seed List', 'desc')`, listID)
