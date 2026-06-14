@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/via-justa/overpacked-app/backend/internal/auth"
+	"github.com/via-justa/overpacked-app/backend/internal/backup"
 	"github.com/via-justa/overpacked-app/backend/internal/http/handlers"
 	"github.com/via-justa/overpacked-app/backend/internal/store"
 )
@@ -21,7 +22,12 @@ func newTestRouter(t *testing.T) http.Handler {
 	}
 	authHandler := handlers.NewAuthHandler(authService)
 
-	return setupRoutes(authHandler, store.New(nil), "pw123")
+	st := store.New(nil)
+	backupService := backup.NewService(nil, "")
+	scheduler := backup.NewScheduler(backupService, st.BackupConfig)
+	backupHandler := handlers.NewBackupHandler(backupService, st, scheduler, "pw123")
+
+	return setupRoutes(authHandler, st, "pw123", backupHandler)
 }
 
 func TestRoutesHealth(t *testing.T) {
@@ -298,49 +304,5 @@ func TestRoutesSetsCreateInvalidBody(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Fatalf("expected 400 for invalid set create body, got %d", w.Code)
-	}
-}
-
-func TestRoutesPacksInvalidUUID(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name string
-		path string
-	}{
-		{name: "get pack", path: "/api/v1/packs/not-a-uuid"},
-		{name: "get pack items", path: "/api/v1/packs/not-a-uuid/items"},
-		{name: "get pack sets", path: "/api/v1/packs/not-a-uuid/sets"},
-	}
-
-	for _, tt := range tests {
-		tt := tt
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			router := newTestRouter(t)
-			req := httptest.NewRequest(http.MethodGet, tt.path, http.NoBody)
-			w := httptest.NewRecorder()
-
-			router.ServeHTTP(w, req)
-
-			if w.Code != http.StatusBadRequest {
-				t.Fatalf("expected 400 for invalid pack id, got %d", w.Code)
-			}
-		})
-	}
-}
-
-func TestRoutesPacksCreateInvalidBody(t *testing.T) {
-	t.Parallel()
-
-	router := newTestRouter(t)
-	req := httptest.NewRequest(http.MethodPost, "/api/v1/packs", bytes.NewReader([]byte(`{"name":`)))
-	w := httptest.NewRecorder()
-
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400 for invalid pack create body, got %d", w.Code)
 	}
 }

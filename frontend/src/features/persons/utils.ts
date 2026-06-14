@@ -1,5 +1,35 @@
 import type { ConditioningLevel, Person } from './types'
 
+// Formats a person's age in whole years from their birthdate, or 'Not set'.
+export const formatAge = (birthdate?: string | null): string => {
+  if (!birthdate) {
+    return 'Not set'
+  }
+
+  const parsed = new Date(birthdate)
+  if (Number.isNaN(parsed.getTime())) {
+    return 'Not set'
+  }
+
+  const today = new Date()
+  let age = today.getFullYear() - parsed.getFullYear()
+  const monthDiff = today.getMonth() - parsed.getMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < parsed.getDate())) {
+    age -= 1
+  }
+
+  return age >= 0 ? String(age) : 'Not set'
+}
+
+// Capitalizes a gender value for display, or 'Not set' when absent.
+export const formatGender = (value?: string | null): string => {
+  if (!value) {
+    return 'Not set'
+  }
+
+  return value.charAt(0).toUpperCase() + value.slice(1)
+}
+
 /**
  * Calculates the recommended maximum backpack weight based on age, gender, and conditioning.
  * Formula: Body Weight × 0.12 × F_age × F_gender × F_conditioning

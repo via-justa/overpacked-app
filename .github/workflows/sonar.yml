@@ -1,0 +1,83 @@
+name: SonarQube Analysis
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  analysis:
+    name: SonarQube
+    runs-on: ubuntu-latest
+    services:
+      # Empty Postgres for the backend integration tests; they run their own
+      # migrations, so no schema needs to be provisioned here.
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: overpacked
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d overpacked"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          # Full history so SonarQube attributes new code and SCM blame correctly.
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Run the frontend suite with coverage so the scanner has an lcov report to
+      # ingest (sonar.javascript.lcov.reportPaths in sonar-project.properties),
+      # mirroring how the Go step produces coverage.out below. Installing deps also
+      # makes tsconfig.app.json's "extends": "@vue/tsconfig/tsconfig.dom.json"
+      # resolvable, so SonarQube runs full TypeScript analysis.
+      - name: Run frontend tests with coverage
+        working-directory: frontend
+        run: |
+          npm ci --ignore-scripts
+          npm run coverage
+
+      - name: Set up Go
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version: '1.26.4'
+          cache-dependency-path: backend/go.sum
+
+      # Produce the coverage profile BEFORE the scan so the scanner can ingest it.
+      # -coverpkg=./... credits code in store/backup/app exercised by tests that
+      # live in other packages (Go otherwise counts only the package under test);
+      # -covermode=atomic for the concurrent paths; -p 1 because integration
+      # packages share the one database.
+      - name: Run backend tests with coverage
+        working-directory: backend
+        env:
+          RUN_CONTAINERIZED_TESTS: "true"
+          DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/overpacked?sslmode=disable
+          JWT_SECRET: test-secret
+        run: go test -p 1 -covermode=atomic -coverpkg=./... -coverprofile=coverage.out ./...
+
+      - name: SonarQube scan
+        uses: SonarSource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          # SonarQube Cloud endpoint. Change to your server URL if self-hosted.
+          SONAR_HOST_URL: https://sonarcloud.io

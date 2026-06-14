@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Item } from '../types'
+import type { Item, Label } from '../types'
 import ItemCard from './ItemCard.vue'
 import ItemsTypeTable from './ItemsTypeTable.vue'
 
@@ -16,12 +16,12 @@ interface ItemTableSection {
   title: string
   items: Item[]
   baseFields: TableField[]
-  extraFields: TableField[]
   tableDetailMode: 'simple' | 'expanded'
   selectionMode: boolean
   selectedItemIds: string[]
   totalWeightLabel: string
   totalValueLabel: string
+  itemLabelsMap: Map<string, Label[]>
 }
 
 defineProps<{
@@ -29,11 +29,10 @@ defineProps<{
   items: Item[]
   tableSections: ItemTableSection[]
   getImageSrc: (item: Item) => string
+  itemLabelsMap: Map<string, Label[]>
 }>()
 
 defineEmits<{
-  openDetails: [item: Item]
-  'update:tableDetailMode': [type: string, mode: 'simple' | 'expanded']
   'update:tableSelectionMode': [type: string, value: boolean]
   'toggle:tableItemSelection': [type: string, itemId: string, checked: boolean]
   'toggle:tableSelectAll': [type: string, checked: boolean]
@@ -49,13 +48,12 @@ defineEmits<{
 </script>
 
 <template>
-  <div v-if="viewMode === 'table'" data-element="items-table-view" class="space-y-6">
+  <div v-if="viewMode === 'table'" data-element="items-table-view" class="w-full space-y-6">
     <ItemsTypeTable v-for="section in tableSections" :key="section.type" :title="section.title" :items="section.items"
-      :base-fields="section.baseFields" :extra-fields="section.extraFields" :table-detail-mode="section.tableDetailMode"
+      :base-fields="section.baseFields" :table-detail-mode="section.tableDetailMode"
       :selection-mode="section.selectionMode" :selected-item-ids="section.selectedItemIds"
       :total-weight-label="section.totalWeightLabel" :total-value-label="section.totalValueLabel"
-      @open-details="$emit('openDetails', $event)"
-      @update:table-detail-mode="$emit('update:tableDetailMode', section.type, $event)"
+      :item-labels-map="section.itemLabelsMap" @edit="$emit('row:edit', $event)"
       @update:selection-mode="$emit('update:tableSelectionMode', section.type, $event)"
       @toggle:item-selection="(itemId, checked) => $emit('toggle:tableItemSelection', section.type, itemId, checked)"
       @toggle:select-all="$emit('toggle:tableSelectAll', section.type, $event)"
@@ -66,9 +64,9 @@ defineEmits<{
       @row:toggle-default="$emit('row:toggleDefault', $event)" @row:delete="$emit('row:delete', $event)" />
   </div>
 
-  <div v-else data-element="items-card-view" class="grid gap-4 sm:grid-cols-3 xl:grid-cols-4">
+  <div v-else data-element="items-card-view" class="grid gap-2 sm:gap-4 sm:grid-cols-3 xl:grid-cols-5">
     <ItemCard v-for="item in items" :key="item.id" :item="item" :image-src="getImageSrc(item)"
-      @open-details="$emit('openDetails', $event)">
+      :item-labels="itemLabelsMap.get(item.id) ?? []" @edit="$emit('row:edit', $event)">
       <template #additional-info>
         <slot name="card-additional-info" :item="item" />
       </template>

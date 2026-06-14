@@ -22,10 +22,39 @@ spec:
       {{- end }}
     spec:
       serviceAccountName: {{ include "overpacked-app.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      {{- with .Values.backend.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.backend.seed.enabled }}
+      initContainers:
+        - name: seed
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          {{- with .Values.backend.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command:
+            {{- toYaml .Values.backend.seed.command | nindent 12 }}
+          envFrom:
+            - secretRef:
+                name: {{ default (printf "%s-backend" (include "overpacked-app.fullname" .)) .Values.backend.existingSecret }}
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      {{- end }}
       containers:
         - name: backend
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
           imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          {{- with .Values.backend.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.backend.containerPort }}
@@ -33,6 +62,10 @@ spec:
           env:
             - name: SERVER_ADDR
               value: "0.0.0.0:{{ .Values.backend.containerPort }}"
+            {{- if .Values.backend.backup.enabled }}
+            - name: BACKUP_BASE_DIR
+              value: {{ .Values.backend.backup.baseDir | quote }}
+            {{- end }}
             {{- with .Values.backend.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -55,3 +88,18 @@ spec:
             timeoutSeconds: {{ .Values.backend.readinessProbe.timeoutSeconds }}
           resources:
             {{- toYaml .Values.backend.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- if .Values.backend.backup.enabled }}
+            - name: backups
+              mountPath: {{ .Values.backend.backup.baseDir | quote }}
+            {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        {{- if .Values.backend.backup.enabled }}
+        - name: backups
+          persistentVolumeClaim:
+            claimName: {{ printf "%s-backups" (include "overpacked-app.backend.fullname" .) }}
+        {{- end }}

@@ -20,3 +20,5 @@ Thumbs.db
 
 # Local container/runtime leftovers
 docker-compose.override.yml
+
+node_modules/

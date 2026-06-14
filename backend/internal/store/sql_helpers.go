@@ -2,8 +2,24 @@ package store
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
+
+	"github.com/via-justa/overpacked-app/backend/internal/domain"
 )
+
+// rowsAffectedOrNotFound reports domain.ErrNotFound when an Exec affected no
+// rows, wrapping any RowsAffected error with op for context.
+func rowsAffectedOrNotFound(res sql.Result, op string) error {
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	if n == 0 {
+		return domain.ErrNotFound
+	}
+	return nil
+}
 
 func toNullString(v *string) sql.NullString {
 	if v == nil {
@@ -24,13 +40,6 @@ func toNullInt(v *int) sql.NullInt64 {
 		return sql.NullInt64{}
 	}
 	return sql.NullInt64{Int64: int64(*v), Valid: true}
-}
-
-func toNullBool(v *bool) sql.NullBool {
-	if v == nil {
-		return sql.NullBool{}
-	}
-	return sql.NullBool{Bool: *v, Valid: true}
 }
 
 func toNullBytes(v []byte) []byte {
@@ -63,14 +72,6 @@ func intPtrFromNull(v sql.NullInt64) *int {
 	}
 	i := int(v.Int64)
 	return &i
-}
-
-func boolPtrFromNull(v sql.NullBool) *bool {
-	if !v.Valid {
-		return nil
-	}
-	b := v.Bool
-	return &b
 }
 
 func timePtr(v sql.NullTime) *time.Time {

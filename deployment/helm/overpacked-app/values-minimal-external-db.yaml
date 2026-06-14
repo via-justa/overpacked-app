@@ -1,0 +1,36 @@
+# Minimal configuration: smallest footprint for small self-hosted instance.
+# External PostgreSQL database
+
+backend:
+  backup:
+    baseDir: /data/backups
+  auth:
+    username: admin
+    password: ""
+    jwtSecret: ""
+
+ingress:
+  enabled: true
+  className: ""
+  annotations: {}
+  hosts:
+    - host: overpacked.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - overpacked.example.com
+      secretName: overpacked-tls
+
+database:
+  mode: external
+  external:
+    host: postgres.example.com
+    port: 5432
+    sslmode: require
+  auth:
+    username: app
+    # Required: provide at install time.
+    password: ""
+    database: overpacked

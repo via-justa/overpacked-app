@@ -5,31 +5,66 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-packing_light}
+      POSTGRES_DB: ${POSTGRES_DB:-overpacked}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 3s
       retries: 20
+    ports:
+      - "5432:5432"
     volumes:
-      - packing_light_db_data:/var/lib/postgresql/data
+      - overpacked_db_data:/var/lib/postgresql/data
+
+  test-data:
+    image: postgres:16-alpine
+    # Waits for the backend to be healthy, which guarantees migrations have run and
+    # (with ENABLE_SEED_DATA) the seed catalog is in place before loading test data.
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - ./test-data.sql:/test-data.sql:ro
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        echo "Applying dev test data..."
+        psql -h db -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-overpacked} -v ON_ERROR_STOP=1 -f /test-data.sql
+        echo "Test data applied."
+    profiles:
+      - test-data
 
   backend:
-    image: golang:1.26-alpine
+    image: golang:1.26.4-alpine
     depends_on:
       db:
         condition: service_healthy
     working_dir: /workspace/backend
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-packing_light}?sslmode=disable
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-overpacked}?sslmode=disable
       APP_USERNAME: ${APP_USERNAME:-admin}
       APP_PASSWORD: ${APP_PASSWORD:-pw123}
       JWT_SECRET: ${JWT_SECRET:-dev-secret-change-me}
       SERVER_ADDR: ${SERVER_ADDR:-0.0.0.0:8000}
+      ENABLE_SEED_DATA: ${ENABLE_SEED_DATA:-true}
+      BACKUP_BASE_DIR: ${BACKUP_BASE_DIR:-/workspace/.backups}
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+      start_period: 120s
     volumes:
       - ../:/workspace
       - ${HOME}/go/pkg/mod:/go/pkg/mod
       - ${HOME}/Library/Caches/go-build:/root/.cache/go-build
+      - overpacked_backups:/workspace/.backups
     ports:
       - "8000:8000"
     command:
@@ -50,7 +85,7 @@ services:
       VITE_DEV_PROXY_TARGET: ${VITE_DEV_PROXY_TARGET:-http://backend:8000}
     volumes:
       - ../:/workspace
-      - packing_light_frontend_node_modules:/workspace/frontend/node_modules
+      - overpacked_frontend_node_modules:/workspace/frontend/node_modules
     ports:
       - "5173:5173"
     command:
@@ -62,5 +97,6 @@ services:
         npm run dev -- --host 0.0.0.0 --port 5173
 
 volumes:
-  packing_light_db_data:
-  packing_light_frontend_node_modules:
+  overpacked_db_data:
+  overpacked_frontend_node_modules:
+  overpacked_backups:

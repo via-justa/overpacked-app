@@ -191,13 +191,5 @@ func (s *PersonStore) Delete(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("delete person: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("rows affected on delete person: %w", err)
-	}
-	if rowsAffected == 0 {
-		return domain.ErrNotFound
-	}
-
-	return nil
+	return rowsAffectedOrNotFound(result, "rows affected on delete person")
 }

@@ -1,20 +1,21 @@
 <script setup lang="ts">
 import { RouterView, useRoute, useRouter } from 'vue-router'
-import AppTopNav from '../components/AppTopNav.vue'
+import AppTopNav from '../components/layout/AppTopNav.vue'
+import AppActionRail from '../components/layout/AppActionRail.vue'
+import { useActionRail } from '../composables/useActionRail'
 import { logoutAuth } from '../lib/api/auth'
 import { useAuthStore } from '../stores/auth'
 
 const authStore = useAuthStore()
 const route = useRoute()
 const router = useRouter()
+const { pinned } = useActionRail()
 
 const navItems = [
-  { to: '/dashboard', label: 'Dashboard', icon: 'pi pi-home' },
-  { to: '/packs', label: 'Packs', icon: 'pi pi-briefcase' },
-  { to: '/sets', label: 'Sets', icon: 'pi pi-sitemap' },
-  { to: '/gear', label: 'Gear', icon: 'pi pi-box' },
-  { to: '/persons', label: 'Persons', icon: 'pi pi-users' },
-  { to: '/settings', label: 'Settings', icon: 'pi pi-cog' },
+  { to: '/trips', label: 'Trips', iconCategory: 'navigation' as const, iconName: 'trips' as const },
+  { to: '/planner', label: 'Planner', iconCategory: 'navigation' as const, iconName: 'planner' as const },
+  { to: '/gear', label: 'Gear', iconCategory: 'navigation' as const, iconName: 'gear' as const },
+  { to: '/settings', label: 'Settings', iconCategory: 'navigation' as const, iconName: 'settings' as const },
 ]
 
 const onLogout = async () => {
@@ -34,10 +35,13 @@ const onLogout = async () => {
 </script>
 
 <template>
-  <div data-component="app-layout-view" class="app-shell-gradient text-ink min-h-screen">
+  <div data-component="app-layout-view"
+    class="app-shell-gradient text-ink min-h-screen overflow-x-hidden transition-[padding] duration-200 motion-reduce:transition-none"
+    :class="pinned ? 'md:pl-60' : 'md:pl-16'">
     <AppTopNav :nav-items="navItems" :current-path="route.path" @logout="onLogout" />
+    <AppActionRail @logout="onLogout" />
 
-    <main data-element="app-layout-content" class="w-full px-4 pb-6 pt-24 sm:px-6 sm:pb-8 sm:pt-28 lg:px-10">
+    <main data-element="app-layout-content" class="w-full px-4 pb-6 pt-32 sm:px-6 sm:pb-8 md:pt-28 lg:px-10">
       <RouterView />
     </main>
   </div>

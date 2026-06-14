@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -114,7 +115,7 @@ func TestItemsHandlerIntegrationCRUD(t *testing.T) {
 	mustGetItemNotFound(t, h, createdConsumable.Id)
 }
 
-func mustCreateConsumableItem(t *testing.T, h *ItemsHandler, manufacturerID types.UUID, weight, volume, value float32) api.ConsumableItem {
+func mustCreateConsumableItem(t *testing.T, h *ItemsHandler, manufacturerID types.UUID, weight, volume, value float32) api.Item {
 	t.Helper()
 
 	createBody, err := json.Marshal(api.ItemCreate{
@@ -142,26 +143,17 @@ func mustCreateConsumableItem(t *testing.T, h *ItemsHandler, manufacturerID type
 		t.Fatalf("decode create item response: %v", err)
 	}
 
-	createdValue, err := created.ValueByDiscriminator()
-	if err != nil {
-		t.Fatalf("decode created item union: %v", err)
+	if created.Name != "Fuel Canister" {
+		t.Fatalf("expected created item name Fuel Canister, got %q", created.Name)
+	}
+	if created.WeightGrams == nil || *created.WeightGrams != 500 {
+		t.Fatalf("expected created item weight 500, got %+v", created.WeightGrams)
+	}
+	if created.Value == nil || *created.Value != value {
+		t.Fatalf("expected created item value %v, got %+v", value, created.Value)
 	}
 
-	createdConsumable, ok := createdValue.(api.ConsumableItem)
-	if !ok {
-		t.Fatalf("expected consumable item, got %T", createdValue)
-	}
-	if createdConsumable.Name != "Fuel Canister" {
-		t.Fatalf("expected created item name Fuel Canister, got %q", createdConsumable.Name)
-	}
-	if createdConsumable.WeightGrams == nil || *createdConsumable.WeightGrams != 500 {
-		t.Fatalf("expected created item weight 500, got %+v", createdConsumable.WeightGrams)
-	}
-	if createdConsumable.Value == nil || *createdConsumable.Value != value {
-		t.Fatalf("expected created item value %v, got %+v", value, createdConsumable.Value)
-	}
-
-	return createdConsumable
+	return created
 }
 
 func mustGetItemOK(t *testing.T, h *ItemsHandler, id types.UUID) {
@@ -205,19 +197,11 @@ func mustListContainUpdatedItem(t *testing.T, h *ItemsHandler, expectedName stri
 		t.Fatalf("expected one updated item, got %+v", list)
 	}
 
-	listValue, err := list[0].ValueByDiscriminator()
-	if err != nil {
-		t.Fatalf("decode list item union: %v", err)
+	if list[0].Name != expectedName {
+		t.Fatalf("expected updated item name, got %q", list[0].Name)
 	}
-	listConsumable, ok := listValue.(api.ConsumableItem)
-	if !ok {
-		t.Fatalf("expected consumable item in list, got %T", listValue)
-	}
-	if listConsumable.Name != expectedName {
-		t.Fatalf("expected updated item name, got %q", listConsumable.Name)
-	}
-	if listConsumable.Value == nil || *listConsumable.Value != expectedValue {
-		t.Fatalf("expected updated item value %v, got %+v", expectedValue, listConsumable.Value)
+	if list[0].Value == nil || *list[0].Value != expectedValue {
+		t.Fatalf("expected updated item value %v, got %+v", expectedValue, list[0].Value)
 	}
 }
 
@@ -239,4 +223,77 @@ func mustGetItemNotFound(t *testing.T, h *ItemsHandler, id types.UUID) {
 	if getMissingW.Code != http.StatusNotFound {
 		t.Fatalf("expected 404 for deleted item, got %d", getMissingW.Code)
 	}
+}
+
+// onePixelPNG is a valid 1×1 PNG used to exercise the image-handling path.
+const onePixelPNG = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+
+// TestItemsHandlerIntegrationImage covers applyImage: a valid image round-trips,
+// a declared size that disagrees with the blob is rejected, and an oversized
+// blob is rejected by the size cap.
+func TestItemsHandlerIntegrationImage(t *testing.T) {
+	h, dbConn := newContainerizedItemsHandler(t)
+	defer func() { _ = dbConn.Close() }()
+
+	manufacturerID := insertManufacturer(t, dbConn, "ImageCo")
+
+	png, err := base64.StdEncoding.DecodeString(onePixelPNG)
+	if err != nil {
+		t.Fatalf("decode png fixture: %v", err)
+	}
+	mime := "image/png"
+	size := len(png)
+
+	created := mustCreateItemWithImage(t, h, manufacturerID, png, &mime, &size, http.StatusCreated)
+	getW := httptest.NewRecorder()
+	h.GetItem(getW, httptest.NewRequest(http.MethodGet, "/api/v1/items/"+created.Id.String(), http.NoBody), created.Id)
+	if getW.Code != http.StatusOK {
+		t.Fatalf("expected 200 from get item with image, got %d", getW.Code)
+	}
+	var fetched api.Item
+	if err := json.NewDecoder(getW.Body).Decode(&fetched); err != nil {
+		t.Fatalf("decode fetched item: %v", err)
+	}
+	if fetched.ImageBlob == nil || len(*fetched.ImageBlob) != size {
+		t.Fatalf("expected image blob to round-trip, got %v", fetched.ImageBlob)
+	}
+
+	// Declared size disagrees with the blob → rejected.
+	badSize := size + 1
+	mustCreateItemWithImage(t, h, manufacturerID, png, &mime, &badSize, http.StatusBadRequest)
+
+	// Blob larger than the cap → rejected (cap is checked before decoding).
+	big := bytes.Repeat([]byte{0}, maxImageBytes+1)
+	bigSize := len(big)
+	mustCreateItemWithImage(t, h, manufacturerID, big, &mime, &bigSize, http.StatusBadRequest)
+}
+
+func mustCreateItemWithImage(t *testing.T, h *ItemsHandler, manufacturerID types.UUID, blob []byte, mime *string, size *int, wantStatus int) api.Item {
+	t.Helper()
+	body, err := json.Marshal(api.ItemCreate{
+		ManufacturerId: manufacturerID,
+		Type:           "consumable",
+		Name:           "Imaged Item",
+		IsActive:       true,
+		ImageBlob:      &blob,
+		ImageMimeType:  mime,
+		ImageSizeBytes: size,
+	})
+	if err != nil {
+		t.Fatalf("marshal item with image: %v", err)
+	}
+
+	w := httptest.NewRecorder()
+	h.CreateItem(w, httptest.NewRequest(http.MethodPost, "/api/v1/items", bytes.NewReader(body)))
+	if w.Code != wantStatus {
+		t.Fatalf("create item with image: expected %d, got %d: %s", wantStatus, w.Code, w.Body.String())
+	}
+
+	var created api.Item
+	if w.Code == http.StatusCreated {
+		if err := json.NewDecoder(w.Body).Decode(&created); err != nil {
+			t.Fatalf("decode created item: %v", err)
+		}
+	}
+	return created
 }

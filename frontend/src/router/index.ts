@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { pinia } from '../stores'
+import { safeRedirectPath } from '../lib/navigation/redirect'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -18,22 +19,43 @@ const router = createRouter({
       children: [
         {
           path: '',
-          redirect: { name: 'dashboard' },
+          redirect: { name: 'trips' },
         },
         {
-          path: 'dashboard',
-          name: 'dashboard',
-          component: () => import('../features/dashboard/views/DashboardPage.vue'),
+          path: 'trips',
+          name: 'trips',
+          component: () => import('../features/trips/views/TripsPage.vue'),
+        },
+        {
+          path: 'trips/new',
+          name: 'trip-new',
+          component: () => import('../features/trips/views/TripPlannerPage.vue'),
+        },
+        {
+          path: 'trips/:tripId/edit',
+          name: 'trip-edit',
+          component: () => import('../features/trips/views/TripPlannerPage.vue'),
+          props: true,
+        },
+        {
+          path: 'planner',
+          name: 'planner',
+          component: () => import('../features/planner/views/PlannerPage.vue'),
+        },
+        {
+          path: 'sets',
+          name: 'sets',
+          component: () => import('../features/sets/views/SetsPage.vue'),
+        },
+        {
+          path: 'lists',
+          name: 'lists',
+          component: () => import('../features/planner/views/PackingListsPage.vue'),
         },
         {
           path: 'persons',
           name: 'persons',
           component: () => import('../features/persons/views/PersonsPage.vue'),
-        },
-        {
-          path: 'packs',
-          name: 'packs',
-          component: () => import('../features/packs/views/PacksPage.vue'),
         },
         {
           path: 'items',
@@ -45,9 +67,9 @@ const router = createRouter({
           component: () => import('../features/items/views/ItemsPage.vue'),
         },
         {
-          path: 'sets',
-          name: 'sets',
-          component: () => import('../features/sets/views/SetsPage.vue'),
+          path: 'lists',
+          name: 'lists',
+          component: () => import('../features/lists/views/PackingListsPage.vue'),
         },
         {
           path: 'settings',
@@ -78,12 +100,12 @@ router.beforeEach(async (to) => {
   }
 
   if (guestOnly && authStore.isAuthenticated) {
-    const redirectQuery = to.query.redirect
-    if (typeof redirectQuery === 'string' && redirectQuery.startsWith('/')) {
-      return redirectQuery
+    const target = safeRedirectPath(to.query.redirect)
+    if (target) {
+      return target
     }
 
-    return { name: 'dashboard' }
+    return { name: 'trips' }
   }
 
   return true

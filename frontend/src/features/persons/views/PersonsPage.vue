@@ -1,54 +1,31 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useMutation, useQuery } from '@tanstack/vue-query'
-import Button from 'primevue/button'
-import Message from 'primevue/message'
-import { useToast } from 'primevue/usetoast'
-import AppTemplateDialog from '../../../components/AppTemplateDialog.vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { useQuery } from '@tanstack/vue-query'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
-import { queryClient } from '../../../lib/query/client'
-import { getSettings } from '../../settings/api/settingsApi'
+import { useMutationWithToast } from '../../../composables/useMutationWithToast'
+import AppQueryError from '../../../components/feedback/AppQueryError.vue'
+import AppLoadingState from '../../../components/feedback/AppLoadingState.vue'
+import AppEmptyState from '../../../components/feedback/AppEmptyState.vue'
 import {
   createPerson,
   listPersons,
   removePerson,
   updatePerson,
 } from '../api/personsApi'
-import PersonFormCard from '../components/PersonFormCard.vue'
+import PersonFormDialog from '../components/PersonFormDialog.vue'
 import type { Person, PersonCreate, PersonFormValues, PersonUpdate } from '../types'
-import type { WeightUnit } from '../../settings/types'
 
-import { getPersonRecommendedMaxWeightGrams } from '../utils'
+import { formatAge, formatGender, getPersonRecommendedMaxWeightGrams } from '../utils'
+import { useSettings } from '../../../composables/useSettings'
+import { bodyWeightGramsToInput as gramsToInput, bodyWeightInputToGrams as inputToGrams, type BodyWeightInputUnit } from '../../../lib/units/conversions'
 
-const toast = useToast()
 const route = useRoute()
 const router = useRouter()
-const GRAMS_PER_KILOGRAM = 1000
-const LB_PER_KG = 2.2046226218
 
-type BodyWeightInputUnit = 'kg' | 'lb'
-
-const settingsQuery = useQuery({
-  queryKey: ['settings'],
-  queryFn: getSettings,
-})
-
-const weightUnit = computed<WeightUnit>(() => settingsQuery.data.value?.weight_unit ?? 'g')
+const { weightUnit } = useSettings()
 const defaultInputUnit = computed<BodyWeightInputUnit>(() => (weightUnit.value === 'oz' ? 'lb' : 'kg'))
 const inputWeightLabel = computed<'kg' | 'lb'>(() => (defaultInputUnit.value === 'lb' ? 'lb' : 'kg'))
-
-// Backend always stores and returns grams. These functions convert between
-// the user-facing input unit (kg or lb) and grams.
-const gramsToInput = (grams: number, inputUnit: BodyWeightInputUnit): number => {
-  const kg = grams / GRAMS_PER_KILOGRAM
-  return inputUnit === 'kg' ? kg : kg * LB_PER_KG
-}
-
-const inputToGrams = (value: number, inputUnit: BodyWeightInputUnit): number => {
-  const kg = inputUnit === 'kg' ? value : value / LB_PER_KG
-  return Math.round(kg * GRAMS_PER_KILOGRAM)
-}
 
 const buildRange = (start: number, end: number, step: number): number[] => {
   const options: number[] = []
@@ -109,34 +86,6 @@ const toPayload = (
   return payload
 }
 
-const formatAge = (birthdate?: string | null): string => {
-  if (!birthdate) {
-    return 'Not set'
-  }
-
-  const parsed = new Date(birthdate)
-  if (Number.isNaN(parsed.getTime())) {
-    return 'Not set'
-  }
-
-  const today = new Date()
-  let age = today.getFullYear() - parsed.getFullYear()
-  const monthDiff = today.getMonth() - parsed.getMonth()
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < parsed.getDate())) {
-    age -= 1
-  }
-
-  return age >= 0 ? String(age) : 'Not set'
-}
-
-const formatGender = (value?: string | null) => {
-  if (!value) {
-    return 'Not set'
-  }
-
-  return value.charAt(0).toUpperCase() + value.slice(1)
-}
-
 const formatWeight = (value?: number | null) => {
   if (typeof value !== 'number') {
     return 'Not set'
@@ -164,74 +113,54 @@ const editingPersonId = ref<string | null>(null)
 const editValues = ref<PersonFormValues>(emptyFormValues())
 const isFormDialogOpen = ref(false)
 
-const createMutation = useMutation({
+const createMutation = useMutationWithToast<Person, Error, PersonCreate>({
   mutationFn: createPerson,
-  onSuccess: async () => {
+  successMessage: {
+    summary: 'Person created',
+    detail: 'New person has been added.',
+  },
+  errorMessage: {
+    summary: 'Create failed',
+    detail: 'Unable to create person.',
+  },
+  invalidateQueries: [['persons']],
+  onSuccess: () => {
     createValues.value = emptyFormValues()
     isFormDialogOpen.value = false
-    await queryClient.invalidateQueries({ queryKey: ['persons'] })
-    toast.add({
-      severity: 'success',
-      summary: 'Person created',
-      detail: 'New person has been added.',
-      life: 3000,
-    })
-  },
-  onError: (error) => {
-    toast.add({
-      severity: 'error',
-      summary: 'Create failed',
-      detail: error instanceof Error ? error.message : 'Unable to create person.',
-      life: 3500,
-    })
   },
 })
 
-const updateMutation = useMutation({
+const updateMutation = useMutationWithToast<Person, Error, { personId: string; payload: PersonUpdate }>({
   mutationFn: async (params: { personId: string; payload: PersonUpdate }) => {
     return updatePerson(params.personId, params.payload)
   },
-  onSuccess: async () => {
+  successMessage: {
+    summary: 'Person updated',
+    detail: 'Person details were saved.',
+  },
+  errorMessage: {
+    summary: 'Update failed',
+    detail: 'Unable to update person.',
+  },
+  invalidateQueries: [['persons']],
+  onSuccess: () => {
     editingPersonId.value = null
     editValues.value = emptyFormValues()
     isFormDialogOpen.value = false
-    await queryClient.invalidateQueries({ queryKey: ['persons'] })
-    toast.add({
-      severity: 'success',
-      summary: 'Person updated',
-      detail: 'Person details were saved.',
-      life: 3000,
-    })
-  },
-  onError: (error) => {
-    toast.add({
-      severity: 'error',
-      summary: 'Update failed',
-      detail: error instanceof Error ? error.message : 'Unable to update person.',
-      life: 3500,
-    })
   },
 })
 
-const deleteMutation = useMutation({
+const deleteMutation = useMutationWithToast<void, Error, string>({
   mutationFn: removePerson,
-  onSuccess: async () => {
-    await queryClient.invalidateQueries({ queryKey: ['persons'] })
-    toast.add({
-      severity: 'success',
-      summary: 'Person deleted',
-      detail: 'Person was removed successfully.',
-      life: 3000,
-    })
+  successMessage: {
+    summary: 'Person deleted',
+    detail: 'Person was removed successfully.',
   },
-  onError: (error) => {
-    toast.add({
-      severity: 'error',
-      summary: 'Delete failed',
-      detail: error instanceof Error ? error.message : 'Unable to delete person.',
-      life: 3500,
-    })
+  errorMessage: {
+    summary: 'Delete failed',
+    detail: 'Unable to delete person.',
   },
+  invalidateQueries: [['persons']],
 })
 
 const canShowEmptyState = computed(() => {
@@ -255,7 +184,6 @@ const activeFormValues = computed<PersonFormValues>({
 })
 
 const formTitle = computed(() => (isCreateMode.value ? 'Add Person' : 'Edit Person'))
-const formSubmitLabel = computed(() => (isCreateMode.value ? 'Create Person' : 'Save Changes'))
 const formLoading = computed(() => (isCreateMode.value ? createMutation.isPending.value : updateMutation.isPending.value))
 
 const openCreateDialog = () => {
@@ -278,6 +206,27 @@ const consumeCreateQuery = async () => {
   })
 }
 
+const consumeOpenQuery = async () => {
+  const openId = route.query.open
+  if (typeof openId !== 'string' || !openId) {
+    return
+  }
+
+  const person = personsQuery.data.value?.find((entry) => entry.id === openId)
+  if (!person) {
+    return
+  }
+
+  const nextQuery = { ...route.query }
+  delete nextQuery.open
+  await router.replace({
+    path: route.path,
+    query: nextQuery,
+  })
+
+  onStartEdit(person)
+}
+
 watch(
   () => route.query.create,
   () => {
@@ -296,6 +245,14 @@ const onStartEdit = (person: Person) => {
   editValues.value = toFormValues(person)
   isFormDialogOpen.value = true
 }
+
+watch(
+  [() => route.query.open, () => personsQuery.data.value],
+  () => {
+    void consumeOpenQuery()
+  },
+  { immediate: true },
+)
 
 const onCancelEdit = () => {
   isFormDialogOpen.value = false
@@ -322,6 +279,12 @@ const onDelete = async (personId: string) => {
   await deleteMutation.mutateAsync(personId)
 }
 
+const onDeleteFromDialog = async () => {
+  if (!editingPersonId.value) return
+  await onDelete(editingPersonId.value)
+  onCancelEdit()
+}
+
 const onSubmitForm = async () => {
   if (isCreateMode.value) {
     await onCreate()
@@ -334,31 +297,33 @@ const onSubmitForm = async () => {
 
 <template>
   <section data-component="persons-page" class="flex w-full flex-col gap-4">
-    <AppTemplateDialog v-model="isFormDialogOpen" data-element="persons-form-dialog"
-      width="min(36rem, calc(100vw - 2rem))" @hide="onCancelEdit">
-      <PersonFormCard :data-element="isCreateMode ? 'persons-create-form' : 'persons-edit-form'" :title="formTitle"
-        :submit-label="formSubmitLabel" :values="activeFormValues" :weight-input-label="inputWeightLabel"
-        :weight-options="weightOptions" :loading="formLoading" show-cancel
-        @update:values="(values) => { activeFormValues = values }" @submit="onSubmitForm" @cancel="onCancelEdit" />
-    </AppTemplateDialog>
-
-    <Message v-if="personsQuery.isError.value" data-element="persons-error" severity="error" :closable="false">
-      {{ personsQuery.error.value instanceof Error ? personsQuery.error.value.message : 'Unable to load persons.' }}
-    </Message>
-
-    <div v-if="personsQuery.isPending.value" data-element="persons-loading"
-      class="border-line-subtle bg-surface-muted text-copy-muted rounded-2xl border px-4 py-3 text-sm font-medium">
-      Loading persons...
+    <!-- Header -->
+    <div class="hidden items-center justify-between md:flex">
+      <h1 class="text-copy text-2xl font-bold">Persons</h1>
+      <RouterLink to="/planner" class="text-brand-500 hover:text-brand-600 text-sm font-medium">
+        ← Back to Planner
+      </RouterLink>
     </div>
 
-    <div v-else-if="canShowEmptyState" data-element="persons-empty-state"
-      class="border-line-subtle bg-surface-elevated text-copy-muted rounded-2xl border px-5 py-6 text-sm">
-      Current crew count: 0. Morale remains surprisingly high. Add your first person to get started!
-    </div>
+    <PersonFormDialog :open="isFormDialogOpen" :is-create-mode="isCreateMode" :title="formTitle"
+      :values="activeFormValues" :weight-input-label="inputWeightLabel" :weight-options="weightOptions"
+      :loading="formLoading" @update:open="(value) => { if (!value) onCancelEdit(); isFormDialogOpen = value }"
+      @update:values="(values) => { activeFormValues = values }" @submit="onSubmitForm" @cancel="onCancelEdit"
+      @delete="onDeleteFromDialog" />
+
+    <AppQueryError :query="personsQuery" fallback-message="Unable to load persons." data-element="persons-error" />
+
+    <AppLoadingState v-if="personsQuery.isPending.value" message="Loading persons..." data-element="persons-loading" />
+
+    <AppEmptyState v-else-if="canShowEmptyState"
+      message="Current crew count: 0. Morale remains surprisingly high. Time to recruit some people for your adventure!"
+      data-element="persons-empty-state" />
 
     <div v-else data-element="persons-list" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      <article v-for="person in personsQuery.data.value" :key="person.id" data-element="person-card"
-        :data-person-id="person.id" class="border-line-subtle bg-surface-elevated rounded-2xl border p-4 shadow-panel">
+      <button v-for="person in personsQuery.data.value" :key="person.id" data-element="person-card"
+        :data-person-id="person.id" type="button"
+        class="surface-panel hover:border-brand-300 cursor-pointer p-4 text-left transition"
+        @click="onStartEdit(person)">
         <h3 class="text-ink text-lg font-semibold">{{ normalizeTitleWords(person.name) }}</h3>
 
         <div class="text-copy-muted mt-2 space-y-1 text-sm">
@@ -373,18 +338,11 @@ const onSubmitForm = async () => {
             <span class="ml-1">{{ formatWeight(person.body_weight_grams) }}</span>
           </p>
           <p>
-            <span class="text-copy font-medium">Max recommended pack weight:</span>
+            <span class="text-copy font-medium">Max recommended carry weight:</span>
             <span class="ml-1">{{ formatRecommendedMaxWeight(person) }}</span>
           </p>
         </div>
-
-        <div class="mt-4 flex items-center justify-between gap-2">
-          <Button data-element="person-edit" label="Edit" icon="pi pi-pencil" size="small" outlined
-            @click="onStartEdit(person)" />
-          <Button data-element="person-delete" label="Delete" icon="pi pi-trash" size="small" severity="danger" outlined
-            :loading="deleteMutation.isPending.value" @click="onDelete(person.id)" />
-        </div>
-      </article>
+      </button>
     </div>
   </section>
 </template>

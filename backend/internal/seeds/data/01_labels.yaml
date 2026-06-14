@@ -1,0 +1,275 @@
+# Seed data for labels table
+# Labels are tags that can be applied to items and packing lists
+
+table: labels
+records:
+  - name: backpack
+    id: 102ed93b-712e-5bcd-9d96-2baa903f78c3
+    color: "#FF5733"
+  - name: slinger
+    id: b613c9e9-db43-5674-bce8-5c96a7261d70
+    color: "#3498DB"
+  - name: pannier bag
+    id: 02fd6ebe-6aea-5b22-b81d-1f7750bfeeeb
+    color: "#9B59B6"
+  - name: handlebar bag
+    id: e79b71f3-707e-576e-835a-d3b33cab2865
+    color: "#1ABC9C"
+  - name: seatpost bag
+    id: ff27f738-1bb1-52fa-b657-ae1f96c7af6b
+    color: "#F39C12"
+  - name: map
+    id: 2555c7c9-65fe-5c3e-9618-cfbf39884786
+    color: "#E74C3C"
+  - name: compass
+    id: c993e63a-fc16-592c-b706-8fec8cc17a33
+    color: "#16A085"
+  - name: gps device
+    id: f5eb9bd2-84a9-5919-86a2-f9ac98a8a0fa
+    color: "#8E44AD"
+  - name: headlamp
+    id: 2944b29a-c12b-50eb-b1e5-f8e1c25193b6
+    color: "#2980B9"
+  - name: batteries
+    id: 3a9164ac-c31a-5935-a03e-881d0739ec75
+    color: "#D35400"
+  - name: power bank
+    id: 7efa8f2b-efe6-590d-9cf3-418dddb7325a
+    color: "#27AE60"
+  - name: first aid kit
+    id: 5a325bdb-a17a-533a-8a1d-db6092d9132f
+    color: "#C0392B"
+  - name: whistle
+    id: ad366eb8-36de-5061-a14c-2298c4d533df
+    color: "#2C3E50"
+  - name: multi-tool
+    id: 2ad732a4-d2e9-5b2c-9db8-40bd7081a45e
+    color: "#7F8C8D"
+  - name: knife
+    id: cbb471cd-69ec-5e2f-a99e-880e1ae3a868
+    color: "#34495E"
+  - name: lighter
+    id: ee5d63d4-fe1d-52b0-9c5a-5fa74fc585bc
+    color: "#E67E22"
+  - name: ferro rod
+    id: c4d7d874-ad14-5c92-af56-cd9c0b85e476
+    color: "#95A5A6"
+  - name: matches
+    id: 9caa6320-75d4-5084-b074-8e782f1fbad0
+    color: "#D98880"
+  - name: tent
+    id: 56571ed6-ed3a-5619-9ffb-18e398452792
+    color: "#76D7C4"
+  - name: footprint
+    id: f8a1f8ef-71b5-574e-a607-ff77d9b41f66
+    color: "#F8B739"
+  - name: tarp
+    id: 75a13391-ca8b-5c85-a0f0-8e2d4c616cd2
+    color: "#85C1E2"
+  - name: sleeping bag
+    id: 991c1299-4343-52db-a695-36b96ea7d083
+    color: "#BB8FCE"
+  - name: quilt
+    id: e31930a7-6150-58db-847c-36ef53e4bda6
+    color: "#F1948A"
+  - name: sleeping pad
+    id: 8f73b46d-5b72-5aad-bce4-d89d66777f70
+    color: "#73C6B6"
+  - name: pillow
+    id: 0a247d81-1f5d-5128-a673-88506a78dcfe
+    color: "#F7DC6F"
+  - name: rain fly
+    id: 56d9a8fe-22ce-5e18-818a-8fff9c0a102e
+    color: "#AED6F1"
+  - name: paracord
+    id: 9043dd9d-9d3d-5840-8215-09d26b206221
+    color: "#ABEBC6"
+  - name: utility rope
+    id: 570841a0-3fbb-55d0-9182-0206e1957d84
+    color: "#FAD7A0"
+  - name: clothesline
+    id: c36d76f0-26ba-5e43-83d3-315ba7b52d57
+    color: "#D7BDE2"
+  - name: tent stakes
+    id: e46aad4f-ff98-5b43-998c-82c132fd0225
+    color: "#A9CCE3"
+  - name: bivy
+    id: 69ad2c1a-15df-53e2-bb69-a0500cd74fd3
+    color: "#A3E4D7"
+  - name: tent repair kit
+    id: 073be702-5f8d-582f-bde8-3a3da83dce1c
+    color: "#F9E79F"
+  - name: sleeping pad repair kit
+    id: 0bfefb82-1fe5-5d32-8a65-4a8558d59a5e
+    color: "#FADBD8"
+  - name: base layer
+    id: d5e87f64-465e-5e87-81ce-91ff7731b25f
+    color: "#D5F4E6"
+  - name: hiking pants
+    id: 69a76852-aeab-5c85-bcf0-e4babae5bd02
+    color: "#FCF3CF"
+  - name: hiking shorts
+    id: 4f8c07cc-cc14-5a13-b208-55a28e43ca3d
+    color: "#EBDEF0"
+  - name: hiking shirt
+    id: ad76216f-f9f0-562c-887b-8c28b74c64e4
+    color: "#D6EAF8"
+  - name: mid-layer
+    id: 3ffcba74-b29c-5eff-b6e2-444c6870b798
+    color: "#E8DAEF"
+  - name: fleece
+    id: 01fd37e0-76c8-5ad4-bfdd-e87cbca87dab
+    color: "#D1F2EB"
+  - name: down jacket
+    id: 15075b31-c805-56fa-b2ab-9d1eca912f3f
+    color: "#FDEBD0"
+  - name: rain jacket
+    id: 5c06e5d8-679a-5ee0-bde1-b80755ee7758
+    color: "#F8BBD0"
+  - name: poncho
+    id: c3874999-8ae7-5bb0-ba89-249bffc6e9ab
+    color: "#C5CAE9"
+  - name: rain pants
+    id: c7533f6b-7dd0-537d-9ced-f83c64b706ed
+    color: "#B2DFDB"
+  - name: hiking boots
+    id: e443df59-d4fb-56ed-9d7e-e249bf1000e8
+    color: "#FFCCBC"
+  - name: trail runners
+    id: f714f646-68db-529f-9609-2710f9064f9b
+    color: "#D7CCC8"
+  - name: camp shoes
+    id: 1ed4f335-ba8d-5637-a08e-8e5e0034474e
+    color: "#F0F4C3"
+  - name: sandals
+    id: b23d8717-6698-5302-897d-4027f831d5da
+    color: "#DCEDC8"
+  - name: socks
+    id: 960b78c9-cd5f-58d4-a1c1-3a2f2a94ba52
+    color: "#B3E5FC"
+  - name: hat
+    id: 3ef99a49-5529-52d2-9b2b-d4d0ffd2b8db
+    color: "#FFE0B2"
+  - name: cap
+    id: f8d2a708-e528-5c1e-a9f5-16a2e1e92844
+    color: "#FFCCBC"
+  - name: gloves
+    id: 0e43387e-f9e9-506f-9794-7d1a6febfc9c
+    color: "#CFD8DC"
+  - name: neck warmer
+    id: 30fa3ae2-55e6-5584-af50-87f3cdf80fe7
+    color: "#FFAB91"
+  - name: sunglasses
+    id: 04258e5e-1743-52eb-b9c0-910bf18e694e
+    color: "#80CBC4"
+  - name: stove
+    id: 562a2320-97eb-535e-a32a-39b2d1b66e0e
+    color: "#EF9A9A"
+  - name: fuel canister
+    id: c278478e-35c3-5b98-8e24-777034683edf
+    color: "#CE93D8"
+  - name: cooking pot
+    id: 350e9d8e-9fe8-5212-98c9-8e2423332527
+    color: "#90CAF9"
+  - name: cooking pan
+    id: 844efd14-0db1-5295-9cec-6c6272542ef7
+    color: "#80DEEA"
+  - name: spork
+    id: 55758e0b-a34d-5ff1-810c-3feb4114d31d
+    color: "#A5D6A7"
+  - name: eating utensils
+    id: 2e59f81c-1a06-5c67-bb04-b9966efd3fae
+    color: "#E6EE9C"
+  - name: mug
+    id: cde9d321-1ea1-54bb-9b6b-e56006509548
+    color: "#FFF59D"
+  - name: cup
+    id: d31da992-a62f-5a15-b20e-411f377b2925
+    color: "#FFE082"
+  - name: bowl
+    id: 24190017-a3a0-5b89-abad-f28b20785d37
+    color: "#FFCC80"
+  - name: water bottle
+    id: 6d9deae5-2cd0-5ce2-88ae-e8150c35e0c5
+    color: "#81D4FA"
+  - name: hydration bladder
+    id: 82024e0d-5623-5099-9904-82e5429a5da9
+    color: "#80DEEA"
+  - name: water filter
+    id: 1cdc9d82-2846-5b76-adb9-bfcd08381ede
+    color: "#64B5F6"
+  - name: purifier tabs
+    id: 66346267-e607-5e97-b6b1-1a06720940c5
+    color: "#4FC3F7"
+  - name: dehydrated meal
+    id: 994c2836-f5f3-5446-bb72-49bc6ec6f999
+    color: "#BCAAA4"
+  - name: snacks
+    id: 2e0edfdc-266e-5e24-8bd7-8b7333be5480
+    color: "#FFB74D"
+  - name: energy bars
+    id: 9c2ddf6d-9523-5587-82b0-3b569b83c865
+    color: "#FF8A65"
+  - name: dry bag
+    id: 243585a4-85e5-5405-9440-d68d702cf430
+    color: "#4DD0E1"
+  - name: stuff sack
+    id: d6fe40aa-9b75-5d18-9c6a-41726697617f
+    color: "#4DB6AC"
+  - name: toothbrush
+    id: 4648aac7-5897-5a54-8fc3-a5d6a6e5c228
+    color: "#AED581"
+  - name: toothpaste
+    id: 57ffaade-0e47-5075-81bb-89eeb7c55699
+    color: "#DCE775"
+  - name: soap
+    id: 81e2305d-655f-5fee-b66f-4e69b4537d25
+    color: "#FFF176"
+  - name: toilet paper
+    id: 710dd4c3-0a93-5a08-baee-9a113be880f2
+    color: "#FFD54F"
+  - name: trowel
+    id: 0ac59f97-19da-5593-af8b-f1c10ac86ff4
+    color: "#A1887F"
+  - name: towel
+    id: 1b408976-4c06-5c0e-bc7f-32db2b365721
+    color: "#90A4AE"
+  - name: sunscreen
+    id: 16b76927-f114-57f5-a64b-84d75bcbf588
+    color: "#FFEB3B"
+  - name: insect repellent
+    id: 15eaf6f3-a99f-58cf-9785-3b80c3a8c54b
+    color: "#9CCC65"
+  - name: trash bag
+    id: 3e70ca27-09a4-5f8e-8aa8-046d8dc7db3f
+    color: "#78909C"
+  - name: trekking poles
+    id: 4a1404da-2acd-5ff3-b8cb-631e679dc0c8
+    color: "#8D6E63"
+  - name: chair
+    id: 422de1fb-895b-55a9-928c-51756b660f03
+    color: "#FFAB40"
+  - name: solar charger
+    id: 5e2a28e9-ae64-5eab-a018-20f62d453796
+    color: "#FFD740"
+  - name: notebook
+    id: 9aa1af57-1b00-54e2-896e-8546d0d9b536
+    color: "#B0BEC5"
+  - name: pen
+    id: d1b40d51-e752-5a6d-a600-9214472213c7
+    color: "#546E7A"
+  - name: camera
+    id: 8817c07e-19dc-5683-9709-d758c2fbdc85
+    color: "#607D8B"
+  - name: binoculars
+    id: 1cf7d1db-8a41-5336-9861-afa1e006f6d6
+    color: "#455A64"
+  - name: duct tape
+    id: 1695f1a1-b0c5-541b-9d97-03577c937a05
+    color: "#757575"
+  - name: hand warmer
+    id: 80f29b08-4c10-54a4-b64f-34ddc40e4a4b
+    color: "#FF6E40"
+  - name: gaiters
+    id: fdecfded-a851-5256-aba1-2213d77d284f
+    color: "#5D4037"

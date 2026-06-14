@@ -19,6 +19,9 @@
   --color-copy-subtle: rgb(168 162 158);
   --color-ink-inverse: rgb(255 255 255);
 
+  /* Neutral background for a label/chip that has no user-chosen color. */
+  --color-label-fallback: rgb(107 114 128);
+
   --color-brand-50: rgb(236 253 245);
   --color-brand-200: rgb(167 243 208);
   --color-brand-500: rgb(16 185 129);
@@ -35,8 +38,6 @@
   --shadow-soft: 0 10px 24px -18px rgb(120 113 108 / 0.28);
   --backdrop-blur-soft: 12px;
 
-  --app-text: var(--color-ink);
-
   --app-shell-gradient-start: color-mix(in srgb, var(--color-warning-200) 28%, var(--color-surface-base));
   --app-shell-gradient-middle: var(--color-surface-muted);
   --app-shell-gradient-end: color-mix(in srgb, var(--color-brand-200) 36%, var(--color-surface-base));
@@ -44,6 +45,19 @@
   --app-shell-gradient-soft-start: color-mix(in srgb, var(--color-line-subtle) 45%, var(--color-surface-base));
   --app-shell-gradient-soft-middle: color-mix(in srgb, var(--color-warning-200) 24%, var(--color-surface-base));
   --app-shell-gradient-soft-end: color-mix(in srgb, var(--color-brand-200) 30%, var(--color-surface-base));
+
+  /* Tonal action buttons: soft same-hue tint at rest, deeper on hover */
+  --color-action-primary-bg: color-mix(in srgb, var(--color-brand-500) 14%, var(--color-surface-base));
+  --color-action-primary-bg-hover: color-mix(in srgb, var(--color-brand-500) 28%, var(--color-surface-base));
+  --color-action-primary-fg: var(--color-brand-800);
+
+  --color-action-secondary-bg: color-mix(in srgb, var(--color-line) 45%, var(--color-surface-base));
+  --color-action-secondary-bg-hover: color-mix(in srgb, var(--color-line) 85%, var(--color-surface-base));
+  --color-action-secondary-fg: var(--color-copy);
+
+  --color-action-danger-bg: color-mix(in srgb, var(--color-danger-500) 12%, var(--color-surface-base));
+  --color-action-danger-bg-hover: color-mix(in srgb, var(--color-danger-500) 26%, var(--color-surface-base));
+  --color-action-danger-fg: var(--color-danger-500);
 
   --surface-panel-radius: var(--radius-panel);
   --surface-panel-border: var(--color-line-subtle);
@@ -73,8 +87,7 @@
   --field-font-size: 0.875rem;
   --field-icon: var(--color-copy-subtle);
   --field-icon-width: 2.5rem;
-  --field-transition-duration: 0.2s;
-  --field-transition-easing: ease;
+  --field-transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
 
   --field-overlay-background: var(--color-surface-elevated);
   --field-overlay-text: var(--color-copy);
@@ -101,8 +114,8 @@
   --checkbox-focus-width: 2px;
   --checkbox-focus-offset: 2px;
   --checkbox-transition-duration: 0.15s;
-  --checkbox-transition-easing: ease;
-  --checkbox-icon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5L3.5 7.5L8.5 2.5' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
+  --checkbox-transition: border-color 0.15s ease;
+ --checkbox-icon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5L3.5 7.5L8.5 2.5' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E");
   --checkbox-icon-indeterminate: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M2 5H8' stroke='white' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E");
   --checkbox-icon-size: 70%;
 
@@ -157,6 +170,54 @@
   box-shadow: var(--surface-chip-shadow);
 }
 
+/* ─── Typography Utilities ─────────────────────────────────────────────── */
+
+@utility label-field {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-copy);
+}
+
+@utility label-section {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-copy);
+}
+
+@utility label-section-subtle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-copy-subtle);
+}
+
+@utility heading-section {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-copy);
+}
+
+/* ─── Layout Utilities ─────────────────────────────────────────────────── */
+
+@utility flex-center {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@utility flex-center-block {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @utility input-shell {
   border: 1px solid var(--field-border);
   border-radius: var(--field-radius);
@@ -167,9 +228,7 @@
   outline: none;
   transition:
     border-color var(--field-transition-duration) var(--field-transition-easing),
-    box-shadow var(--field-transition-duration) var(--field-transition-easing),
-    background-color var(--field-transition-duration) var(--field-transition-easing),
-    color var(--field-transition-duration) var(--field-transition-easing);
+    box-shado var(--field-transition)
 }
 
 @utility input-shell-focus {
@@ -204,9 +263,7 @@
   box-shadow: none;
   transition:
     border-color var(--field-transition-duration) var(--field-transition-easing),
-    box-shadow var(--field-transition-duration) var(--field-transition-easing),
-    background-color var(--field-transition-duration) var(--field-transition-easing),
-    color var(--field-transition-duration) var(--field-transition-easing);
+    box-shado var(--field-transition)
 }
 
 .app-select-field.p-select:not(.p-disabled):hover {
@@ -285,10 +342,95 @@
   color: var(--field-option-text-selected) !important;
 }
 
+/* MultiSelect adopts the same field theme as Select (root class differs: .p-multiselect). */
+.app-select-field.p-multiselect {
+  width: 100%;
+  border: 1px solid var(--field-border);
+  border-radius: var(--field-radius);
+  background: var(--field-background);
+  color: var(--field-text);
+  box-shadow: none;
+  transition:
+    border-color var(--field-transition-duration) var(--field-transition-easing),
+    box-shado var(--field-transition)
+}
+
+.app-select-field.p-multiselect:not(.p-disabled):hover {
+  border-color: var(--field-border-hover);
+}
+
+.app-select-field.p-multiselect.p-focus {
+  border-color: var(--field-border-focus);
+  box-shadow: var(--field-focus-shadow);
+}
+
+.app-select-field.is-invalid.p-multiselect,
+.app-select-field.is-invalid.p-multiselect.p-focus {
+  border-color: var(--field-border-invalid);
+}
+
+.app-select-field .p-multiselect-label {
+  padding: var(--field-padding-y) var(--field-padding-x);
+  color: var(--field-text) !important;
+  font-size: var(--field-font-size);
+  background: transparent !important;
+}
+
+.app-select-field .p-multiselect-label.p-placeholder {
+  color: var(--field-placeholder) !important;
+}
+
+.app-select-option.p-multiselect-option.p-focus {
+  background: var(--field-option-background-hover) !important;
+  color: var(--field-option-text-hover) !important;
+}
+
+.app-select-option.p-multiselect-option.p-multiselect-option-selected {
+  background: var(--field-option-background-selected) !important;
+  color: var(--field-option-text-selected) !important;
+}
+
+/* MultiSelect uses PrimeVue's Checkbox (not a native input); match the app checkbox style. */
+.app-select-overlay .p-checkbox-box {
+  width: var(--checkbox-size);
+  height: var(--checkbox-size);
+  border-radius: var(--checkbox-radius);
+  border: var(--checkbox-border-width) solid var(--checkbox-border);
+  background-color: var(--checkbox-background);
+  box-shadow: none;
+  transition:
+    border-color var(--checkbox-transition-duration) var(--checkbox-transition-easing),
+    backgroun var(--checkbox-transition)
+}
+
+.app-select-overlay .p-checkbox[data-p-checked='true'] .p-checkbox-box {
+  background-color: var(--checkbox-background-selected);
+  border-color: var(--checkbox-border-selected);
+  background-image: var(--checkbox-icon-check);
+  background-size: var(--checkbox-icon-size);
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Hide PrimeVue's own check glyph; the box background renders the app's checkmark. */
+.app-select-overlay .p-checkbox-icon {
+  display: none;
+}
+
+.app-select-overlay .p-checkbox-input:focus-visible + .p-checkbox-box {
+  outline: var(--checkbox-focus-width) solid var(--checkbox-focus-color);
+  outline-offset: var(--checkbox-focus-offset);
+}
+
 html,
 body,
 #app {
   min-height: 100%;
+}
+
+html,
+body {
+  overflow-x: hidden;
 }
 
 body {
@@ -296,13 +438,12 @@ body {
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  color: var(--app-text);
+  color: var(--color-ink);
 }
 
 /* ─── Global checkbox style ─── */
 input[type='checkbox'] {
   appearance: none;
-  -webkit-appearance: none;
   width: var(--checkbox-size);
   height: var(--checkbox-size);
   flex-shrink: 0;
@@ -312,8 +453,7 @@ input[type='checkbox'] {
   background-color: var(--checkbox-background);
   transition:
     border-color var(--checkbox-transition-duration) var(--checkbox-transition-easing),
-    background-color var(--checkbox-transition-duration) var(--checkbox-transition-easing);
-  vertical-align: middle;
+    backgroun var(--checkbox-transition)
 }
 
 input[type='checkbox']:checked {
@@ -364,7 +504,7 @@ input[type='checkbox']:focus-visible {
   text-transform: uppercase;
   letter-spacing: var(--toggle-letter-spacing);
   color: var(--toggle-label-text);
-  transition: all var(--toggle-transition-duration) var(--toggle-transition-easing);
+  transition: all var(--toggle-transition-duration) var(--toggle-transition-easing) var(--toggle-transition);
 }
 
 .toggle-option-label:hover {
@@ -391,9 +531,7 @@ input[type='checkbox']:focus-visible {
   padding: var(--field-padding-y) var(--field-padding-x);
   transition:
     border-color var(--field-transition-duration) var(--field-transition-easing),
-    box-shadow var(--field-transition-duration) var(--field-transition-easing),
-    background-color var(--field-transition-duration) var(--field-transition-easing),
-    color var(--field-transition-duration) var(--field-transition-easing);
+    box-shado var(--field-transition)
 }
 
 .app-date-picker .p-inputtext:focus {

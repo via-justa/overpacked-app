@@ -1,34 +1,53 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useMutation, useQuery } from '@tanstack/vue-query'
-import Message from 'primevue/message'
+import { useQuery } from '@tanstack/vue-query'
 import { useToast } from 'primevue/usetoast'
-import AppToggleGroup from '../../../components/AppToggleGroup.vue'
-import AppConfirmDialog from '../../../components/AppConfirmDialog.vue'
+import { iconRegistry } from '../../../lib/icons'
+import { AppIcon } from '../../../components/icons'
+import AppToggleGroup from '../../../components/forms/AppToggleGroup.vue'
+import AppConfirmDialog from '../../../components/dialogs/AppConfirmDialog.vue'
+import AppQueryError from '../../../components/feedback/AppQueryError.vue'
+import AppLoadingState from '../../../components/feedback/AppLoadingState.vue'
+import AppEmptyState from '../../../components/feedback/AppEmptyState.vue'
+import AppCategoryFilter from '../../../components/actions/AppCategoryFilter.vue'
+import AppSummaryCard from '../../../components/layout/AppSummaryCard.vue'
 import { normalizeTitleWords } from '../../../lib/text/normalize'
 import { queryClient } from '../../../lib/query/client'
-import { getSettings } from '../../settings/api/settingsApi'
-import { listItems, listItemTypeFields, listItemTypes, listManufacturers, removeItem, updateItem, createItem } from '../api/itemsApi'
-import ItemDetailsDialog from '../components/ItemDetailsDialog.vue'
+import { getStoredValue, setStoredValue } from '../../../lib/storage/localStorage'
+import { safeHttpUrl } from '../../../lib/navigation/url'
+import { listItems, listItemTypeFields, listItemTypes, listManufacturers, removeItem, updateItem, createItem, listItemLabels, listLabels, createLabel, addItemLabel, removeItemLabel } from '../api/itemsApi'
+import { useMutationWithToast } from '../../../composables/useMutationWithToast'
+import { useInlineMutation } from '../../../composables/useInlineMutation'
+import { useIsMobile } from '../../../composables/useIsMobile'
+import { useSettings } from '../../../composables/useSettings'
+import {
+  gramsToInput,
+  inputToGrams,
+  mlToInput,
+  inputToMl,
+  toRoundedString,
+  formatDisplayWeight,
+} from '../../../lib/units/conversions'
+import {
+  formatNumber as formatNumberDisplay,
+  formatValue as formatValueDisplay,
+  formatCarryStatus as formatCarryStatusDisplay,
+  formatType as formatTypeDisplay,
+  formatText as formatTextDisplay,
+} from '../../../lib/format/display'
 import ItemFormDialog from '../components/ItemFormDialog.vue'
 import ItemsCreateOptionsMenu from '../components/ItemsCreateOptionsMenu.vue'
 import ItemsListView from '../components/ItemsListView.vue'
 import ItemsManufacturerDialog from '../components/ItemsManufacturerDialog.vue'
 import ItemsCategoryDialog from '../components/ItemsCategoryDialog.vue'
 import ItemsImportDialog from '../components/ItemsImportDialog.vue'
-import type { Item, ItemCreate, ItemFormValues, ItemTypeField, ItemUpdate, KnownItemType } from '../types'
-import { KNOWN_ITEM_TYPES, isKnownItemType } from '../types'
-import type { Currency } from '../../settings/types'
+import type { Item, ItemCreate, ItemFormValues, ItemTypeField, ItemUpdate, Label, LabelCreate } from '../types'
 
 const toast = useToast()
+const { executeInlineMutation } = useInlineMutation()
 const route = useRoute()
 const router = useRouter()
-
-const GRAMS_PER_OUNCE = 28.349523125
-const GRAMS_PER_KILOGRAM = 1000
-const OUNCES_PER_POUND = 16
-const ML_PER_FL_OZ = 29.5735295625
 
 type WeightInputUnit = 'g' | 'oz'
 type VolumeInputUnit = 'ml' | 'fl_oz'
@@ -36,7 +55,7 @@ type ItemsViewMode = 'cards' | 'table'
 type ItemsTableDetailMode = 'simple' | 'expanded'
 type ItemTypeFilter = 'all' | string
 type CreateTarget = 'item' | 'manufacturer' | 'category' | 'import'
-type TableFieldKey = 'type' | 'manufacturer' | 'active' | 'default_carry' | 'default_quantity' | 'is_default' | 'weight' | 'volume' | 'value' | 'description' | 'source_url' | 'dose_count' | 'calories' | 'calories_per_serving' | 'requires_water' | 'season' | 'layer' | 'waterproof' | 'size' | 'color' | 'capacity_people' | 'season_rating' | 'freestanding' | 'has_footprint' | 'comfort_temp_c' | 'fill_type' | 'r_value' | 'capacity_mah' | 'charge_port' | 'rechargeable'
+type TableFieldKey = 'type' | 'manufacturer' | 'active' | 'default_carry' | 'default_quantity' | 'is_default' | 'weight' | 'volume' | 'weight_volume' | 'value' | 'labels' | 'description' | 'source_url'
 
 type TableFieldOption = {
   key: TableFieldKey
@@ -49,149 +68,69 @@ type TableFieldDefinition = TableFieldOption & {
   renderBoolean?: (item: Item) => boolean | null | undefined
 }
 
-type DetailEntry = {
-  label: string
-  value: string
-  href?: string
-  booleanValue?: boolean | null
-}
-
 type ItemTableSection = {
   type: string
   title: string
   items: Item[]
   baseFields: TableFieldDefinition[]
-  extraFields: TableFieldDefinition[]
   tableDetailMode: ItemsTableDetailMode
   selectionMode: boolean
   selectedItemIds: string[]
   totalWeightLabel: string
   totalValueLabel: string
+  itemLabelsMap: Map<string, Label[]>
 }
 
 const ITEMS_VIEW_MODE_STORAGE_KEY = 'items:view-mode'
 const ITEMS_TYPE_FILTER_STORAGE_KEY = 'items:type-filter'
-const ITEMS_TABLE_DETAIL_MODE_BY_TYPE_STORAGE_KEY = 'items:table-detail-mode-by-type'
+const ITEMS_TABLE_EXPANDED_VIEW_STORAGE_KEY = 'items:table-expanded-view'
+const ITEMS_SHOW_INACTIVE_STORAGE_KEY = 'items:show-inactive'
+
+const isViewMode = (value: string): value is 'cards' | 'table' => value === 'cards' || value === 'table'
+
 const commonTableFieldOptions: TableFieldOption[] = [
-  { key: 'type', label: 'Type' },
   { key: 'manufacturer', label: 'Manufacturer' },
-  { key: 'active', label: 'Active' },
   { key: 'default_carry', label: 'Default Carry' },
   { key: 'default_quantity', label: 'Qty' },
   { key: 'is_default', label: 'Default' },
-  { key: 'weight', label: 'Weight' },
-  { key: 'volume', label: 'Volume' },
+  { key: 'weight_volume', label: 'W/V' },
   { key: 'value', label: 'Value' },
+  { key: 'labels', label: 'Labels' },
   { key: 'description', label: 'Notes' },
   { key: 'source_url', label: 'URL' },
 ]
-
-const extraTableFieldOptionsByType: Record<KnownItemType, TableFieldOption[]> = {
-  consumable: [
-    { key: 'dose_count', label: 'Dose Count' },
-    { key: 'calories', label: 'Calories' },
-    { key: 'calories_per_serving', label: 'Cal/Serving' },
-    { key: 'requires_water', label: 'Requires Water' },
-  ],
-  wearable: [
-    { key: 'season', label: 'Season' },
-    { key: 'layer', label: 'Layer' },
-    { key: 'waterproof', label: 'Waterproof' },
-    { key: 'size', label: 'Size' },
-    { key: 'color', label: 'Color' },
-  ],
-  shelter: [
-    { key: 'capacity_people', label: 'Capacity' },
-    { key: 'season_rating', label: 'Season Rating' },
-    { key: 'freestanding', label: 'Freestanding' },
-    { key: 'has_footprint', label: 'Has Footprint' },
-  ],
-  sleep: [
-    { key: 'comfort_temp_c', label: 'Comfort Temp (°C)' },
-    { key: 'fill_type', label: 'Fill Type' },
-    { key: 'r_value', label: 'R-Value' },
-  ],
-  electronics: [
-    { key: 'capacity_mah', label: 'Capacity (mAh)' },
-    { key: 'charge_port', label: 'Charge Port' },
-    { key: 'rechargeable', label: 'Rechargeable' },
-  ],
-}
-
-const toRoundedString = (value: number): string => {
-  if (!Number.isFinite(value)) {
-    return ''
-  }
-
-  return Number.parseFloat(value.toFixed(2)).toString()
-}
 
 const toIntegerString = (value?: number | null): string => {
   if (typeof value !== 'number') {
     return ''
   }
-
   return String(Math.trunc(value))
 }
 
-const gramsToInput = (value: number, unit: WeightInputUnit): number => {
-  return unit === 'oz' ? value / GRAMS_PER_OUNCE : value
-}
-
-const inputToGrams = (value: number, unit: WeightInputUnit): number => {
-  return unit === 'oz' ? value * GRAMS_PER_OUNCE : value
-}
-
-const mlToInput = (value: number, unit: VolumeInputUnit): number => {
-  return unit === 'fl_oz' ? value / ML_PER_FL_OZ : value
-}
-
-const inputToMl = (value: number, unit: VolumeInputUnit): number => {
-  return unit === 'fl_oz' ? value * ML_PER_FL_OZ : value
-}
-
 const readStoredItemsViewMode = (): ItemsViewMode => {
-  if (globalThis.window === undefined) {
-    return 'table'
-  }
-
-  const stored = globalThis.localStorage.getItem(ITEMS_VIEW_MODE_STORAGE_KEY)
-  return stored === 'cards' || stored === 'table' ? stored : 'table'
+  return getStoredValue(ITEMS_VIEW_MODE_STORAGE_KEY, isViewMode, 'table')
 }
 
 const readStoredItemsTypeFilter = (): ItemTypeFilter => {
-  if (globalThis.window === undefined) {
-    return 'all'
-  }
-
-  const stored = globalThis.localStorage.getItem(ITEMS_TYPE_FILTER_STORAGE_KEY)
-  return stored && stored.trim().length > 0 ? stored : 'all'
+  return getStoredValue(ITEMS_TYPE_FILTER_STORAGE_KEY, (value): value is string => value.trim().length > 0, 'all')
 }
 
-const readStoredItemsTableDetailModeByType = (): Record<string, ItemsTableDetailMode> => {
+const readStoredShowInactive = (): boolean => {
   if (globalThis.window === undefined) {
-    return {}
+    return false
   }
 
-  const stored = globalThis.localStorage.getItem(ITEMS_TABLE_DETAIL_MODE_BY_TYPE_STORAGE_KEY)
-  if (!stored) {
-    return {}
+  const stored = globalThis.localStorage.getItem(ITEMS_SHOW_INACTIVE_STORAGE_KEY)
+  return stored === 'true'
+}
+
+const readStoredExpandedView = (): boolean => {
+  if (globalThis.window === undefined) {
+    return false
   }
 
-  try {
-    const parsed = JSON.parse(stored) as Record<string, unknown>
-    const next: Record<string, ItemsTableDetailMode> = {}
-
-    for (const [type, rawValue] of Object.entries(parsed)) {
-      if (rawValue === 'simple' || rawValue === 'expanded') {
-        next[type] = rawValue
-      }
-    }
-
-    return next
-  } catch {
-    return {}
-  }
+  const stored = globalThis.localStorage.getItem(ITEMS_TABLE_EXPANDED_VIEW_STORAGE_KEY)
+  return stored === 'true'
 }
 
 const toNumberString = (value?: number | null): string => {
@@ -201,8 +140,6 @@ const toNumberString = (value?: number | null): string => {
 
   return toRoundedString(value)
 }
-
-const toBooleanValue = Boolean
 
 const parseNumber = (value: string): number | undefined => {
   if (!value.trim()) {
@@ -239,29 +176,11 @@ const emptyFormValues = (): ItemFormValues => ({
   is_default: true,
   weight_value: '',
   volume_value: '',
-  dose_count: '',
-  calories: '',
-  calories_per_serving: '',
-  requires_water: false,
-  season: '',
-  layer: '',
-  waterproof: false,
-  size: '',
-  color: '',
-  capacity_people: '',
-  season_rating: '',
-  freestanding: false,
-  has_footprint: false,
-  comfort_temp_c: '',
-  fill_type: '',
-  r_value: '',
-  capacity_mah: '',
-  charge_port: '',
-  rechargeable: false,
   image_blob: '',
   image_mime_type: '',
   image_size_bytes: '',
   attributes: {},
+  label_ids: [],
 })
 
 const toFormAttributes = (attributes?: Record<string, unknown> | null): Record<string, string | boolean> => {
@@ -308,29 +227,11 @@ const toFormValues = (item: Item): ItemFormValues => ({
     typeof item.volume_ml === 'number'
       ? toRoundedString(mlToInput(item.volume_ml, volumeInputUnit.value))
       : '',
-  dose_count: toIntegerString(item.dose_count),
-  calories: toNumberString(item.calories),
-  calories_per_serving: toNumberString(item.calories_per_serving),
-  requires_water: toBooleanValue(item.requires_water),
-  season: item.season ? item.season as ItemFormValues['season'] : '',
-  layer: item.layer ? item.layer as ItemFormValues['layer'] : '',
-  waterproof: toBooleanValue(item.waterproof),
-  size: item.size ?? '',
-  color: item.color ?? '',
-  capacity_people: toIntegerString(item.capacity_people),
-  season_rating: item.season_rating ? item.season_rating as ItemFormValues['season_rating'] : '',
-  freestanding: toBooleanValue(item.freestanding),
-  has_footprint: toBooleanValue(item.has_footprint),
-  comfort_temp_c: toNumberString(item.comfort_temp_c),
-  fill_type: item.fill_type ? item.fill_type as ItemFormValues['fill_type'] : '',
-  r_value: toNumberString(item.r_value),
-  capacity_mah: toIntegerString(item.capacity_mah),
-  charge_port: item.charge_port ? item.charge_port as ItemFormValues['charge_port'] : '',
-  rechargeable: toBooleanValue(item.rechargeable),
   image_blob: item.image_blob ?? '',
   image_mime_type: item.image_mime_type ?? '',
   image_size_bytes: toIntegerString(item.image_size_bytes),
   attributes: toFormAttributes(item.attributes),
+  label_ids: [],
 })
 
 const applyCommonPayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
@@ -386,99 +287,6 @@ const applyImagePayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemF
   }
 }
 
-const applyConsumablePayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
-  const parsedDoseCount = parseInteger(values.dose_count)
-  if (parsedDoseCount !== undefined) {
-    payload.dose_count = parsedDoseCount
-  }
-
-  const parsedCalories = parseInteger(values.calories)
-  if (parsedCalories !== undefined) {
-    payload.calories = parsedCalories
-  }
-
-  if (parsedCalories !== undefined && parsedDoseCount !== undefined && parsedDoseCount > 0) {
-    payload.calories_per_serving = Math.round((parsedCalories / parsedDoseCount) * 100) / 100
-  }
-
-  payload.requires_water = values.requires_water
-}
-
-const applyWearablePayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
-  if (values.season) {
-    payload.season = values.season
-  }
-  if (values.layer) {
-    payload.layer = values.layer
-  }
-  payload.waterproof = values.waterproof
-  if (values.size.trim()) {
-    payload.size = values.size.trim()
-  }
-  if (values.color.trim()) {
-    payload.color = values.color.trim()
-  }
-}
-
-const applyShelterPayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
-  const parsedCapacityPeople = parseNumber(values.capacity_people)
-  if (parsedCapacityPeople !== undefined) {
-    payload.capacity_people = parsedCapacityPeople
-  }
-  if (values.season_rating) {
-    payload.season_rating = values.season_rating
-  }
-  payload.freestanding = values.freestanding
-  payload.has_footprint = values.has_footprint
-}
-
-const applySleepPayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
-  const parsedComfortTempC = parseNumber(values.comfort_temp_c)
-  if (parsedComfortTempC !== undefined) {
-    payload.comfort_temp_c = parsedComfortTempC
-  }
-  if (values.fill_type) {
-    payload.fill_type = values.fill_type
-  }
-  const parsedRValue = parseNumber(values.r_value)
-  if (parsedRValue !== undefined) {
-    payload.r_value = parsedRValue
-  }
-}
-
-const applyElectronicsPayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
-  const parsedCapacityMah = parseInteger(values.capacity_mah)
-  if (parsedCapacityMah !== undefined) {
-    payload.capacity_mah = parsedCapacityMah
-  }
-  if (values.charge_port) {
-    payload.charge_port = values.charge_port
-  }
-  payload.rechargeable = values.rechargeable
-}
-
-const applyTypeSpecificPayloadFields = (payload: ItemCreate | ItemUpdate, values: ItemFormValues) => {
-  switch (values.type) {
-    case 'consumable':
-      applyConsumablePayloadFields(payload, values)
-      break
-    case 'wearable':
-      applyWearablePayloadFields(payload, values)
-      break
-    case 'shelter':
-      applyShelterPayloadFields(payload, values)
-      break
-    case 'sleep':
-      applySleepPayloadFields(payload, values)
-      break
-    case 'electronics':
-      applyElectronicsPayloadFields(payload, values)
-      break
-    default:
-      break
-  }
-}
-
 const toDynamicAttributeValue = (field: ItemTypeField, rawValue: string | boolean | undefined): unknown => {
   if (field.data_type === 'boolean') {
     return typeof rawValue === 'boolean' ? rawValue : undefined
@@ -500,7 +308,7 @@ const toDynamicAttributeValue = (field: ItemTypeField, rawValue: string | boolea
 }
 
 const toDynamicAttributes = (values: ItemFormValues, fields: ItemTypeField[]): Record<string, unknown> | undefined => {
-  if (isKnownItemType(values.type) || fields.length === 0) {
+  if (fields.length === 0) {
     return undefined
   }
 
@@ -527,7 +335,6 @@ const toPayload = (values: ItemFormValues, dynamicFields: ItemTypeField[]): Item
 
   applyCommonPayloadFields(payload, values)
   applyImagePayloadFields(payload, values)
-  applyTypeSpecificPayloadFields(payload, values)
 
   const dynamicAttributes = toDynamicAttributes(values, dynamicFields)
   if (dynamicAttributes !== undefined) {
@@ -537,33 +344,15 @@ const toPayload = (values: ItemFormValues, dynamicFields: ItemTypeField[]): Item
   return payload
 }
 
-const formatDisplayWeight = (valueGrams: number): string => {
-  if (weightInputUnit.value === 'oz') {
-    const ounces = gramsToInput(valueGrams, 'oz')
-    if (Math.abs(ounces) >= OUNCES_PER_POUND) {
-      return `${toRoundedString(ounces / OUNCES_PER_POUND)} lb`
-    }
-
-    return `${toRoundedString(ounces)} oz`
-  }
-
-  if (Math.abs(valueGrams) >= GRAMS_PER_KILOGRAM) {
-    return `${toRoundedString(valueGrams / GRAMS_PER_KILOGRAM)} kg`
-  }
-
-  return `${toRoundedString(valueGrams)} g`
-}
-
 const formatWeight = (value?: number | null) => {
   if (typeof value !== 'number') {
     return 'Not set'
   }
-
-  return formatDisplayWeight(value)
+  return formatDisplayWeight(value, weightInputUnit.value)
 }
 
 const formatTotalWeight = (valueGrams: number): string => {
-  return formatDisplayWeight(valueGrams)
+  return formatDisplayWeight(valueGrams, weightInputUnit.value)
 }
 
 const formatVolume = (value?: number | null) => {
@@ -575,49 +364,26 @@ const formatVolume = (value?: number | null) => {
 }
 
 const formatNumber = (value?: number | null) => {
-  if (typeof value !== 'number') {
-    return 'Not set'
-  }
-
-  return toRoundedString(value)
+  return formatNumberDisplay(value, toRoundedString)
 }
 
 const formatValue = (value?: number | null): string => {
-  if (!value) {
+  if (value === 0) {
     return 'Not set'
   }
-  const formatted = formatNumber(value)
-  const currencySymbol = currency.value === 'usd' ? '$' : '€'
-  return `${formatted} ${currencySymbol}`
+  return formatValueDisplay(value, currency.value, toRoundedString)
 }
 
 const formatCarryStatus = (value?: string | null) => {
-  if (!value) {
-    return 'Not set'
-  }
-
-  if (value === 'packed') {
-    return 'Packed'
-  }
-  if (value === 'worn') {
-    return 'Worn'
-  }
-  return value
+  return formatCarryStatusDisplay(value)
 }
 
 const formatType = (value: string) => {
-  return value
-    .split('_')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ')
+  return formatTypeDisplay(value)
 }
 
 const formatText = (value?: string | null) => {
-  if (!value?.trim()) {
-    return 'Not set'
-  }
-
-  return value
+  return formatTextDisplay(value)
 }
 
 const getItemImageSrc = (item: Item) => {
@@ -634,7 +400,7 @@ const getCardSummaryEntries = (item: Item) => {
     { label: 'Manufacturer', value: manufacturersById.value.get(item.manufacturer_id) ?? '' },
     { label: 'Weight', value: typeof item.weight_grams === 'number' ? formatWeight(item.weight_grams) : '' },
     { label: 'Volume', value: typeof item.volume_ml === 'number' ? formatVolume(item.volume_ml) : '' },
-    { label: 'Value', value: typeof item.value === 'number' ? formatNumber(item.value) : '' },
+    { label: 'Value', value: typeof item.value === 'number' ? formatValue(item.value) : '' },
   ]
 
   return entries.filter((entry) => entry.value)
@@ -644,91 +410,9 @@ const getCardStatEntries = (item: Item) => {
   return getCardSummaryEntries(item).filter((entry) => entry.label === 'Weight' || entry.label === 'Volume' || entry.label === 'Value')
 }
 
-const getBaseDetails = (item: Item) => {
-  return [
-    { label: 'Type', value: formatType(item.type) },
-    { label: 'Manufacturer', value: manufacturersById.value.get(item.manufacturer_id) ?? item.manufacturer_id },
-    { label: 'Active', value: '', booleanValue: item.is_active },
-    { label: 'Default carry', value: formatCarryStatus(item.default_carry_status) },
-    { label: 'Default quantity', value: formatNumber(item.default_quantity) },
-    { label: 'Is default', value: '', booleanValue: item.is_default },
-    { label: 'Weight', value: formatWeight(item.weight_grams) },
-    { label: 'Volume', value: formatVolume(item.volume_ml) },
-    { label: 'Value', value: formatValue(item.value) },
-  ]
-}
-
-const getDetailedEntries = (item: Item) => {
-  const entries: DetailEntry[] = [
-    ...getBaseDetails(item),
-    { label: 'Description', value: formatText(item.description) },
-    { label: 'URL', value: item.source_url?.trim() ? 'URL' : 'Not set', href: item.source_url ?? undefined },
-  ]
-
-  if (item.type === 'consumable') {
-    entries.push(
-      { label: 'Dose count', value: formatNumber(item.dose_count) },
-      { label: 'Calories', value: formatNumber(item.calories) },
-      { label: 'Calories per serving', value: formatNumber(item.calories_per_serving) },
-      { label: 'Requires water', value: '', booleanValue: item.requires_water },
-    )
-  }
-
-  if (item.type === 'wearable') {
-    entries.push(
-      { label: 'Season', value: formatText(item.season) },
-      { label: 'Layer', value: formatText(item.layer) },
-      { label: 'Size', value: formatText(item.size) },
-      { label: 'Color', value: formatText(item.color) },
-      { label: 'Waterproof', value: '', booleanValue: item.waterproof },
-    )
-  }
-
-  if (item.type === 'shelter') {
-    entries.push(
-      { label: 'Capacity people', value: formatNumber(item.capacity_people) },
-      { label: 'Season rating', value: formatText(item.season_rating) },
-      { label: 'Freestanding', value: '', booleanValue: item.freestanding },
-      { label: 'Has footprint', value: '', booleanValue: item.has_footprint },
-    )
-  }
-
-  if (item.type === 'sleep') {
-    entries.push(
-      { label: 'Comfort temp C', value: formatNumber(item.comfort_temp_c) },
-      { label: 'Fill type', value: formatText(item.fill_type) },
-      { label: 'R value', value: formatNumber(item.r_value) },
-    )
-  }
-
-  if (item.type === 'electronics') {
-    entries.push(
-      { label: 'Capacity mAh', value: formatNumber(item.capacity_mah) },
-      { label: 'Charge port', value: formatText(item.charge_port) },
-      { label: 'Rechargeable', value: '', booleanValue: item.rechargeable },
-    )
-  }
-
-  if (item.image_mime_type || item.image_size_bytes || item.image_width_px || item.image_height_px) {
-    entries.push(
-      { label: 'Image type', value: formatText(item.image_mime_type) },
-      { label: 'Image size bytes', value: formatNumber(item.image_size_bytes) },
-      { label: 'Image width px', value: formatNumber(item.image_width_px) },
-      { label: 'Image height px', value: formatNumber(item.image_height_px) },
-    )
-  }
-
-  return entries
-}
-
-const settingsQuery = useQuery({
-  queryKey: ['settings'],
-  queryFn: getSettings,
-})
-
-const weightInputUnit = computed<WeightInputUnit>(() => settingsQuery.data.value?.weight_unit ?? 'g')
-const volumeInputUnit = computed<VolumeInputUnit>(() => settingsQuery.data.value?.volume_unit ?? 'ml')
-const currency = computed<Currency>(() => settingsQuery.data.value?.currency ?? 'usd')
+const { weightUnit, volumeUnit, currency } = useSettings()
+const weightInputUnit = computed<WeightInputUnit>(() => weightUnit.value)
+const volumeInputUnit = computed<VolumeInputUnit>(() => volumeUnit.value)
 const weightInputLabel = computed<'g' | 'oz'>(() => (weightInputUnit.value === 'oz' ? 'oz' : 'g'))
 const volumeInputLabel = computed<'ml' | 'fl oz'>(() => (volumeInputUnit.value === 'fl_oz' ? 'fl oz' : 'ml'))
 
@@ -747,10 +431,49 @@ const manufacturersQuery = useQuery({
   queryFn: listManufacturers,
 })
 
+const itemLabelsQueries = useQuery({
+  queryKey: computed(() => ['items-labels', itemsQuery.data.value?.map(i => i.id).sort().join(',') ?? '']),
+  queryFn: async () => {
+    const items = itemsQuery.data.value ?? []
+    if (items.length === 0) return []
+
+    const labelsPromises = items.map(item =>
+      listItemLabels(item.id).catch(() => [] as Label[])
+    )
+    const labelsArrays = await Promise.all(labelsPromises)
+
+    return items.map((item, index) => ({
+      itemId: item.id,
+      labels: labelsArrays[index],
+    }))
+  },
+  enabled: computed(() => (itemsQuery.data.value?.length ?? 0) > 0),
+})
+
+const itemLabelsMap = computed(() => {
+  const map = new Map<string, Label[]>()
+  for (const entry of itemLabelsQueries.data.value ?? []) {
+    map.set(entry.itemId, entry.labels)
+  }
+  return map
+})
+
 const manufacturersById = computed(() => {
   const map = new Map<string, string>()
   for (const manufacturer of manufacturersQuery.data.value ?? []) {
     map.set(manufacturer.id, normalizeTitleWords(manufacturer.name))
+  }
+
+  return map
+})
+
+const manufacturerWebsitesById = computed(() => {
+  const map = new Map<string, string>()
+  for (const manufacturer of manufacturersQuery.data.value ?? []) {
+    const website = manufacturer.website?.trim()
+    if (website) {
+      map.set(manufacturer.id, website)
+    }
   }
 
   return map
@@ -761,10 +484,14 @@ const editingItemId = ref<string | null>(null)
 const editValues = ref<ItemFormValues>(emptyFormValues())
 const isFormDialogOpen = ref(false)
 const itemsViewMode = ref<ItemsViewMode>(readStoredItemsViewMode())
-const itemsTableDetailModeByType = ref<Record<string, ItemsTableDetailMode>>(readStoredItemsTableDetailModeByType())
+// Table view and the cards/table selector are desktop/tablet only
+const isMobileViewport = useIsMobile()
+
+// On mobile, only the cards view is available regardless of stored preference
+const effectiveViewMode = computed<ItemsViewMode>(() => (isMobileViewport.value ? 'cards' : itemsViewMode.value))
+const showExpandedView = ref<boolean>(readStoredExpandedView())
 const itemsTableSelectionModeByType = ref<Record<string, boolean>>({})
 const selectedTableItemIdsByType = ref<Record<string, string[]>>({})
-const selectedDetailItemId = ref<string | null>(null)
 const isCreateOptionsOpen = ref(false)
 const isManufacturerDialogOpen = ref(false)
 const isCategoryDialogOpen = ref(false)
@@ -775,6 +502,17 @@ const confirmDialogState = ref<
   | { kind: 'bulk-delete'; type: string; count: number }
   | null
 >(null)
+
+const allLabelsQuery = useQuery({
+  queryKey: ['labels'],
+  queryFn: listLabels,
+  enabled: computed(() => isFormDialogOpen.value),
+})
+
+const createSelectedLabels = ref<Label[]>([])
+const editSelectedLabels = ref<Label[]>([])
+
+const selectedLabels = computed(() => (isCreateMode.value ? createSelectedLabels.value : editSelectedLabels.value))
 
 const currentItemFormType = computed(() => (editingItemId.value === null ? createValues.value.type : editValues.value.type))
 
@@ -815,6 +553,9 @@ const itemViewOptions: Array<{ label: string; value: ItemsViewMode }> = [
   { label: 'Table', value: 'table' },
 ]
 
+const showInactive = ref<boolean>(readStoredShowInactive())
+const isSettingsMenuOpen = ref(false)
+const settingsMenuPosition = ref({ top: 0, left: 0 })
 const itemTypeFilter = ref<ItemTypeFilter>(readStoredItemsTypeFilter())
 const itemTypeFilterOptions = computed<Array<{ value: ItemTypeFilter; label: string }>>(() => {
   const options: Array<{ value: ItemTypeFilter; label: string }> = [{ value: 'all', label: 'All' }]
@@ -828,28 +569,28 @@ const itemTypeFilterOptions = computed<Array<{ value: ItemTypeFilter; label: str
 })
 
 const createTargetOptions: Array<{ value: CreateTarget; label: string; description: string; icon: string }> = [
-  { value: 'item', label: 'Create', description: 'Add a new gear item.', icon: 'pi pi-box' },
-  { value: 'manufacturer', label: 'Manage Manufacturers', description: 'Create and edit manufacturers.', icon: 'pi pi-building' },
-  { value: 'category', label: 'Manage Categories', description: 'Create and edit custom categories.', icon: 'pi pi-tag' },
-  { value: 'import', label: 'Import CSV', description: 'Preview and import gear from CSV.', icon: 'pi pi-upload' },
+  { value: 'item', label: 'Create', description: 'Add a new gear item.', icon: `pi ${iconRegistry.navigation.gear}` },
+  { value: 'manufacturer', label: 'Manage Manufacturers', description: 'Create and edit manufacturers.', icon: `pi ${iconRegistry.content.building}` },
+  { value: 'category', label: 'Manage Categories', description: 'Create and edit custom categories.', icon: `pi ${iconRegistry.content.tag}` },
+  { value: 'import', label: 'Import CSV', description: 'Preview and import gear from CSV.', icon: `pi ${iconRegistry.action.upload}` },
 ]
 
 const itemFormTypeOptions = computed<Array<{ label: string; value: string }>>(() => {
   const fetched = itemTypesQuery.data.value ?? []
-  if (fetched.length > 0) {
-    return fetched
-      .map((itemType) => ({ label: normalizeTitleWords(itemType.name), value: itemType.id }))
-      .sort((left, right) => left.label.localeCompare(right.label))
-  }
-
-  return KNOWN_ITEM_TYPES.map((value) => ({
-    value,
-    label: formatType(value),
-  }))
+  return fetched
+    .map((itemType) => ({ label: normalizeTitleWords(itemType.name), value: itemType.id }))
+    .sort((left, right) => left.label.localeCompare(right.label))
 })
 
 const filteredItems = computed(() => {
-  const items = itemsQuery.data.value ?? []
+  let items = itemsQuery.data.value ?? []
+
+  // Filter by active status
+  if (!showInactive.value) {
+    items = items.filter((item) => item.is_active)
+  }
+
+  // Filter by type
   if (itemTypeFilter.value === 'all') {
     return items
   }
@@ -885,24 +626,44 @@ const createTableFieldDefinition = (field: TableFieldOption): TableFieldDefiniti
     switch (key) {
       case 'active': return item.is_active
       case 'is_default': return item.is_default
-      case 'requires_water': return item.requires_water
-      case 'waterproof': return item.waterproof
-      case 'freestanding': return item.freestanding
-      case 'has_footprint': return item.has_footprint
-      case 'rechargeable': return item.rechargeable
       default: return undefined
     }
   }
 
   const renderHref = (item: Item): string | undefined => {
-    if (key !== 'source_url') {
-      return undefined
+    if (key === 'source_url') {
+      return safeHttpUrl(item.source_url)
     }
 
-    return item.source_url?.trim() ? item.source_url : undefined
+    if (key === 'manufacturer') {
+      return safeHttpUrl(manufacturerWebsitesById.value.get(item.manufacturer_id))
+    }
+
+    return undefined
   }
 
   const render = (item: Item): string => {
+    if (key === 'labels') {
+      const count = itemLabelsMap.value.get(item.id)?.length ?? 0
+      return count > 0 ? String(count) : 'Not set'
+    }
+
+    if (key === 'weight_volume') {
+      const hasWeight = typeof item.weight_grams === 'number'
+      const hasVolume = typeof item.volume_ml === 'number'
+
+      if (hasWeight && hasVolume) {
+        return `${formatWeight(item.weight_grams)} / ${formatVolume(item.volume_ml)}`
+      }
+      if (hasWeight) {
+        return formatWeight(item.weight_grams)
+      }
+      if (hasVolume) {
+        return formatVolume(item.volume_ml)
+      }
+      return 'Not set'
+    }
+
     switch (key) {
       case 'type': return formatType(item.type)
       case 'manufacturer': return manufacturersById.value.get(item.manufacturer_id) ?? item.manufacturer_id
@@ -915,25 +676,6 @@ const createTableFieldDefinition = (field: TableFieldOption): TableFieldDefiniti
       case 'value': return formatValue(item.value)
       case 'description': return formatText(item.description)
       case 'source_url': return item.source_url?.trim() ? 'URL' : 'Not set'
-      case 'dose_count': return formatNumber(item.dose_count)
-      case 'calories': return formatNumber(item.calories)
-      case 'calories_per_serving': return formatNumber(item.calories_per_serving)
-      case 'requires_water': return ''
-      case 'season': return formatText(item.season)
-      case 'layer': return formatText(item.layer)
-      case 'waterproof': return ''
-      case 'size': return formatText(item.size)
-      case 'color': return formatText(item.color)
-      case 'capacity_people': return formatNumber(item.capacity_people)
-      case 'season_rating': return formatText(item.season_rating)
-      case 'freestanding': return ''
-      case 'has_footprint': return ''
-      case 'comfort_temp_c': return formatNumber(item.comfort_temp_c)
-      case 'fill_type': return formatText(item.fill_type)
-      case 'r_value': return formatNumber(item.r_value)
-      case 'capacity_mah': return formatNumber(item.capacity_mah)
-      case 'charge_port': return formatText(item.charge_port)
-      case 'rechargeable': return ''
       default: return 'Not set'
     }
   }
@@ -942,13 +684,6 @@ const createTableFieldDefinition = (field: TableFieldOption): TableFieldDefiniti
 }
 
 const commonTableFieldDefinitions = commonTableFieldOptions.map(createTableFieldDefinition)
-const extraTableFieldDefinitionsByType: Record<KnownItemType, TableFieldDefinition[]> = {
-  consumable: extraTableFieldOptionsByType.consumable.map(createTableFieldDefinition),
-  wearable: extraTableFieldOptionsByType.wearable.map(createTableFieldDefinition),
-  shelter: extraTableFieldOptionsByType.shelter.map(createTableFieldDefinition),
-  sleep: extraTableFieldOptionsByType.sleep.map(createTableFieldDefinition),
-  electronics: extraTableFieldOptionsByType.electronics.map(createTableFieldDefinition),
-}
 
 const itemTableSections = computed<ItemTableSection[]>(() => {
   const items = filteredItems.value
@@ -966,29 +701,21 @@ const itemTableSections = computed<ItemTableSection[]>(() => {
   return [...grouped.entries()]
     .sort((left, right) => left[0].localeCompare(right[0]))
     .map(([type, groupedItems]) => {
-      const knownType = isKnownItemType(type) ? type : null
       return {
         type,
         title: formatType(type),
         items: groupedItems,
         baseFields: commonTableFieldDefinitions,
-        extraFields: knownType ? extraTableFieldDefinitionsByType[knownType] : [],
-        tableDetailMode: itemsTableDetailModeByType.value[type] ?? 'simple',
+        tableDetailMode: (showExpandedView.value ? 'expanded' : 'simple') as ItemsTableDetailMode,
         selectionMode: itemsTableSelectionModeByType.value[type] ?? false,
         selectedItemIds: selectedTableItemIdsByType.value[type] ?? [],
         totalWeightLabel: formatTotalWeight(getItemsTotalWeightGrams(groupedItems)),
         totalValueLabel: formatTotalValue(getItemsTotalValue(groupedItems)),
+        itemLabelsMap: itemLabelsMap.value,
       }
     })
     .filter((section) => section.items.length > 0)
 })
-
-const updateTableDetailMode = (type: string, mode: ItemsTableDetailMode) => {
-  itemsTableDetailModeByType.value = {
-    ...itemsTableDetailModeByType.value,
-    [type]: mode,
-  }
-}
 
 const clearSelectionForType = (type: string) => {
   selectedTableItemIdsByType.value = {
@@ -1052,78 +779,66 @@ const getSelectedIdsForType = (type: string): string[] => {
 
 const withItemsRefresh = async (task: () => Promise<void>) => {
   await task()
-  await queryClient.invalidateQueries({ queryKey: ['items'] })
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['items'] }),
+    queryClient.invalidateQueries({ queryKey: ['items-labels'] }),
+  ])
 }
 
 const onRowToggleActive = async (item: Item) => {
-  try {
-    await withItemsRefresh(async () => {
-      await updateItem(item.id, { is_active: !item.is_active })
-    })
-    toast.add({
-      severity: 'success',
-      summary: 'Item updated',
-      detail: `Item is now ${item.is_active ? 'inactive' : 'active'}.`,
-      life: 2500,
-    })
-  } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Update failed',
-      detail: error instanceof Error ? error.message : 'Unable to update item.',
-      life: 3500,
-    })
-  }
+  await executeInlineMutation(
+    async () => {
+      await withItemsRefresh(async () => {
+        await updateItem(item.id, { is_active: !item.is_active })
+      })
+    },
+    {
+      successSummary: 'Item updated',
+      successDetail: `Item is now ${item.is_active ? 'inactive' : 'active'}.`,
+      errorSummary: 'Update failed',
+      errorDetail: 'Unable to update item.',
+    }
+  )
 }
 
 const onRowToggleDefault = async (item: Item) => {
-  try {
-    await withItemsRefresh(async () => {
-      await updateItem(item.id, { is_default: !item.is_default })
-    })
-    toast.add({
-      severity: 'success',
-      summary: 'Item updated',
-      detail: item.is_default ? 'Item is no longer default.' : 'Item is now default.',
-      life: 2500,
-    })
-  } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Update failed',
-      detail: error instanceof Error ? error.message : 'Unable to update item.',
-      life: 3500,
-    })
-  }
+  await executeInlineMutation(
+    async () => {
+      await withItemsRefresh(async () => {
+        await updateItem(item.id, { is_default: !item.is_default })
+      })
+    },
+    {
+      successSummary: 'Item updated',
+      successDetail: item.is_default ? 'Item is no longer default.' : 'Item is now default.',
+      errorSummary: 'Update failed',
+      errorDetail: 'Unable to update item.',
+    }
+  )
 }
 
 const onRowDuplicate = async (item: Item) => {
-  try {
-    const duplicateValues = toFormValues(item)
-    duplicateValues.name = `${item.name} Copy`
-    const payload = toPayload(duplicateValues, []) as ItemCreate
-    if (!isKnownItemType(item.type) && item.attributes) {
-      payload.attributes = item.attributes
+  await executeInlineMutation(
+    async () => {
+      const duplicateValues = toFormValues(item)
+      duplicateValues.name = `${item.name} Copy`
+      const payload = toPayload(duplicateValues, []) as ItemCreate
+      if (item.attributes) {
+        payload.attributes = item.attributes
+      }
+
+      await withItemsRefresh(async () => {
+        await createItem(payload)
+      })
+    },
+    {
+      successSummary: 'Item duplicated',
+      successDetail: 'A copy was created successfully.',
+      errorSummary: 'Duplicate failed',
+      errorDetail: 'Unable to duplicate item.',
+      successLife: 3000,
     }
-
-    await withItemsRefresh(async () => {
-      await createItem(payload)
-    })
-
-    toast.add({
-      severity: 'success',
-      summary: 'Item duplicated',
-      detail: 'A copy was created successfully.',
-      life: 3000,
-    })
-  } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Duplicate failed',
-      detail: error instanceof Error ? error.message : 'Unable to duplicate item.',
-      life: 3500,
-    })
-  }
+  )
 }
 
 const onRowDelete = async (item: Item) => {
@@ -1260,74 +975,51 @@ const onConfirmDelete = async () => {
   }
 }
 
-const createMutation = useMutation({
+const createMutation = useMutationWithToast<Item, Error, ItemCreate>({
   mutationFn: createItem,
-  onSuccess: async () => {
-    createValues.value = emptyFormValues()
-    isFormDialogOpen.value = false
-    await queryClient.invalidateQueries({ queryKey: ['items'] })
-    toast.add({
-      severity: 'success',
-      summary: 'Item created',
-      detail: 'New item has been added.',
-      life: 3000,
-    })
+  successMessage: {
+    summary: 'Item created',
+    detail: 'New item has been added.',
   },
-  onError: (error) => {
-    toast.add({
-      severity: 'error',
-      summary: 'Create failed',
-      detail: error instanceof Error ? error.message : 'Unable to create item.',
-      life: 3500,
-    })
+  errorMessage: {
+    summary: 'Create failed',
+    detail: 'Unable to create item.',
+  },
+  invalidateQueries: [],
+  onSuccess: () => {
+    // Don't reset form or close dialog here - let onCreate handle it
   },
 })
 
-const updateMutation = useMutation({
+const updateMutation = useMutationWithToast<Item, Error, { itemId: string; payload: ItemUpdate }>({
   mutationFn: async (params: { itemId: string; payload: ItemUpdate }) => {
     return updateItem(params.itemId, params.payload)
   },
-  onSuccess: async () => {
-    editingItemId.value = null
-    editValues.value = emptyFormValues()
-    isFormDialogOpen.value = false
-    await queryClient.invalidateQueries({ queryKey: ['items'] })
-    toast.add({
-      severity: 'success',
-      summary: 'Item updated',
-      detail: 'Item details were saved.',
-      life: 3000,
-    })
+  successMessage: {
+    summary: 'Item updated',
+    detail: 'Item details were saved.',
   },
-  onError: (error) => {
-    toast.add({
-      severity: 'error',
-      summary: 'Update failed',
-      detail: error instanceof Error ? error.message : 'Unable to update item.',
-      life: 3500,
-    })
+  errorMessage: {
+    summary: 'Update failed',
+    detail: 'Unable to update item.',
+  },
+  invalidateQueries: [],
+  onSuccess: () => {
+    // Don't reset form or close dialog here - let onSaveEdit handle it
   },
 })
 
-const deleteMutation = useMutation({
+const deleteMutation = useMutationWithToast<void, Error, string>({
   mutationFn: removeItem,
-  onSuccess: async () => {
-    await queryClient.invalidateQueries({ queryKey: ['items'] })
-    toast.add({
-      severity: 'success',
-      summary: 'Item deleted',
-      detail: 'Item was removed successfully.',
-      life: 3000,
-    })
+  successMessage: {
+    summary: 'Item deleted',
+    detail: 'Item was removed successfully.',
   },
-  onError: (error) => {
-    toast.add({
-      severity: 'error',
-      summary: 'Delete failed',
-      detail: error instanceof Error ? error.message : 'Unable to delete item.',
-      life: 3500,
-    })
+  errorMessage: {
+    summary: 'Delete failed',
+    detail: 'Unable to delete item.',
   },
+  invalidateQueries: [['items'], ['items-labels']],
 })
 
 const canShowEmptyState = computed(() => {
@@ -1335,23 +1027,6 @@ const canShowEmptyState = computed(() => {
 })
 
 const hasFilteredItems = computed(() => filteredItems.value.length > 0)
-
-const selectedDetailItem = computed(() => {
-  if (!selectedDetailItemId.value) {
-    return null
-  }
-
-  return itemsQuery.data.value?.find((item) => item.id === selectedDetailItemId.value) ?? null
-})
-
-const isDetailDialogOpen = computed({
-  get: () => selectedDetailItem.value !== null,
-  set: (value: boolean) => {
-    if (!value) {
-      selectedDetailItemId.value = null
-    }
-  },
-})
 
 const isCreateMode = computed(() => editingItemId.value === null)
 
@@ -1370,7 +1045,6 @@ const activeFormValues = computed<ItemFormValues>({
 })
 
 const formTitle = computed(() => (isCreateMode.value ? 'Add Item' : 'Edit Item'))
-const formSubmitLabel = computed(() => (isCreateMode.value ? 'Create' : 'Save Changes'))
 const formLoading = computed(() => (isCreateMode.value ? createMutation.isPending.value : updateMutation.isPending.value))
 
 const closeCreateOptions = () => {
@@ -1407,6 +1081,7 @@ const openManufacturerDialog = () => {
 const openCreateDialog = () => {
   editingItemId.value = null
   createValues.value = emptyFormValues()
+  createSelectedLabels.value = []
   isManufacturerDialogOpen.value = false
   isCategoryDialogOpen.value = false
   closeCreateOptions()
@@ -1427,6 +1102,30 @@ const consumeCreateQuery = async () => {
   })
 }
 
+const consumeActionQuery = async () => {
+  const action = route.query.action
+  if (!action || typeof action !== 'string') {
+    return
+  }
+
+  const nextQuery = { ...route.query }
+  delete nextQuery.action
+  await router.replace({
+    path: route.path,
+    query: nextQuery,
+  })
+
+  if (action === 'create-item') {
+    openCreateDialog()
+  } else if (action === 'manufacturers') {
+    isManufacturerDialogOpen.value = true
+  } else if (action === 'categories') {
+    isCategoryDialogOpen.value = true
+  } else if (action === 'import') {
+    isImportDialogOpen.value = true
+  }
+}
+
 watch(
   () => route.query.create,
   () => {
@@ -1435,29 +1134,29 @@ watch(
   { immediate: true },
 )
 
-watch(itemsViewMode, (value) => {
-  if (globalThis.window === undefined) {
-    return
-  }
+watch(
+  () => route.query.action,
+  () => {
+    void consumeActionQuery()
+  },
+  { immediate: true },
+)
 
-  globalThis.localStorage.setItem(ITEMS_VIEW_MODE_STORAGE_KEY, value)
+watch(itemsViewMode, (value) => {
+  setStoredValue(ITEMS_VIEW_MODE_STORAGE_KEY, value)
 })
 
 watch(itemTypeFilter, (value) => {
-  if (globalThis.window === undefined) {
-    return
-  }
-
-  globalThis.localStorage.setItem(ITEMS_TYPE_FILTER_STORAGE_KEY, value)
+  setStoredValue(ITEMS_TYPE_FILTER_STORAGE_KEY, value)
 })
 
-watch(itemsTableDetailModeByType, (value) => {
-  if (globalThis.window === undefined) {
-    return
-  }
+watch(showInactive, (value) => {
+  setStoredValue(ITEMS_SHOW_INACTIVE_STORAGE_KEY, String(value))
+})
 
-  globalThis.localStorage.setItem(ITEMS_TABLE_DETAIL_MODE_BY_TYPE_STORAGE_KEY, JSON.stringify(value))
-}, { deep: true })
+watch(showExpandedView, (value) => {
+  setStoredValue(ITEMS_TABLE_EXPANDED_VIEW_STORAGE_KEY, String(value))
+})
 
 watch(isFormDialogOpen, (value) => {
   if (!value) {
@@ -1465,15 +1164,67 @@ watch(isFormDialogOpen, (value) => {
   }
 })
 
+onMounted(() => {
+  if (globalThis.document) {
+    globalThis.document.addEventListener('click', onDocumentClickSettings)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (globalThis.document) {
+    globalThis.document.removeEventListener('click', onDocumentClickSettings)
+  }
+})
+
 const onCreate = async () => {
   const payload = toPayload(createValues.value, itemFormDynamicFields.value) as ItemCreate
-  await createMutation.mutateAsync(payload)
+  const createdItem = await createMutation.mutateAsync(payload)
+
+  // Save label associations
+  if (createSelectedLabels.value.length > 0) {
+    try {
+      await Promise.all(
+        createSelectedLabels.value.map(label => addItemLabel(createdItem.id, { label_id: label.id }))
+      )
+    } catch (err) {
+      // Log error but allow item creation to succeed
+      // eslint-disable-next-line no-console
+      console.error('Failed to add labels to item:', err)
+      toast.add({
+        severity: 'warn',
+        summary: 'Labels partially saved',
+        detail: 'Item created but some labels could not be added.',
+        life: 3500,
+      })
+    }
+  }
+
+  // Invalidate queries and reset form after everything is done
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['items'] }),
+    queryClient.invalidateQueries({ queryKey: ['items-labels'] }),
+  ])
+  createValues.value = emptyFormValues()
+  createSelectedLabels.value = []
+  isFormDialogOpen.value = false
 }
 
-const onStartEdit = (item: Item) => {
+const onStartEdit = async (item: Item) => {
   editingItemId.value = item.id
   editValues.value = toFormValues(item)
-  selectedDetailItemId.value = null
+
+  // Load item labels
+  try {
+    const labels = await listItemLabels(item.id)
+    editSelectedLabels.value = labels
+    editValues.value = { ...editValues.value, label_ids: labels.map(l => l.id) }
+  } catch (err) {
+    // If labels fail to load, continue with empty labels
+    // eslint-disable-next-line no-console
+    console.error('Failed to load item labels:', err)
+    editSelectedLabels.value = []
+  }
+
   isManufacturerDialogOpen.value = false
   isCategoryDialogOpen.value = false
   closeCreateOptions()
@@ -1485,12 +1236,44 @@ const onCancelEdit = () => {
 
   if (isCreateMode.value) {
     createValues.value = emptyFormValues()
+    createSelectedLabels.value = []
     return
   }
 
   editingItemId.value = null
   editValues.value = emptyFormValues()
+  editSelectedLabels.value = []
 }
+
+// Open an item edit dialog when navigated to with ?open=<itemId> (e.g. from global search)
+const consumeOpenQuery = async () => {
+  const openId = route.query.open
+  if (typeof openId !== 'string' || !openId) {
+    return
+  }
+
+  const item = itemsQuery.data.value?.find((entry) => entry.id === openId)
+  if (!item) {
+    return
+  }
+
+  const nextQuery = { ...route.query }
+  delete nextQuery.open
+  await router.replace({
+    path: route.path,
+    query: nextQuery,
+  })
+
+  await onStartEdit(item)
+}
+
+watch(
+  [() => route.query.open, () => itemsQuery.data.value],
+  () => {
+    void consumeOpenQuery()
+  },
+  { immediate: true },
+)
 
 const onSaveEdit = async () => {
   if (!editingItemId.value) {
@@ -1499,29 +1282,106 @@ const onSaveEdit = async () => {
 
   const payload = toPayload(editValues.value, itemFormDynamicFields.value)
   await updateMutation.mutateAsync({ itemId: editingItemId.value, payload })
+
+  // Sync label associations
+  try {
+    const currentLabels = await listItemLabels(editingItemId.value)
+    const currentLabelIds = new Set(currentLabels.map(l => l.id))
+    const selectedLabelIds = new Set(editSelectedLabels.value.map(l => l.id))
+
+    // Remove labels that are no longer selected
+    const toRemove = currentLabels.filter(l => !selectedLabelIds.has(l.id))
+    await Promise.all(toRemove.map(l => removeItemLabel(editingItemId.value!, l.id)))
+
+    // Add labels that are newly selected
+    const toAdd = editSelectedLabels.value.filter(l => !currentLabelIds.has(l.id))
+    await Promise.all(toAdd.map(l => addItemLabel(editingItemId.value!, { label_id: l.id })))
+  } catch (err) {
+    // Log error but allow item update to succeed
+    // eslint-disable-next-line no-console
+    console.error('Failed to sync labels:', err)
+    toast.add({
+      severity: 'warn',
+      summary: 'Labels partially saved',
+      detail: 'Item updated but some labels could not be synced.',
+      life: 3500,
+    })
+  }
+
+  // Invalidate queries and reset form after everything is done
+  await Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['items'] }),
+    queryClient.invalidateQueries({ queryKey: ['items-labels'] }),
+  ])
+  editingItemId.value = null
+  editValues.value = emptyFormValues()
+  editSelectedLabels.value = []
+  isFormDialogOpen.value = false
 }
 
 const onDelete = async (itemId: string) => {
   await deleteMutation.mutateAsync(itemId)
 }
 
-const openDetails = (item: Item) => {
-  selectedDetailItemId.value = item.id
-}
-
-const onEditFromDetails = () => {
-  if (!selectedDetailItem.value) {
+const onDeleteFromForm = async () => {
+  if (!editingItemId.value) {
     return
   }
 
-  const item = selectedDetailItem.value
-  selectedDetailItemId.value = null
-  onStartEdit(item)
+  isFormDialogOpen.value = false
+  await onDelete(editingItemId.value)
+  editingItemId.value = null
+  editValues.value = emptyFormValues()
+  editSelectedLabels.value = []
 }
 
-const onDeleteFromDetails = async (itemId: string) => {
-  selectedDetailItemId.value = null
-  await onDelete(itemId)
+const onAddLabel = (label: Label) => {
+  if (isCreateMode.value) {
+    if (!createSelectedLabels.value.some(l => l.id === label.id)) {
+      createSelectedLabels.value = [...createSelectedLabels.value, label]
+      createValues.value = { ...createValues.value, label_ids: createSelectedLabels.value.map(l => l.id) }
+    }
+    return
+  }
+
+  if (!editSelectedLabels.value.some(l => l.id === label.id)) {
+    editSelectedLabels.value = [...editSelectedLabels.value, label]
+    editValues.value = { ...editValues.value, label_ids: editSelectedLabels.value.map(l => l.id) }
+  }
+}
+
+const onRemoveLabel = (labelId: string) => {
+  if (isCreateMode.value) {
+    createSelectedLabels.value = createSelectedLabels.value.filter(l => l.id !== labelId)
+    createValues.value = { ...createValues.value, label_ids: createSelectedLabels.value.map(l => l.id) }
+    return
+  }
+
+  editSelectedLabels.value = editSelectedLabels.value.filter(l => l.id !== labelId)
+  editValues.value = { ...editValues.value, label_ids: editSelectedLabels.value.map(l => l.id) }
+}
+
+const generateRandomLabelColor = (): string => {
+  const hue = Math.floor(Math.random() * 360)
+  const saturation = 60 + Math.floor(Math.random() * 20) // 60-80%
+  const lightness = 45 + Math.floor(Math.random() * 20) // 45-65%
+  return `hsl(${hue}, ${saturation}%, ${lightness}%)`
+}
+
+const onCreateLabel = async (name: string) => {
+  try {
+    const payload: LabelCreate = { name, color: generateRandomLabelColor() }
+    const created = await createLabel(payload)
+    await queryClient.invalidateQueries({ queryKey: ['labels'] })
+    onAddLabel(created)
+  } catch (err) {
+    toast.add({
+      severity: 'error',
+      summary: 'Label creation failed',
+      detail: err instanceof Error ? err.message : 'Unable to create label.',
+      life: 3500,
+    })
+  }
 }
 
 const onSubmitForm = async () => {
@@ -1532,6 +1392,61 @@ const onSubmitForm = async () => {
 
   await onSaveEdit()
 }
+
+const toggleSettingsMenu = (event: MouseEvent) => {
+  if (isSettingsMenuOpen.value) {
+    isSettingsMenuOpen.value = false
+    return
+  }
+
+  const trigger = event.currentTarget
+  if (!(trigger instanceof HTMLElement)) {
+    isSettingsMenuOpen.value = true
+    return
+  }
+
+  const rect = trigger.getBoundingClientRect()
+  const menuWidth = 200
+  const menuHeight = 60
+  const gap = 8
+
+  const left = Math.max(8, rect.right - menuWidth)
+  const openUpward = rect.bottom + gap + menuHeight > globalThis.window.innerHeight - 8
+  const top = openUpward ? Math.max(8, rect.top - gap - menuHeight) : rect.bottom + gap
+
+  settingsMenuPosition.value = { top, left }
+  isSettingsMenuOpen.value = true
+}
+
+const closeSettingsMenu = () => {
+  isSettingsMenuOpen.value = false
+}
+
+const onDocumentClickSettings = (event: MouseEvent) => {
+  const target = event.target
+  if (!(target instanceof HTMLElement)) {
+    closeSettingsMenu()
+    return
+  }
+
+  if (target.closest('[data-element="items-settings-menu"]')) {
+    return
+  }
+
+  closeSettingsMenu()
+}
+
+onMounted(() => {
+  if (globalThis.document) {
+    globalThis.document.addEventListener('click', onDocumentClickSettings)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (globalThis.document) {
+    globalThis.document.removeEventListener('click', onDocumentClickSettings)
+  }
+})
 </script>
 
 <template>
@@ -1540,18 +1455,15 @@ const onSubmitForm = async () => {
       confirm-label="Delete" confirm-tone="danger" @update:open="(value) => { if (!value) closeConfirmDialog() }"
       @cancel="closeConfirmDialog" @confirm="onConfirmDelete" />
 
-    <ItemDetailsDialog :open="isDetailDialogOpen" :selected-item="selectedDetailItem" :get-image-src="getItemImageSrc"
-      :get-detailed-entries="getDetailedEntries" :format-type="formatType" :manufacturers-by-id="manufacturersById"
-      :is-delete-loading="deleteMutation.isPending.value" @update:open="isDetailDialogOpen = $event"
-      @edit="onEditFromDetails" @delete="onDeleteFromDetails" />
-
     <ItemFormDialog :open="isFormDialogOpen" :is-create-mode="isCreateMode" :title="formTitle"
-      :submit-label="formSubmitLabel" :values="activeFormValues" :item-type-options="itemFormTypeOptions"
-      :dynamic-fields="itemFormDynamicFields" :dynamic-fields-loading="itemTypeFieldsQuery.isPending.value"
-      :manufacturers="manufacturersQuery.data.value ?? []" :weight-input-label="weightInputLabel"
-      :volume-input-label="volumeInputLabel" :is-loading="formLoading" @update:open="isFormDialogOpen = $event"
+      :values="activeFormValues" :item-type-options="itemFormTypeOptions" :dynamic-fields="itemFormDynamicFields"
+      :dynamic-fields-loading="itemTypeFieldsQuery.isPending.value" :manufacturers="manufacturersQuery.data.value ?? []"
+      :weight-input-label="weightInputLabel" :volume-input-label="volumeInputLabel" :is-loading="formLoading"
+      :all-labels="allLabelsQuery.data.value ?? []" :selected-labels="selectedLabels"
+      :labels-loading="allLabelsQuery.isPending.value" @update:open="isFormDialogOpen = $event"
       @update:values="(values) => { activeFormValues = values }" @request:manufacturer-create="openManufacturerDialog"
-      @submit="onSubmitForm" @cancel="onCancelEdit" />
+      @label:add="onAddLabel" @label:remove="onRemoveLabel" @label:create="onCreateLabel" @submit="onSubmitForm"
+      @cancel="onCancelEdit" @delete="onDeleteFromForm" />
 
     <ItemsManufacturerDialog v-model:open="isManufacturerDialogOpen"
       :manufacturers="manufacturersQuery.data.value ?? []" :items="itemsQuery.data.value ?? []"
@@ -1561,75 +1473,75 @@ const onSubmitForm = async () => {
 
     <ItemsImportDialog v-model:open="isImportDialogOpen" />
 
-    <Message v-if="itemsQuery.isError.value" data-element="items-error" severity="error" :closable="false">
-      {{ itemsQuery.error.value instanceof Error ? itemsQuery.error.value.message : 'Unable to load gear.' }}
-    </Message>
+    <AppQueryError :query="itemsQuery" fallback-message="Unable to load gear." data-element="items-error" />
 
-    <Message v-if="manufacturersQuery.isError.value" data-element="items-manufacturers-error" severity="error"
-      :closable="false">
-      {{ manufacturersQuery.error.value instanceof Error ? manufacturersQuery.error.value.message :
-        'Unable to load manufacturers.' }}
-    </Message>
+    <AppQueryError :query="manufacturersQuery" fallback-message="Unable to load manufacturers."
+      data-element="items-manufacturers-error" />
 
     <ItemsCreateOptionsMenu :open="isCreateOptionsOpen" :position="createOptionsPosition" :options="createTargetOptions"
       @update:open="isCreateOptionsOpen = $event" @select="onSelectCreateTarget" />
 
-    <div v-if="itemsQuery.isPending.value" data-element="items-loading"
-      class="border-line-subtle bg-surface-muted text-copy-muted rounded-2xl border px-4 py-3 text-sm font-medium">
-      Loading gear...
-    </div>
+    <AppLoadingState v-if="itemsQuery.isPending.value" message="Loading gear..." data-element="items-loading" />
 
-    <div v-else-if="canShowEmptyState" data-element="items-empty-state"
-      class="border-line-subtle bg-surface-elevated text-copy-muted rounded-2xl border px-5 py-6 text-sm">
-      Your closet is currently operating at true ultralight standards. Add some gear to get started!
-    </div>
+    <AppEmptyState v-else-if="canShowEmptyState"
+      message="Your closet is currently operating at true ultralight standards. Add some gear to get started!"
+      data-element="items-empty-state" />
 
     <div v-else data-element="items-list" class="space-y-3">
-      <div data-element="items-summary" class="grid gap-2 sm:grid-cols-3">
-        <div class="border-line-subtle bg-surface-elevated text-copy rounded-xl border px-3 py-2 text-sm">
-          <span class="text-copy-subtle text-xs font-semibold uppercase tracking-[0.08em]">Total gear</span>
-          <p class="text-ink mt-1 text-base font-semibold">{{ filteredSummary.totalItems }}</p>
-        </div>
-        <div class="border-line-subtle bg-surface-elevated text-copy rounded-xl border px-3 py-2 text-sm">
-          <span class="text-copy-subtle text-xs font-semibold uppercase tracking-[0.08em]">Total weight</span>
-          <p class="text-ink mt-1 text-base font-semibold">{{ filteredSummary.totalWeightLabel }}</p>
-        </div>
-        <div class="border-line-subtle bg-surface-elevated text-copy rounded-xl border px-3 py-2 text-sm">
-          <span class="text-copy-subtle text-xs font-semibold uppercase tracking-[0.08em]">Total value</span>
-          <p class="text-ink mt-1 text-base font-semibold">{{ filteredSummary.totalValueLabel }}</p>
-        </div>
-      </div>
-
-      <!-- Click-outside backdrop -->
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div class="flex flex-wrap items-center gap-3">
-          <!-- View Mode Toggle -->
-          <AppToggleGroup name="items-view-mode" data-element="items-view-mode" :model-value="itemsViewMode"
-            :options="itemViewOptions" fit-content
+      <div class="flex flex-wrap items-center gap-4">
+        <!-- Left spacer holds the view-mode toggle (hidden on mobile) and balances the right column to keep the summary centered -->
+        <div class="flex flex-1 justify-start">
+          <AppToggleGroup v-if="!isMobileViewport" name="items-view-mode" data-element="items-view-mode"
+            :model-value="itemsViewMode" :options="itemViewOptions" fit-content
             @update:model-value="(value) => { itemsViewMode = value as ItemsViewMode }" />
+        </div>
 
-          <nav data-element="items-type-filter" aria-label="Item type filter"
-            class="text-copy-subtle flex flex-wrap items-center text-xs font-semibold uppercase tracking-[0.08em]">
-            <template v-for="(option, index) in itemTypeFilterOptions" :key="option.value">
-              <span v-if="index > 0" class="text-line mx-1">/</span>
-              <button type="button" class="rounded px-2 py-1 transition"
-                :class="itemTypeFilter === option.value ? 'bg-brand-50 text-brand-800' : 'text-copy-subtle hover:bg-surface-soft hover:text-copy'"
-                @click="itemTypeFilter = option.value">
-                {{ option.label }}
-              </button>
-            </template>
-          </nav>
+        <div data-element="items-summary" class="flex flex-wrap justify-center gap-2">
+          <AppSummaryCard class="w-44" label="Gear" :value="filteredSummary.totalItems" />
+          <AppSummaryCard class="w-44" label="Weight" :value="filteredSummary.totalWeightLabel" />
+          <AppSummaryCard class="w-44" label="Value" :value="filteredSummary.totalValueLabel" />
+        </div>
+
+        <!-- Settings Button -->
+        <div class="flex flex-1 justify-end">
+          <div data-element="items-settings-menu" class="relative">
+            <button type="button"
+              class="text-copy-muted hover:text-copy hover:bg-surface-soft inline-flex h-9 w-9 items-center justify-center rounded-full transition"
+              aria-label="View settings" @click="toggleSettingsMenu">
+              <AppIcon category="navigation" name="settings" size="sm" />
+            </button>
+
+            <div v-if="isSettingsMenuOpen"
+              class="border-line-subtle bg-surface-elevated fixed z-30 w-48 rounded-lg border shadow-sm" :style="{
+                top: `${settingsMenuPosition.top}px`,
+                left: `${settingsMenuPosition.left}px`,
+              }">
+              <div class="px-3 py-2.5">
+                <label class="flex cursor-pointer items-center gap-2.5">
+                  <input type="checkbox" v-model="showInactive" />
+                  <span class="text-copy text-sm font-medium">Show inactive</span>
+                </label>
+                <label v-if="effectiveViewMode === 'table'" class="mt-2.5 flex cursor-pointer items-center gap-2.5">
+                  <input type="checkbox" v-model="showExpandedView" />
+                  <span class="text-copy text-sm font-medium">Expanded view</span>
+                </label>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+      <!-- item type filter -->
+      <AppCategoryFilter v-model="itemTypeFilter" :options="itemTypeFilterOptions" label="Item type filter"
+        data-element="items-type-filter" />
+
 
       <div v-if="!hasFilteredItems" data-element="items-filter-empty-state"
         class="border-line-subtle bg-surface-elevated text-copy-muted rounded-2xl border px-5 py-6 text-sm">
         No gear matches the selected type filter.
       </div>
 
-      <ItemsListView v-else :view-mode="itemsViewMode" :items="filteredItems" :table-sections="itemTableSections"
-        :get-image-src="getItemImageSrc" @open-details="openDetails"
-        @update:table-detail-mode="(type, mode) => updateTableDetailMode(type, mode)"
+      <ItemsListView v-else :view-mode="effectiveViewMode" :items="filteredItems" :table-sections="itemTableSections"
+        :get-image-src="getItemImageSrc" :item-labels-map="itemLabelsMap"
         @update:table-selection-mode="(type, value) => updateTableSelectionMode(type, value)"
         @toggle:table-item-selection="(type, itemId, checked) => toggleTableItemSelection(type, itemId, checked)"
         @toggle:table-select-all="(type, checked) => toggleTableSelectAll(type, checked)"

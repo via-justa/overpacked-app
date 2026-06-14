@@ -16,14 +16,13 @@ const (
 )
 
 type Pack struct {
-	ID         uuid.UUID
-	PersonID   *uuid.UUID
-	Name       string
-	TripType   *TripType
-	Notes      *string
-	IsTemplate bool
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	ID        uuid.UUID
+	PersonID  uuid.UUID
+	Name      string
+	TripType  *TripType
+	Notes     *string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type PackItem struct {
@@ -35,12 +34,4 @@ type PackItem struct {
 	Notes       *string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
-}
-
-type PackSet struct {
-	ID        uuid.UUID
-	PackID    uuid.UUID
-	SetID     uuid.UUID
-	AppliedAt time.Time
-	CreatedAt time.Time
 }

@@ -24,18 +24,12 @@ func (s *ItemStore) Create(ctx context.Context, item *domain.Item) error {
 		INSERT INTO items (
 			manufacturer_id, type_id, name, is_active, description, source_url,
 			price, weight_grams, volume_ml, default_quantity, default_carry_status, is_default,
-			dose_count, calories, calories_per_serving, requires_water, season, layer, waterproof,
-			size, color, capacity_people, season_rating, freestanding, has_footprint,
-			comfort_temp_c, fill_type, r_value, capacity_mah, charge_port, rechargeable,
 			image_blob, image_mime_type, image_size_bytes, image_width_px, image_height_px,
 			attributes_json
 		) VALUES (
 			$1, $2, $3, $4, $5, $6,
 			$7, $8, $9, $10, $11, $12,
-			$13, $14, $15, $16, $17, $18, $19,
-			$20, $21, $22, $23, $24, $25,
-			$26, $27, $28, $29, $30, $31,
-			$32, $33, $34, $35, $36, $37
+			$13, $14, $15, $16, $17, $18
 		)
 		RETURNING id, created_at, updated_at`
 
@@ -63,25 +57,6 @@ func (s *ItemStore) Create(ctx context.Context, item *domain.Item) error {
 		item.DefaultQuantity,
 		string(item.DefaultCarryStatus),
 		item.IsDefault,
-		toNullInt(item.DoseCount),
-		toNullFloat64(item.Calories),
-		toNullFloat64(item.CaloriesPerServing),
-		toNullBool(item.RequiresWater),
-		toNullString(item.Season),
-		toNullString(item.Layer),
-		toNullBool(item.Waterproof),
-		toNullString(item.Size),
-		toNullString(item.Color),
-		toNullFloat64(item.CapacityPeople),
-		toNullString(item.SeasonRating),
-		toNullBool(item.Freestanding),
-		toNullBool(item.HasFootprint),
-		toNullFloat64(item.ComfortTempC),
-		toNullString(item.FillType),
-		toNullFloat64(item.RValue),
-		toNullInt(item.CapacityMAH),
-		toNullString(item.ChargePort),
-		toNullBool(item.Rechargeable),
 		toNullBytes(item.ImageBlob),
 		toNullString(item.ImageMimeType),
 		toNullInt(item.ImageSizeBytes),
@@ -101,10 +76,7 @@ func (s *ItemStore) GetByID(ctx context.Context, id uuid.UUID) (*domain.Item, er
 		SELECT
 			id, manufacturer_id, type_id, name, is_active, description, source_url,
 			price, weight_grams, volume_ml, default_quantity, default_carry_status,
-			is_default, dose_count, calories, calories_per_serving, requires_water, season, layer, waterproof,
-			size, color, capacity_people, season_rating, freestanding, has_footprint,
-			comfort_temp_c, fill_type, r_value, capacity_mah, charge_port, rechargeable,
-			image_blob, image_mime_type, image_size_bytes, image_width_px, image_height_px, attributes_json,
+			is_default, image_blob, image_mime_type, image_size_bytes, image_width_px, image_height_px, attributes_json,
 			created_at, updated_at
 		FROM items
 		WHERE id = $1`
@@ -115,25 +87,6 @@ func (s *ItemStore) GetByID(ctx context.Context, id uuid.UUID) (*domain.Item, er
 	var price sql.NullFloat64
 	var weightGrams sql.NullFloat64
 	var volumeML sql.NullFloat64
-	var doseCount sql.NullInt64
-	var calories sql.NullFloat64
-	var caloriesPerServing sql.NullFloat64
-	var requiresWater sql.NullBool
-	var season sql.NullString
-	var layer sql.NullString
-	var waterproof sql.NullBool
-	var size sql.NullString
-	var color sql.NullString
-	var capacityPeople sql.NullFloat64
-	var seasonRating sql.NullString
-	var freestanding sql.NullBool
-	var hasFootprint sql.NullBool
-	var comfortTempC sql.NullFloat64
-	var fillType sql.NullString
-	var rValue sql.NullFloat64
-	var capacityMah sql.NullInt64
-	var chargePort sql.NullString
-	var rechargeable sql.NullBool
 	var imageBlob []byte
 	var imageMimeType sql.NullString
 	var imageSizeBytes sql.NullInt64
@@ -156,25 +109,6 @@ func (s *ItemStore) GetByID(ctx context.Context, id uuid.UUID) (*domain.Item, er
 		&item.DefaultQuantity,
 		&defaultCarryStatus,
 		&item.IsDefault,
-		&doseCount,
-		&calories,
-		&caloriesPerServing,
-		&requiresWater,
-		&season,
-		&layer,
-		&waterproof,
-		&size,
-		&color,
-		&capacityPeople,
-		&seasonRating,
-		&freestanding,
-		&hasFootprint,
-		&comfortTempC,
-		&fillType,
-		&rValue,
-		&capacityMah,
-		&chargePort,
-		&rechargeable,
 		&imageBlob,
 		&imageMimeType,
 		&imageSizeBytes,
@@ -196,25 +130,6 @@ func (s *ItemStore) GetByID(ctx context.Context, id uuid.UUID) (*domain.Item, er
 	item.Price = floatPtr(price)
 	item.WeightGrams = floatPtr(weightGrams)
 	item.VolumeML = floatPtr(volumeML)
-	item.DoseCount = intPtrFromNull(doseCount)
-	item.Calories = floatPtr(calories)
-	item.CaloriesPerServing = floatPtr(caloriesPerServing)
-	item.RequiresWater = boolPtrFromNull(requiresWater)
-	item.Season = strPtr(season)
-	item.Layer = strPtr(layer)
-	item.Waterproof = boolPtrFromNull(waterproof)
-	item.Size = strPtr(size)
-	item.Color = strPtr(color)
-	item.CapacityPeople = floatPtr(capacityPeople)
-	item.SeasonRating = strPtr(seasonRating)
-	item.Freestanding = boolPtrFromNull(freestanding)
-	item.HasFootprint = boolPtrFromNull(hasFootprint)
-	item.ComfortTempC = floatPtr(comfortTempC)
-	item.FillType = strPtr(fillType)
-	item.RValue = floatPtr(rValue)
-	item.CapacityMAH = intPtrFromNull(capacityMah)
-	item.ChargePort = strPtr(chargePort)
-	item.Rechargeable = boolPtrFromNull(rechargeable)
 	item.ImageBlob = toNullBytes(imageBlob)
 	item.ImageMimeType = strPtr(imageMimeType)
 	item.ImageSizeBytes = intPtrFromNull(imageSizeBytes)
@@ -235,10 +150,7 @@ func (s *ItemStore) List(ctx context.Context) ([]domain.Item, error) {
 		SELECT
 			id, manufacturer_id, type_id, name, is_active, description, source_url,
 			price, weight_grams, volume_ml, default_quantity, default_carry_status,
-			is_default, dose_count, calories, calories_per_serving, requires_water, season, layer, waterproof,
-			size, color, capacity_people, season_rating, freestanding, has_footprint,
-			comfort_temp_c, fill_type, r_value, capacity_mah, charge_port, rechargeable,
-			image_blob, image_mime_type, image_size_bytes, image_width_px, image_height_px, attributes_json,
+			is_default, image_blob, image_mime_type, image_size_bytes, image_width_px, image_height_px, attributes_json,
 			created_at, updated_at
 		FROM items
 		ORDER BY name ASC`
@@ -257,25 +169,6 @@ func (s *ItemStore) List(ctx context.Context) ([]domain.Item, error) {
 		var price sql.NullFloat64
 		var weightGrams sql.NullFloat64
 		var volumeML sql.NullFloat64
-		var doseCount sql.NullInt64
-		var calories sql.NullFloat64
-		var caloriesPerServing sql.NullFloat64
-		var requiresWater sql.NullBool
-		var season sql.NullString
-		var layer sql.NullString
-		var waterproof sql.NullBool
-		var size sql.NullString
-		var color sql.NullString
-		var capacityPeople sql.NullFloat64
-		var seasonRating sql.NullString
-		var freestanding sql.NullBool
-		var hasFootprint sql.NullBool
-		var comfortTempC sql.NullFloat64
-		var fillType sql.NullString
-		var rValue sql.NullFloat64
-		var capacityMah sql.NullInt64
-		var chargePort sql.NullString
-		var rechargeable sql.NullBool
 		var imageBlob []byte
 		var imageMimeType sql.NullString
 		var imageSizeBytes sql.NullInt64
@@ -298,25 +191,6 @@ func (s *ItemStore) List(ctx context.Context) ([]domain.Item, error) {
 			&item.DefaultQuantity,
 			&defaultCarryStatus,
 			&item.IsDefault,
-			&doseCount,
-			&calories,
-			&caloriesPerServing,
-			&requiresWater,
-			&season,
-			&layer,
-			&waterproof,
-			&size,
-			&color,
-			&capacityPeople,
-			&seasonRating,
-			&freestanding,
-			&hasFootprint,
-			&comfortTempC,
-			&fillType,
-			&rValue,
-			&capacityMah,
-			&chargePort,
-			&rechargeable,
 			&imageBlob,
 			&imageMimeType,
 			&imageSizeBytes,
@@ -334,25 +208,6 @@ func (s *ItemStore) List(ctx context.Context) ([]domain.Item, error) {
 		item.Price = floatPtr(price)
 		item.WeightGrams = floatPtr(weightGrams)
 		item.VolumeML = floatPtr(volumeML)
-		item.DoseCount = intPtrFromNull(doseCount)
-		item.Calories = floatPtr(calories)
-		item.CaloriesPerServing = floatPtr(caloriesPerServing)
-		item.RequiresWater = boolPtrFromNull(requiresWater)
-		item.Season = strPtr(season)
-		item.Layer = strPtr(layer)
-		item.Waterproof = boolPtrFromNull(waterproof)
-		item.Size = strPtr(size)
-		item.Color = strPtr(color)
-		item.CapacityPeople = floatPtr(capacityPeople)
-		item.SeasonRating = strPtr(seasonRating)
-		item.Freestanding = boolPtrFromNull(freestanding)
-		item.HasFootprint = boolPtrFromNull(hasFootprint)
-		item.ComfortTempC = floatPtr(comfortTempC)
-		item.FillType = strPtr(fillType)
-		item.RValue = floatPtr(rValue)
-		item.CapacityMAH = intPtrFromNull(capacityMah)
-		item.ChargePort = strPtr(chargePort)
-		item.Rechargeable = boolPtrFromNull(rechargeable)
 		item.ImageBlob = toNullBytes(imageBlob)
 		item.ImageMimeType = strPtr(imageMimeType)
 		item.ImageSizeBytes = intPtrFromNull(imageSizeBytes)
@@ -389,31 +244,12 @@ func (s *ItemStore) Update(ctx context.Context, item *domain.Item) error {
 			default_quantity = $11,
 			default_carry_status = $12,
 			is_default = $13,
-			dose_count = $14,
-			calories = $15,
-			calories_per_serving = $16,
-			requires_water = $17,
-			season = $18,
-			layer = $19,
-			waterproof = $20,
-			size = $21,
-			color = $22,
-			capacity_people = $23,
-			season_rating = $24,
-			freestanding = $25,
-			has_footprint = $26,
-			comfort_temp_c = $27,
-			fill_type = $28,
-			r_value = $29,
-			capacity_mah = $30,
-			charge_port = $31,
-			rechargeable = $32,
-			image_blob = $33,
-			image_mime_type = $34,
-			image_size_bytes = $35,
-			image_width_px = $36,
-			image_height_px = $37,
-			attributes_json = $38,
+			image_blob = $14,
+			image_mime_type = $15,
+			image_size_bytes = $16,
+			image_width_px = $17,
+			image_height_px = $18,
+			attributes_json = $19,
 			updated_at = NOW()
 		WHERE id = $1
 		RETURNING updated_at`
@@ -443,25 +279,6 @@ func (s *ItemStore) Update(ctx context.Context, item *domain.Item) error {
 		item.DefaultQuantity,
 		string(item.DefaultCarryStatus),
 		item.IsDefault,
-		toNullInt(item.DoseCount),
-		toNullFloat64(item.Calories),
-		toNullFloat64(item.CaloriesPerServing),
-		toNullBool(item.RequiresWater),
-		toNullString(item.Season),
-		toNullString(item.Layer),
-		toNullBool(item.Waterproof),
-		toNullString(item.Size),
-		toNullString(item.Color),
-		toNullFloat64(item.CapacityPeople),
-		toNullString(item.SeasonRating),
-		toNullBool(item.Freestanding),
-		toNullBool(item.HasFootprint),
-		toNullFloat64(item.ComfortTempC),
-		toNullString(item.FillType),
-		toNullFloat64(item.RValue),
-		toNullInt(item.CapacityMAH),
-		toNullString(item.ChargePort),
-		toNullBool(item.Rechargeable),
 		toNullBytes(item.ImageBlob),
 		toNullString(item.ImageMimeType),
 		toNullInt(item.ImageSizeBytes),
@@ -485,13 +302,5 @@ func (s *ItemStore) Delete(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("delete item: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("rows affected on delete item: %w", err)
-	}
-	if rowsAffected == 0 {
-		return domain.ErrNotFound
-	}
-
-	return nil
+	return rowsAffectedOrNotFound(result, "rows affected on delete item")
 }

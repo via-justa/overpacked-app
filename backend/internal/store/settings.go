@@ -80,12 +80,8 @@ func (s *SettingsStore) Update(ctx context.Context, settings *domain.Settings) e
 		return fmt.Errorf("update settings: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("rows affected on update settings: %w", err)
-	}
-	if rowsAffected == 0 {
-		return domain.ErrNotFound
+	if err := rowsAffectedOrNotFound(result, "rows affected on update settings"); err != nil {
+		return err
 	}
 
 	settings.ID = singletonSettingsID
@@ -107,12 +103,19 @@ func (s *SettingsStore) StartFresh(ctx context.Context) error {
 	// Remove all user data while preserving system item types and schema rows.
 	if _, err = tx.ExecContext(ctx, `
 		TRUNCATE TABLE
-			pack_sets,
+			trip_person_items,
+			trip_person_packs,
+			trip_persons,
+			trips,
 			pack_items,
 			packs,
 			set_items,
 			item_sets,
+			item_labels,
 			items,
+			packing_list_labels,
+			packing_lists,
+			labels,
 			manufacturers,
 			persons
 		RESTART IDENTITY CASCADE

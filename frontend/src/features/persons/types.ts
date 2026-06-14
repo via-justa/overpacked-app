@@ -1,34 +1,15 @@
-export type Gender = 'male' | 'female' | 'other'
+import type { components } from '../../lib/api/schema'
 
-export type ConditioningLevel = 'sedentary' | 'average' | 'athletic' | 'military'
+// Server types are sourced from the generated OpenAPI schema (single source of truth).
+export type Person = components['schemas']['Person']
+export type PersonCreate = components['schemas']['PersonCreate']
+export type PersonUpdate = components['schemas']['PersonUpdate']
 
-export type Person = {
-  id: string
-  name: string
-  gender?: Gender | null
-  birthdate?: string | null
-  body_weight_grams?: number | null
-  conditioning_level?: ConditioningLevel | null
-  created_at: string
-  updated_at: string
-}
+// Named enums derived from the schema for use in forms/selects.
+export type Gender = NonNullable<Person['gender']>
+export type ConditioningLevel = NonNullable<Person['conditioning_level']>
 
-export type PersonCreate = {
-  name: string
-  gender?: Gender
-  birthdate?: string
-  body_weight_grams?: number
-  conditioning_level?: ConditioningLevel
-}
-
-export type PersonUpdate = {
-  name?: string
-  gender?: Gender
-  birthdate?: string
-  body_weight_grams?: number
-  conditioning_level?: ConditioningLevel
-}
-
+// UI-only form state — no server/spec equivalent.
 export type PersonFormValues = {
   name: string
   gender: Gender

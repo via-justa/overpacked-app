@@ -10,6 +10,9 @@ serviceAccount:
   annotations: {}
   # Provide an existing ServiceAccount name instead of creating one.
   name: ""
+  # Mount the API token into pods. The app does not call the Kubernetes API,
+  # so this is disabled by default (no token to steal if a pod is compromised).
+  automountServiceAccountToken: false
 
 # CloudNativePG operator dependency settings.
 cloudnativePgOperator:
@@ -54,23 +57,59 @@ backend:
   auth:
     # Backend login username.
     username: admin
-    # Backend login password.
-    password: change-me
-    # JWT signing secret used by the backend.
-    jwtSecret: change-me-jwt-secret
+    # Backend login password. Required: install fails if empty. Set via -f/--set,
+    # or manage the whole Secret yourself with backend.existingSecret.
+    password: ""
+    # JWT signing secret used by the backend. Required: install fails if empty.
+    jwtSecret: ""
   # Additional environment variables for the backend container.
   extraEnv: []
+  # Seed initContainer configuration.
+  seed:
+    # Enable seed initContainer that applies migrations then seeds before backend starts.
+    enabled: true
+    # Command run by the seed initContainer. Applies migrations ("up") then seeds.
+    # Both are idempotent (goose version tracking + ON CONFLICT), so it is safe to
+    # run on every rollout.
+    command: ["/bin/sh", "-c", "/app/api up && /app/api seed"]
+  # Persistent storage for application-level backups (exposed as BACKUP_BASE_DIR).
+  backup:
+    # Create a PVC and mount it for server-side backups. Disabling unsets
+    # BACKUP_BASE_DIR, which turns off scheduled/run-now backups.
+    enabled: true
+    # Mount path passed to the backend as BACKUP_BASE_DIR.
+    baseDir: /data/backups
+    # Size of the backup PersistentVolumeClaim.
+    size: 5Gi
+    # Optional storage class for the backup PVC.
+    storageClass: ""
+  # Pod-level security context. fsGroup makes the backup PVC writable by the
+  # non-root container user.
+  podSecurityContext:
+    runAsNonRoot: true
+    fsGroup: 1000
+    seccompProfile:
+      type: RuntimeDefault
+  # Container-level security context applied to the backend and seed containers.
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
   resources:
-    # CPU and memory requests/limits for the backend.
+    # CPU, memory, and ephemeral-storage requests/limits for the backend.
     requests:
-      cpu: 100m
-      memory: 128Mi
+      cpu: 50m
+      memory: 64Mi
+      ephemeral-storage: 128Mi
     limits:
-      cpu: 500m
-      memory: 512Mi
+      cpu: 250m
+      memory: 256Mi
+      ephemeral-storage: 512Mi
   livenessProbe:
     # HTTP path used for backend liveness checks.
-    path: /api/health
+    path: /health
     # Delay before liveness probes start.
     initialDelaySeconds: 10
     # How often to run liveness probes.
@@ -79,7 +118,7 @@ backend:
     timeoutSeconds: 5
   readinessProbe:
     # HTTP path used for backend readiness checks.
-    path: /api/health
+    path: /health
     # Delay before readiness probes start.
     initialDelaySeconds: 5
     # How often to run readiness probes.
@@ -111,14 +150,27 @@ frontend:
   containerPort: 80
   # Backend upstream used by nginx when the app is deployed.
   backendUpstream: ""
+  # Pod-level security context applied to the frontend pod.
+  podSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  # Container-level security context applied to the frontend container.
+  # The stock nginx image starts its master as root to bind :80 and writes to
+  # /var/cache/nginx and /etc/nginx/conf.d (envsubst), so runAsNonRoot and a
+  # read-only root filesystem are intentionally left off here.
+  securityContext:
+    allowPrivilegeEscalation: false
   resources:
-    # CPU and memory requests/limits for the frontend.
+    # CPU, memory, and ephemeral-storage requests/limits for the frontend.
     requests:
-      cpu: 50m
-      memory: 64Mi
+      cpu: 25m
+      memory: 32Mi
+      ephemeral-storage: 32Mi
     limits:
-      cpu: 300m
-      memory: 256Mi
+      cpu: 100m
+      memory: 128Mi
+      ephemeral-storage: 128Mi
+
   livenessProbe:
     # HTTP path used for frontend liveness checks.
     path: /
@@ -173,30 +225,35 @@ database:
   auth:
     # PostgreSQL application username.
     username: app
-    # PostgreSQL application password.
-    password: change-me-db-password
+    # PostgreSQL application password. Required: install fails if empty.
+    password: ""
     # PostgreSQL database name.
-    database: packing_light
+    database: overpacked
   superuser:
     # CloudNativePG superuser name.
     username: postgres
-    # CloudNativePG superuser password.
-    password: change-me-superuser-password
+    # CloudNativePG superuser password. Required (cloudnativepg mode): install fails if empty.
+    password: ""
   cloudnativepg:
     # Number of PostgreSQL instances managed by CloudNativePG.
     instances: 1
+    # SSL mode used by the backend when connecting to the in-cluster database.
+    # CloudNativePG serves TLS by default; "require" encrypts without CA verification.
+    sslmode: require
     # PostgreSQL image used by the CloudNativePG cluster.
     imageName: ghcr.io/cloudnative-pg/postgresql:16
     storage:
       # Persistent volume size for the database.
-      size: 20Gi
+      size: 1Gi
       # Optional storage class name for the database PVC.
       storageClass: ""
     resources:
-      # CPU and memory requests/limits for PostgreSQL pods.
+      # CPU, memory, and ephemeral-storage requests/limits for PostgreSQL pods.
       requests:
-        cpu: 250m
-        memory: 512Mi
+        cpu: 100m
+        memory: 256Mi
+        ephemeral-storage: 128Mi
       limits:
-        cpu: "1"
-        memory: 2Gi
+        cpu: 500m
+        memory: 512Mi
+        ephemeral-storage: 512Mi

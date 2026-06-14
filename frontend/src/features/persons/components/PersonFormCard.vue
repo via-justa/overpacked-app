@@ -2,8 +2,9 @@
 import { computed } from 'vue'
 import Button from 'primevue/button'
 import DatePicker from 'primevue/datepicker'
-import AppSelect from '../../../components/AppSelect.vue'
-import AppToggleGroup from '../../../components/AppToggleGroup.vue'
+import { iconRegistry } from '../../../lib/icons'
+import AppSelect from '../../../components/forms/AppSelect.vue'
+import AppToggleGroup from '../../../components/forms/AppToggleGroup.vue'
 import type { PersonFormValues } from '../types'
 
 const props = defineProps<{
@@ -14,6 +15,8 @@ const props = defineProps<{
   weightOptions: number[]
   loading?: boolean
   showCancel?: boolean
+  showButtons?: boolean
+  bare?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -100,24 +103,24 @@ const onCancel = () => {
 
 <template>
   <section data-component="person-form-card"
-    class="border-line-subtle bg-surface-elevated rounded-2xl border p-4 shadow-panel backdrop-blur sm:p-5">
-    <h2 class="text-ink text-lg font-semibold">{{ title }}</h2>
+    :class="bare ? 'grid gap-3' : 'border-line-subtle bg-surface-elevated rounded-2xl border p-4 shadow-panel backdrop-blur sm:p-5'">
+    <h2 v-if="!bare" class="text-ink text-lg font-semibold">{{ title }}</h2>
 
-    <div class="mt-4 grid gap-3">
+    <div :class="bare ? 'contents' : 'mt-4 grid gap-3'">
       <label class="grid gap-1">
-        <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Name</span>
+        <span class="label-field">Name</span>
         <input data-element="person-name" class="input-shell" :value="values.name" type="text"
           @input="updateField('name', ($event.target as HTMLInputElement).value)" />
       </label>
 
       <div class="grid gap-1">
-        <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Gender</span>
+        <span class="label-field">Gender</span>
         <AppToggleGroup name="gender" data-element="person-gender" :model-value="values.gender" :options="genderOptions"
           fit-content @update:model-value="(value) => updateField('gender', value as PersonFormValues['gender'])" />
       </div>
 
       <div class="grid gap-1">
-        <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Birthdate</span>
+        <span class="label-field">Birthdate</span>
         <DatePicker data-element="person-birthdate" v-model="birthdateModel" class="app-date-picker w-full" fluid
           show-icon icon-display="input" date-format="dd-mm-yy" :pt="{ panel: { class: 'app-date-panel' } }"
           :manual-input="false" />
@@ -136,18 +139,20 @@ const onCancel = () => {
       </div>
 
       <div class="grid gap-1">
-        <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Conditioning Level</span>
+        <span class="label-field">Conditioning Level</span>
         <AppToggleGroup name="conditioning-level" data-element="person-conditioning-level"
           :model-value="values.conditioning_level" :options="conditioningLevelOptions" fit-content
           @update:model-value="(value) => updateField('conditioning_level', value as PersonFormValues['conditioning_level'])" />
       </div>
     </div>
 
-    <footer data-element="person-form-actions" class="mt-4 flex flex-wrap items-center gap-2">
-      <Button data-element="person-form-submit" :label="submitLabel" icon="pi pi-check"
+    <footer v-if="!bare && showButtons !== false" data-element="person-form-actions"
+      class="mt-4 flex flex-wrap items-center gap-2">
+      <Button data-element="person-form-submit" :label="submitLabel" :icon="`pi ${iconRegistry.action.confirm}`"
         :disabled="!canSubmit || loading" :loading="loading" @click="onSubmit" />
-      <Button v-if="showCancel" data-element="person-form-cancel" label="Cancel" icon="pi pi-times" severity="secondary"
-        outlined :disabled="loading" @click="onCancel" />
+      <Button v-if="showCancel" data-element="person-form-cancel" label="Cancel"
+        :icon="`pi ${iconRegistry.action.cancel}`" severity="secondary" outlined :disabled="loading"
+        @click="onCancel" />
     </footer>
   </section>
 </template>

@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import AppToggleGroup from '../../../components/AppToggleGroup.vue'
-import AppBooleanValue from '../../../components/AppBooleanValue.vue'
-import AppItemTableRowContent from '../../../components/AppItemTableRowContent.vue'
-import type { Item } from '../types'
+import { computed } from 'vue'
+import AppBooleanValue from '../../../components/display/AppBooleanValue.vue'
+import AppItemTableRowContent from '../../../components/display/AppItemTableRowContent.vue'
+import { AppIcon } from '../../../components/icons'
+import { useRowActionsMenu } from '../../../composables/useRowActionsMenu'
+import type { Item, Label } from '../types'
 
 type TableField = {
   key: string
@@ -17,17 +18,15 @@ const props = defineProps<{
   title: string
   items: Item[]
   baseFields: TableField[]
-  extraFields: TableField[]
   tableDetailMode: 'simple' | 'expanded'
   selectionMode: boolean
   selectedItemIds: string[]
   totalWeightLabel: string
   totalValueLabel: string
+  itemLabelsMap?: Map<string, Label[]>
 }>()
 
 const emit = defineEmits<{
-  openDetails: [item: Item]
-  'update:tableDetailMode': [mode: 'simple' | 'expanded']
   'update:selectionMode': [value: boolean]
   'toggle:itemSelection': [itemId: string, checked: boolean]
   'toggle:selectAll': [checked: boolean]
@@ -41,71 +40,20 @@ const emit = defineEmits<{
   'row:delete': [item: Item]
 }>()
 
-const detailModeOptions: Array<{ label: string; value: 'simple' | 'expanded' }> = [
-  { label: 'Simple', value: 'simple' },
-  { label: 'Expanded', value: 'expanded' },
-]
-
 const detailRowArrowImageSrc = 'https://assets.streamlinehq.com/image/private/w_300,h_300,ar_1/f_auto/v1/icons/3/long-arrow-down-right-mbokvtnvyn8z8i5oh7j9v.png/long-arrow-down-right-xo63kk83xpiwai9nokmz4a.png?_a=DATAiZAAZAA0'
 
 const visibleFields = computed(() => props.baseFields)
 const allRowsSelected = computed(() => props.items.length > 0 && props.selectedItemIds.length === props.items.length)
-const openActionsForItemId = ref<string | null>(null)
-const rowActionsMenuPosition = ref<{ top: number; left: number }>({ top: 0, left: 0 })
 
-const closeRowActions = () => {
-  openActionsForItemId.value = null
-}
-
-const toggleRowActions = (itemId: string, event: MouseEvent) => {
-  if (openActionsForItemId.value === itemId) {
-    openActionsForItemId.value = null
-    return
-  }
-
-  const trigger = event.currentTarget
-  if (!(trigger instanceof HTMLElement)) {
-    openActionsForItemId.value = itemId
-    return
-  }
-
-  const rect = trigger.getBoundingClientRect()
-  const menuWidth = 176
-  const menuHeight = 188
-  const gap = 6
-
-  const left = Math.max(8, rect.right - menuWidth)
-  const openUpward = rect.bottom + gap + menuHeight > globalThis.window.innerHeight - 8
-  const top = openUpward ? Math.max(8, rect.top - gap - menuHeight) : rect.bottom + gap
-
-  rowActionsMenuPosition.value = { top, left }
-  openActionsForItemId.value = itemId
-}
-
-const onDocumentClick = (event: MouseEvent) => {
-  const target = event.target
-  if (!(target instanceof HTMLElement)) {
-    closeRowActions()
-    return
-  }
-
-  if (target.closest('[data-element="items-row-actions"]')) {
-    return
-  }
-
-  closeRowActions()
-}
-
-onMounted(() => {
-  if (globalThis.document) {
-    globalThis.document.addEventListener('click', onDocumentClick)
-  }
+const { openActionsForId: openActionsForItemId, menuPosition: rowActionsMenuPosition, closeActions: closeRowActions, toggleActions: toggleRowActions } = useRowActionsMenu({
+  menuWidth: 176,
+  menuHeight: 170,
+  dataElement: 'items-row-actions'
 })
 
-onBeforeUnmount(() => {
-  if (globalThis.document) {
-    globalThis.document.removeEventListener('click', onDocumentClick)
-  }
+const activeMenuItem = computed(() => {
+  if (!openActionsForItemId.value) return null
+  return props.items.find(item => item.id === openActionsForItemId.value) ?? null
 })
 
 type ExpandedFieldDisplay = {
@@ -116,58 +64,78 @@ type ExpandedFieldDisplay = {
   booleanValue?: boolean | null
 }
 
+const formatAttributeLabel = (key: string): string => {
+  return key
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
+const formatAttributeValue = (value: unknown): string | null => {
+  if (value === null || value === undefined) {
+    return null
+  }
+
+  if (typeof value === 'boolean') {
+    return null // Will be rendered as boolean
+  }
+
+  if (typeof value === 'number') {
+    return String(value)
+  }
+
+  if (typeof value === 'string') {
+    return value
+  }
+
+  return String(value)
+}
+
 const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
   const displays: ExpandedFieldDisplay[] = []
 
-  for (const field of props.extraFields) {
-    const href = field.renderHref?.(item)
-    if (href) {
-      displays.push({
-        key: field.key,
-        label: field.label,
-        value: 'URL',
-        href,
-      })
+  if (!item.attributes || typeof item.attributes !== 'object') {
+    return displays
+  }
+
+  for (const [key, value] of Object.entries(item.attributes)) {
+    if (value === null || value === undefined) {
       continue
     }
 
-    const booleanValue = field.renderBoolean?.(item)
-    if (typeof booleanValue === 'boolean') {
+    const label = formatAttributeLabel(key)
+
+    if (typeof value === 'boolean') {
       displays.push({
-        key: field.key,
-        label: field.label,
+        key,
+        label,
         value: '',
-        booleanValue,
+        booleanValue: value,
       })
       continue
     }
 
-    const value = field.render(item)
-    if (!value || value === 'Not set') {
-      continue
+    const formattedValue = formatAttributeValue(value)
+    if (formattedValue) {
+      displays.push({
+        key,
+        label,
+        value: formattedValue,
+      })
     }
-
-    displays.push({
-      key: field.key,
-      label: field.label,
-      value,
-    })
   }
 
   return displays
 }
+
 </script>
 
 <template>
-  <section class="border-line-subtle bg-surface-elevated overflow-visible rounded-2xl border shadow-panel">
+  <section class="surface-panel w-full overflow-visible">
     <div class="border-line-subtle relative border-b py-3 pl-12 pr-4">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-3">
-          <h3 class="text-copy text-sm font-semibold uppercase tracking-[0.08em]">{{ title }}</h3>
-          <AppToggleGroup :name="`items-table-detail-mode-${title.toLowerCase().replace(/\s+/g, '-')}`"
-            data-element="items-table-detail-mode" :model-value="tableDetailMode" :options="detailModeOptions"
-            fit-content
-            @update:model-value="(value) => emit('update:tableDetailMode', value as 'simple' | 'expanded')" />
+          <h3 class="heading-section">{{ title }}</h3>
           <template v-if="selectionMode">
             <span class="text-copy-subtle text-xs font-medium">{{ selectedItemIds.length }} selected</span>
             <button type="button"
@@ -191,7 +159,8 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
               Clear default
             </button>
             <button type="button"
-              class="rounded-md border border-red-200 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50"
+              class="rounded-md border px-2 py-1 text-xs font-medium hover:bg-[color-mix(in_srgb,var(--color-danger-500)_22%,var(--color-surface-elevated))]"
+              :style="{ borderColor: 'color-mix(in srgb, var(--color-danger-500) 55%, var(--color-line-subtle))', color: 'var(--color-danger-500)' }"
               :disabled="selectedItemIds.length === 0" @click="emit('bulk:delete')">
               Delete selected
             </button>
@@ -216,7 +185,8 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
     </div>
 
     <div v-else class="overflow-x-auto overflow-y-visible">
-      <table class="divide-line text-copy min-w-full table-fixed divide-y text-sm">
+      <table class="divide-line text-copy min-w-full table-auto divide-y text-sm">
+        <caption class="sr-only">{{ title }} gear items with {{ visibleFields.length }} columns</caption>
         <thead class="bg-surface-muted text-copy-subtle text-left text-xs font-semibold uppercase tracking-[0.06em]">
           <tr>
             <th class="w-8 px-3 py-3">
@@ -227,7 +197,8 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
               }" />
             </th>
             <th class="w-80 px-4 py-3">Name</th>
-            <th v-for="field in visibleFields" :key="field.key" class="whitespace-nowrap px-4 py-3">{{ field.label }}
+            <th v-for="field in visibleFields" :key="field.key" class="whitespace-nowrap px-4 py-3"
+              :class="field.key === 'manufacturer' ? '' : 'text-center'">{{ field.label }}
             </th>
             <th class="w-px px-4 py-3 text-right">
               <span class="sr-only">Row actions</span>
@@ -236,8 +207,8 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
         </thead>
         <tbody class="divide-line divide-y">
           <template v-for="item in items" :key="item.id">
-            <tr :data-item-id="item.id" class="group hover:bg-surface-muted">
-              <td class="w-8 px-3 py-3 align-top">
+            <tr :data-item-id="item.id" class="group hover:bg-surface-muted" :class="{ 'opacity-50': !item.is_active }">
+              <td class="w-8 px-3 py-2 align-middle">
                 <input type="checkbox" :checked="selectionMode && selectedItemIds.includes(item.id)"
                   :aria-label="`Select ${item.name}`" class="transition-opacity" @change="(event) => {
                     const checked = (event.target as HTMLInputElement).checked
@@ -246,52 +217,19 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
                   }" />
               </td>
               <AppItemTableRowContent :item="item" :visible-fields="visibleFields"
-                @open-details="emit('openDetails', $event)" />
-              <td class="w-px px-4 py-3 align-top">
+                :item-labels="itemLabelsMap?.get(item.id) ?? []" @edit="emit('row:edit', $event)" />
+              <td class="w-px px-4 py-2 align-middle">
                 <div data-element="items-row-actions" class="relative flex justify-end">
                   <button type="button"
                     class="text-copy-muted hover:text-copy hover:bg-surface-soft inline-flex h-7 w-7 items-center justify-center rounded-full transition"
                     :aria-label="`Open actions for ${item.name}`" @click="(event) => toggleRowActions(item.id, event)">
-                    <i class="pi pi-ellipsis-h text-xs" aria-hidden="true" />
+                    <AppIcon category="action" name="menu" size="xs" />
                   </button>
-
-                  <div v-if="openActionsForItemId === item.id"
-                    class="border-line-subtle bg-surface-elevated fixed z-30 w-44 rounded-lg border py-1 shadow-sm"
-                    :style="{
-                      top: `${rowActionsMenuPosition.top}px`,
-                      left: `${rowActionsMenuPosition.left}px`,
-                    }">
-                    <button type="button"
-                      class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
-                      @click="emit('row:edit', item); closeRowActions()">
-                      Edit
-                    </button>
-                    <button type="button"
-                      class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
-                      @click="emit('row:duplicate', item); closeRowActions()">
-                      Duplicate
-                    </button>
-                    <button type="button"
-                      class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
-                      @click="emit('row:toggleActive', item); closeRowActions()">
-                      {{ item.is_active ? 'Deactivate' : 'Activate' }}
-                    </button>
-                    <button type="button"
-                      class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
-                      @click="emit('row:toggleDefault', item); closeRowActions()">
-                      {{ item.is_default ? 'Unset default' : 'Set default' }}
-                    </button>
-                    <button type="button"
-                      class="block w-full px-3 py-2 text-left text-xs font-medium text-red-700 hover:bg-red-50"
-                      @click="emit('row:delete', item); closeRowActions()">
-                      Delete
-                    </button>
-                  </div>
                 </div>
               </td>
             </tr>
 
-            <tr v-if="tableDetailMode === 'expanded'" class="bg-surface-muted/40">
+            <tr v-if="tableDetailMode === 'expanded'" class="bg-surface-muted/40 hidden md:table-row">
               <td :colspan="visibleFields.length + 3" class="border-line-subtle border-t px-4 py-2 align-top">
                 <div class="relative ml-8 pl-3">
                   <img :src="detailRowArrowImageSrc" alt="" aria-hidden="true"
@@ -303,7 +241,7 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
                       <a v-if="field.href" :href="field.href" target="_blank" rel="noreferrer"
                         class="text-brand-500 inline-flex items-center"
                         :aria-label="`Open ${field.label} for ${item.name}`">
-                        <i class="pi pi-external-link" aria-hidden="true"></i>
+                        <AppIcon category="content" name="externalLink" size="sm" />
                         <span class="sr-only">Open {{ field.label }}</span>
                       </a>
                       <AppBooleanValue v-else-if="typeof field.booleanValue === 'boolean'" :value="field.booleanValue"
@@ -320,4 +258,40 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
       </table>
     </div>
   </section>
+
+  <!-- Teleport menu to body to escape overflow container -->
+  <Teleport to="body">
+    <div v-if="activeMenuItem" data-element="items-row-actions-menu" role="menu"
+      :aria-label="`Actions for ${activeMenuItem.name}`"
+      class="border-line-subtle bg-surface-elevated fixed z-30 w-44 rounded-lg border py-1 shadow-sm" :style="{
+        top: `${rowActionsMenuPosition.top}px`,
+        left: `${rowActionsMenuPosition.left}px`,
+      }">
+      <button type="button" role="menuitem"
+        class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
+        @click="emit('row:edit', activeMenuItem); closeRowActions()">
+        Edit
+      </button>
+      <button type="button" role="menuitem"
+        class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
+        @click="emit('row:duplicate', activeMenuItem); closeRowActions()">
+        Duplicate
+      </button>
+      <button type="button" role="menuitem"
+        class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
+        @click="emit('row:toggleActive', activeMenuItem); closeRowActions()">
+        {{ activeMenuItem.is_active ? 'Deactivate' : 'Activate' }}
+      </button>
+      <button type="button" role="menuitem"
+        class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
+        @click="emit('row:toggleDefault', activeMenuItem); closeRowActions()">
+        {{ activeMenuItem.is_default ? 'Unset default' : 'Set default' }}
+      </button>
+      <button type="button" role="menuitem"
+        class="block w-full px-3 py-2 text-left text-xs font-medium hover:bg-[color-mix(in_srgb,var(--color-danger-500)_22%,var(--color-surface-elevated))]"
+        :style="{ color: 'var(--color-danger-500)' }" @click="emit('row:delete', activeMenuItem); closeRowActions()">
+        Delete
+      </button>
+    </div>
+  </Teleport>
 </template>

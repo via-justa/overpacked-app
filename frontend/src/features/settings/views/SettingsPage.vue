@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useMutation, useQuery } from '@tanstack/vue-query'
-import { useToast } from 'primevue/usetoast'
-import { queryClient } from '../../../lib/query/client'
+import { useQuery } from '@tanstack/vue-query'
 import { getSettings, patchSettings, startFresh } from '../api/settingsApi'
+import { useMutationWithToast } from '../../../composables/useMutationWithToast'
 import SettingsDangerZoneCard from '../components/SettingsDangerZoneCard.vue'
 import SettingsDisplaySettingsCard from '../components/SettingsDisplaySettingsCard.vue'
+import SettingsExportCard from '../components/SettingsExportCard.vue'
+import SettingsBackupCard from '../components/SettingsBackupCard.vue'
 import type { Settings, SettingsUpdate } from '../types'
 
-const toast = useToast()
 const editableSettings = ref<Settings | null>(null)
 const startFreshSuccessToken = ref(0)
 
@@ -27,47 +27,39 @@ watch(
   { immediate: true },
 )
 
-const updateMutation = useMutation({
+const updateMutation = useMutationWithToast<Settings, Error, SettingsUpdate>({
   mutationFn: patchSettings,
-  onSuccess: (updatedSettings) => {
-    queryClient.setQueryData(['settings'], updatedSettings)
-    editableSettings.value = { ...updatedSettings }
-    toast.add({
-      severity: 'success',
-      summary: 'Settings saved',
-      detail: 'Display units were updated successfully.',
-      life: 3000,
-    })
+  successMessage: {
+    summary: 'Settings saved',
+    detail: 'Display units were updated successfully.',
   },
-  onError: (error) => {
-    toast.add({
-      severity: 'error',
-      summary: 'Save failed',
-      detail: error instanceof Error ? error.message : 'Unable to save settings.',
-      life: 3500,
-    })
+  errorMessage: {
+    summary: 'Save failed',
+    detail: 'Unable to save settings.',
+  },
+  setQueryData: {
+    queryKey: ['settings'],
+    updater: (updatedSettings) => updatedSettings,
+  },
+  onSuccess: (updatedSettings) => {
+    editableSettings.value = { ...updatedSettings }
   },
 })
 
-const startFreshMutation = useMutation({
+const startFreshMutation = useMutationWithToast<void, Error, string>({
   mutationFn: async (password: string) => startFresh(password),
-  onSuccess: async () => {
-    startFreshSuccessToken.value += 1
-    await queryClient.invalidateQueries()
-    toast.add({
-      severity: 'success',
-      summary: 'Fresh start complete',
-      detail: 'All app data was cleared and settings were reset to defaults.',
-      life: 3500,
-    })
+  successMessage: {
+    summary: 'Fresh start complete',
+    detail: 'All app data was cleared and settings were reset to defaults.',
+    life: 3500,
   },
-  onError: (error) => {
-    toast.add({
-      severity: 'error',
-      summary: 'Start fresh failed',
-      detail: error instanceof Error ? error.message : 'Unable to reset app data.',
-      life: 3500,
-    })
+  errorMessage: {
+    summary: 'Start fresh failed',
+    detail: 'Unable to reset app data.',
+  },
+  invalidateAllQueries: true,
+  onSuccess: () => {
+    startFreshSuccessToken.value += 1
   },
 })
 
@@ -154,14 +146,6 @@ const fieldConfigs: Array<{
     },
   ]
 
-const onReset = () => {
-  if (!settingsQuery.data.value) {
-    return
-  }
-
-  editableSettings.value = { ...settingsQuery.data.value }
-}
-
 const onSave = async () => {
   if (!editableSettings.value) {
     return
@@ -215,7 +199,11 @@ const isFieldDirty = (
     <SettingsDisplaySettingsCard :has-settings-error="hasSettingsError" :settings-error-message="settingsErrorMessage"
       :is-loading-settings="isLoadingSettings" :editable-settings="editableSettings" :field-configs="fieldConfigs"
       :is-saving-settings="isSavingSettings" :is-dirty="isDirty" :is-field-dirty="isFieldDirty" @save="onSave"
-      @reset="onReset" @update-field="({ key, value }) => setFieldValue(key, value)" />
+      @update-field="({ key, value }) => setFieldValue(key, value)" />
+
+    <SettingsExportCard />
+
+    <SettingsBackupCard />
 
     <SettingsDangerZoneCard :is-pending="startFreshMutation.isPending.value"
       :close-dialog-token="startFreshSuccessToken" @start-fresh="onConfirmStartFresh" />

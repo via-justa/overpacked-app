@@ -130,15 +130,7 @@ func (s *ItemTypeStore) Delete(ctx context.Context, id string) error {
 		return fmt.Errorf("delete item type: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return fmt.Errorf("rows affected on delete item type: %w", err)
-	}
-	if rowsAffected == 0 {
-		return domain.ErrNotFound
-	}
-
-	return nil
+	return rowsAffectedOrNotFound(result, "rows affected on delete item type")
 }
 
 func (s *ItemTypeStore) ListFields(ctx context.Context, itemTypeID string) ([]domain.ItemTypeField, error) {

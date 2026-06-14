@@ -1,0 +1,36 @@
+<script setup lang="ts">
+import AppTemplateDialog from './AppTemplateDialog.vue'
+import AppDialogActions from './AppDialogActions.vue'
+
+defineProps<{
+  open: boolean
+  title: string
+  width?: string
+  dataElement?: string
+  canSubmit?: boolean
+  isSubmitting?: boolean
+  isDeleting?: boolean
+}>()
+
+defineEmits<{
+  'update:open': [value: boolean]
+  submit: []
+  cancel: []
+  delete: []
+}>()
+</script>
+
+<template>
+  <AppTemplateDialog :model-value="open" :width="width ?? 'min(36rem, calc(100vw - 2rem))'" :data-element="dataElement"
+    @update:model-value="$emit('update:open', $event)">
+    <article class="surface-panel relative p-4 flex flex-col">
+      <h2 class="text-ink text-lg font-semibold shrink-0 pr-24">{{ title }}</h2>
+      <div class="flex-1 mt-4">
+        <slot />
+      </div>
+
+      <AppDialogActions mode="edit" :can-submit="canSubmit" :is-updating="isSubmitting" :is-deleting="isDeleting"
+        @submit="$emit('submit')" @cancel="$emit('cancel')" @delete="$emit('delete')" />
+    </article>
+  </AppTemplateDialog>
+</template>

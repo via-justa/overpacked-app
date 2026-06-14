@@ -26,6 +26,10 @@ paths:
       tags:
         - auth
       summary: Login with app credentials
+      description: >-
+        On success the access token is returned in the body and the refresh
+        token is set in an HttpOnly `op_refresh` cookie (never exposed to
+        JavaScript).
       operationId: authLogin
       requestBody:
         required: true
@@ -36,6 +40,11 @@ paths:
       responses:
         '200':
           description: Authentication successful
+          headers:
+            Set-Cookie:
+              description: HttpOnly refresh token cookie (`op_refresh`).
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -50,22 +59,23 @@ paths:
       tags:
         - auth
       summary: Refresh JWT tokens
+      description: >-
+        Rotates the session using the refresh token in the HttpOnly
+        `op_refresh` cookie set at login. Takes no request body; a fresh access
+        token is returned in the body and a rotated refresh cookie is set.
       operationId: authRefresh
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RefreshRequest'
       responses:
         '200':
           description: Tokens refreshed
+          headers:
+            Set-Cookie:
+              description: Rotated HttpOnly refresh token cookie (`op_refresh`).
+              schema:
+                type: string
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/TokenResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
 
@@ -145,6 +155,156 @@ paths:
           description: Data reset completed
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/backup/export:
+    get:
+      tags:
+        - backup
+      summary: Download a full backup archive
+      operationId: exportBackup
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Backup archive
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/backup/import:
+    post:
+      tags:
+        - backup
+      summary: Restore data from a backup archive
+      operationId: importBackup
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - mode
+                - password
+              properties:
+                file:
+                  type: string
+                  format: binary
+                mode:
+                  type: string
+                  enum: [replace, merge]
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Import completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackupImportResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/backup/config:
+    get:
+      tags:
+        - backup
+      summary: Get scheduled backup configuration
+      operationId: getBackupConfig
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Backup configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackupConfig'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    put:
+      tags:
+        - backup
+      summary: Update scheduled backup configuration
+      operationId: updateBackupConfig
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BackupConfigUpdate'
+      responses:
+        '200':
+          description: Backup configuration updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackupConfig'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/backup/run:
+    post:
+      tags:
+        - backup
+      summary: Run a scheduled backup now to the configured path
+      operationId: runBackup
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Backup written
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackupRunResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/export/items:
+    get:
+      tags:
+        - export
+      summary: Export items as a denormalized CSV (optionally with images)
+      operationId: exportItems
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: include_images
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Items export
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+            application/zip:
+              schema:
+                type: string
+                format: binary
         '401':
           $ref: '#/components/responses/Unauthorized'
 
@@ -403,6 +563,55 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+
+  /api/v1/search:
+    get:
+      tags:
+        - search
+      summary: Global fuzzy search across entities
+      operationId: searchGlobal
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query (minimum 2 characters)
+          schema:
+            type: string
+            minLength: 2
+        - name: types
+          in: query
+          required: false
+          description: Restrict results to the given entity types. Repeat the parameter to request multiple types.
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/SearchEntityType'
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of results to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
   /api/v1/items:
     get:
@@ -733,6 +942,226 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /api/v1/labels:
+    get:
+      tags:
+        - labels
+      summary: List all labels
+      operationId: listLabels
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of labels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Label'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - labels
+      summary: Create a new label
+      operationId: createLabel
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabelCreate'
+      responses:
+        '201':
+          description: Label created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Label'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/labels/{labelId}:
+    get:
+      tags:
+        - labels
+      summary: Get label by ID
+      operationId: getLabel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: labelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Label retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Label'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags:
+        - labels
+      summary: Update label
+      operationId: updateLabel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: labelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabelUpdate'
+      responses:
+        '200':
+          description: Label updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Label'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - labels
+      summary: Delete label
+      operationId: deleteLabel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: labelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Label deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/items/{itemId}/labels:
+    get:
+      tags:
+        - item-labels
+      summary: List labels for an item
+      operationId: listItemLabels
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of item labels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Label'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags:
+        - item-labels
+      summary: Add label to item
+      operationId: addItemLabel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemLabelAdd'
+      responses:
+        '201':
+          description: Label added to item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Label'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/items/{itemId}/labels/{labelId}:
+    delete:
+      tags:
+        - item-labels
+      summary: Remove label from item
+      operationId: removeItemLabel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: labelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Label removed from item
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /api/v1/sets:
     get:
       tags:
@@ -993,31 +1422,31 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/packs:
+  /api/v1/trips:
     get:
       tags:
-        - packs
-      summary: List all packs
-      operationId: listPacks
+        - trips
+      summary: List all trips
+      operationId: listTrips
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: List of packs
+          description: List of trips
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Pack'
+                  $ref: '#/components/schemas/Trip'
         '401':
           $ref: '#/components/responses/Unauthorized'
 
     post:
       tags:
-        - packs
-      summary: Create a new pack
-      operationId: createPack
+        - trips
+      summary: Create a new trip
+      operationId: createTrip
       security:
         - bearerAuth: []
       requestBody:
@@ -1025,29 +1454,68 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PackCreate'
+              $ref: '#/components/schemas/TripCreate'
       responses:
         '201':
-          description: Pack created
+          description: Trip created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pack'
+                $ref: '#/components/schemas/Trip'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
 
-  /api/v1/packs/{packId}:
+  /api/v1/trips/route-preview/{service}:
     get:
       tags:
-        - packs
-      summary: Get pack by ID
-      operationId: getPack
+        - trips
+      summary: Fetch route link preview metadata
+      description: >-
+        Fetches Open Graph preview metadata (image, title) for a public route
+        share link. The service is supplied in the path. komoot and strava
+        requests are restricted to their official hosts; wanderer accepts any
+        public self-hosted instance (requests resolving to private or loopback
+        addresses are rejected).
+      operationId: getTripRoutePreview
       security:
         - bearerAuth: []
       parameters:
-        - name: packId
+        - name: service
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [komoot, strava, wanderer]
+        - name: url
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Route preview metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripRoutePreview'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/trips/{tripId}:
+    get:
+      tags:
+        - trips
+      summary: Get trip by ID with full nested data
+      description: Returns complete trip details including all persons, their packs, pack items, and direct person items in a single call
+      operationId: getTripById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tripId
           in: path
           required: true
           schema:
@@ -1055,11 +1523,11 @@ paths:
             format: uuid
       responses:
         '200':
-          description: Pack retrieved
+          description: Trip details with nested persons, packs, and items
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pack'
+                $ref: '#/components/schemas/TripWithDetails'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1067,13 +1535,13 @@ paths:
 
     patch:
       tags:
-        - packs
-      summary: Update pack
-      operationId: updatePack
+        - trips
+      summary: Update trip
+      operationId: updateTrip
       security:
         - bearerAuth: []
       parameters:
-        - name: packId
+        - name: tripId
           in: path
           required: true
           schema:
@@ -1084,14 +1552,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PackUpdate'
+              $ref: '#/components/schemas/TripUpdate'
       responses:
         '200':
-          description: Pack updated
+          description: Trip updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pack'
+                $ref: '#/components/schemas/Trip'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1101,12 +1569,153 @@ paths:
 
     delete:
       tags:
-        - packs
-      summary: Delete pack
-      operationId: deletePack
+        - trips
+      summary: Delete trip
+      operationId: deleteTrip
       security:
         - bearerAuth: []
       parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Trip deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/persons:
+    post:
+      tags:
+        - trip-persons
+      summary: Add person to trip
+      operationId: addTripPerson
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripPersonCreate'
+      responses:
+        '201':
+          description: Person added to trip
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripPersonWithDetails'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/persons/{personId}:
+    delete:
+      tags:
+        - trip-persons
+      summary: Remove person from trip
+      operationId: removeTripPerson
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Person removed from trip
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/persons/{personId}/packs:
+    post:
+      tags:
+        - trip-person-packs
+      summary: Create pack for person in trip
+      description: Creates a new pack and assigns it to the person in the trip context
+      operationId: addTripPersonPack
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripPersonPackCreate'
+      responses:
+        '201':
+          description: Pack created and assigned to person in trip
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripPersonPackWithDetails'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/trips/{tripId}/persons/{personId}/packs/{packId}:
+    delete:
+      tags:
+        - trip-person-packs
+      summary: Remove pack from person in trip
+      operationId: removeTripPersonPack
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
         - name: packId
           in: path
           required: true
@@ -1115,49 +1724,33 @@ paths:
             format: uuid
       responses:
         '204':
-          description: Pack deleted
+          description: Pack removed from person in trip
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/packs/{packId}/items:
-    get:
+  /api/v1/trips/{tripId}/persons/{personId}/packs/{packId}/items:
+    post:
       tags:
-        - pack-items
-      summary: List items in a pack
-      operationId: listPackItems
+        - trip-person-pack-items
+      summary: Add item to pack for a person in a trip
+      operationId: addTripPersonPackItem
       security:
         - bearerAuth: []
       parameters:
-        - name: packId
+        - name: tripId
           in: path
           required: true
           schema:
             type: string
             format: uuid
-      responses:
-        '200':
-          description: List of items in pack
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PackItemWithDetails'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    post:
-      tags:
-        - pack-items
-      summary: Add item to pack
-      operationId: addPackItem
-      security:
-        - bearerAuth: []
-      parameters:
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
         - name: packId
           in: path
           required: true
@@ -1184,15 +1777,27 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/packs/{packId}/items/{itemId}:
+  /api/v1/trips/{tripId}/persons/{personId}/packs/{packId}/items/{itemId}:
     patch:
       tags:
-        - pack-items
-      summary: Update item in pack
-      operationId: updatePackItem
+        - trip-person-pack-items
+      summary: Update item in pack for a person in a trip
+      operationId: updateTripPersonPackItem
       security:
         - bearerAuth: []
       parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
         - name: packId
           in: path
           required: true
@@ -1227,12 +1832,24 @@ paths:
 
     delete:
       tags:
-        - pack-items
-      summary: Remove item from pack
-      operationId: removePackItem
+        - trip-person-pack-items
+      summary: Remove item from pack for a person in a trip
+      operationId: removeTripPersonPackItem
       security:
         - bearerAuth: []
       parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
         - name: packId
           in: path
           required: true
@@ -1253,44 +1870,22 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/packs/{packId}/sets:
-    get:
+  /api/v1/trips/{tripId}/persons/{personId}/items:
+    post:
       tags:
-        - pack-sets
-      summary: List sets applied to pack
-      operationId: listPackSets
+        - trip-person-items
+      summary: Assign item to person in trip
+      operationId: addTripPersonItem
       security:
         - bearerAuth: []
       parameters:
-        - name: packId
+        - name: tripId
           in: path
           required: true
           schema:
             type: string
             format: uuid
-      responses:
-        '200':
-          description: List of sets in pack
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ItemSet'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-
-    post:
-      tags:
-        - pack-sets
-      summary: Apply set to pack
-      operationId: addPackSet
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: packId
+        - name: personId
           in: path
           required: true
           schema:
@@ -1301,14 +1896,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PackSetCreate'
+              $ref: '#/components/schemas/TripPersonItemCreate'
       responses:
         '201':
-          description: Set applied to pack
+          description: Item assigned to person in trip
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ItemSet'
+                $ref: '#/components/schemas/TripPersonItemWithDetails'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -1316,22 +1911,74 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
-  /api/v1/packs/{packId}/sets/{setId}:
-    delete:
+  /api/v1/trips/{tripId}/persons/{personId}/items/{itemId}:
+    patch:
       tags:
-        - pack-sets
-      summary: Remove set from pack
-      operationId: removePackSet
+        - trip-person-items
+      summary: Update item for person in trip
+      operationId: updateTripPersonItem
       security:
         - bearerAuth: []
       parameters:
-        - name: packId
+        - name: tripId
           in: path
           required: true
           schema:
             type: string
             format: uuid
-        - name: setId
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TripPersonItemUpdate'
+      responses:
+        '200':
+          description: Item for person in trip updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TripPersonItemWithDetails'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - trip-person-items
+      summary: Remove item from person in trip
+      operationId: removeTripPersonItem
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: personId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: itemId
           in: path
           required: true
           schema:
@@ -1339,7 +1986,227 @@ paths:
             format: uuid
       responses:
         '204':
-          description: Set removed from pack
+          description: Item removed from person in trip
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/packing-lists:
+    get:
+      tags:
+        - packing-lists
+      summary: List all packing lists
+      operationId: listPackingLists
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of packing lists
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PackingList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - packing-lists
+      summary: Create a new packing list
+      operationId: createPackingList
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackingListCreate'
+      responses:
+        '201':
+          description: Packing list created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackingList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/packing-lists/{listId}:
+    get:
+      tags:
+        - packing-lists
+      summary: Get packing list by ID
+      operationId: getPackingListById
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: listId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Packing list details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackingList'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags:
+        - packing-lists
+      summary: Update packing list
+      operationId: updatePackingList
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: listId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackingListUpdate'
+      responses:
+        '200':
+          description: Packing list updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PackingList'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - packing-lists
+      summary: Delete packing list
+      operationId: deletePackingList
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: listId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Packing list deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/packing-lists/{listId}/labels:
+    get:
+      tags:
+        - packing-list-labels
+      summary: List labels for a packing list
+      operationId: listPackingListLabels
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: listId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: List of packing list labels
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Label'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags:
+        - packing-list-labels
+      summary: Add label to packing list
+      operationId: addPackingListLabel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: listId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PackingListLabelAdd'
+      responses:
+        '201':
+          description: Label added to packing list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Label'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/v1/packing-lists/{listId}/labels/{labelId}:
+    delete:
+      tags:
+        - packing-list-labels
+      summary: Remove label from packing list
+      operationId: removePackingListLabel
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: listId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: labelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Label removed from packing list
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -1358,30 +2225,50 @@ components:
         password:
           type: string
 
-    RefreshRequest:
-      type: object
-      required:
-        - refresh_token
-      properties:
-        refresh_token:
-          type: string
-
     TokenResponse:
       type: object
       required:
         - access_token
-        - refresh_token
         - token_type
         - expires_in
       properties:
         access_token:
           type: string
-        refresh_token:
-          type: string
         token_type:
           type: string
         expires_in:
           type: integer
+
+    SearchEntityType:
+      type: string
+      enum:
+        - item
+        - set
+        - packing_list
+        - person
+        - manufacturer
+        - trip
+
+    SearchResult:
+      type: object
+      required:
+        - entity_type
+        - id
+        - title
+        - score
+      properties:
+        entity_type:
+          $ref: '#/components/schemas/SearchEntityType'
+        id:
+          type: string
+        title:
+          type: string
+        subtitle:
+          type: string
+          nullable: true
+        score:
+          type: number
+          format: double
 
     Settings:
       type: object
@@ -1712,32 +2599,9 @@ components:
           items:
             $ref: '#/components/schemas/ItemTypeFieldInput'
 
-    CustomItem:
+    Item:
       allOf:
         - $ref: '#/components/schemas/ItemBase'
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-
-    Item:
-      oneOf:
-        - $ref: '#/components/schemas/ConsumableItem'
-        - $ref: '#/components/schemas/WearableItem'
-        - $ref: '#/components/schemas/ShelterItem'
-        - $ref: '#/components/schemas/SleepItem'
-        - $ref: '#/components/schemas/ElectronicsItem'
-        - $ref: '#/components/schemas/CustomItem'
-      discriminator:
-        propertyName: type
-        mapping:
-          consumable: '#/components/schemas/ConsumableItem'
-          wearable: '#/components/schemas/WearableItem'
-          shelter: '#/components/schemas/ShelterItem'
-          sleep: '#/components/schemas/SleepItem'
-          electronics: '#/components/schemas/ElectronicsItem'
 
     ItemBase:
       type: object
@@ -1817,126 +2681,6 @@ components:
           type: string
           format: date-time
 
-    ConsumableItem:
-      allOf:
-        - $ref: '#/components/schemas/ItemBase'
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-              enum: [consumable]
-            dose_count:
-              type: integer
-              nullable: true
-            calories:
-              type: number
-              format: float
-              nullable: true
-            calories_per_serving:
-              type: number
-              format: float
-              nullable: true
-            requires_water:
-              type: boolean
-              nullable: true
-
-    WearableItem:
-      allOf:
-        - $ref: '#/components/schemas/ItemBase'
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-              enum: [wearable]
-            season:
-              type: string
-              enum: [summer, winter, year_round]
-              nullable: true
-            layer:
-              type: string
-              enum: [base, mid, shell, accessory]
-              nullable: true
-            waterproof:
-              type: boolean
-              nullable: true
-            size:
-              type: string
-              nullable: true
-            color:
-              type: string
-              nullable: true
-
-    ShelterItem:
-      allOf:
-        - $ref: '#/components/schemas/ItemBase'
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-              enum: [shelter]
-            capacity_people:
-              type: number
-              format: float
-              nullable: true
-            season_rating:
-              type: string
-              enum: [3-season, 4-season]
-              nullable: true
-            freestanding:
-              type: boolean
-              nullable: true
-            has_footprint:
-              type: boolean
-              nullable: true
-
-    SleepItem:
-      allOf:
-        - $ref: '#/components/schemas/ItemBase'
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-              enum: [sleep]
-            comfort_temp_c:
-              type: number
-              nullable: true
-            fill_type:
-              type: string
-              enum: [down, synthetic, foam, air, other]
-              nullable: true
-            r_value:
-              type: number
-              nullable: true
-
-    ElectronicsItem:
-      allOf:
-        - $ref: '#/components/schemas/ItemBase'
-        - type: object
-          required:
-            - type
-          properties:
-            type:
-              type: string
-              enum: [electronics]
-            capacity_mah:
-              type: integer
-              nullable: true
-            charge_port:
-              type: string
-              enum: [usb-c, micro-usb, lightning, dc]
-              nullable: true
-            rechargeable:
-              type: boolean
-              nullable: true
-
     ItemCreate:
       type: object
       required:
@@ -1980,73 +2724,6 @@ components:
           enum: [packed, worn]
           nullable: true
         is_default:
-          type: boolean
-          nullable: true
-        dose_count:
-          type: integer
-          nullable: true
-        calories:
-          type: number
-          format: float
-          nullable: true
-        calories_per_serving:
-          type: number
-          format: float
-          nullable: true
-        requires_water:
-          type: boolean
-          nullable: true
-        season:
-          type: string
-          enum: [summer, winter, year_round]
-          nullable: true
-        layer:
-          type: string
-          enum: [base, mid, shell, accessory]
-          nullable: true
-        waterproof:
-          type: boolean
-          nullable: true
-        size:
-          type: string
-          nullable: true
-        color:
-          type: string
-          nullable: true
-        capacity_people:
-          type: number
-          format: float
-          nullable: true
-        season_rating:
-          type: string
-          enum: [3-season, 4-season]
-          nullable: true
-        freestanding:
-          type: boolean
-          nullable: true
-        has_footprint:
-          type: boolean
-          nullable: true
-        comfort_temp_c:
-          type: number
-          format: float
-          nullable: true
-        fill_type:
-          type: string
-          enum: [down, synthetic, foam, air, other]
-          nullable: true
-        r_value:
-          type: number
-          format: float
-          nullable: true
-        capacity_mah:
-          type: integer
-          nullable: true
-        charge_port:
-          type: string
-          enum: [usb-c, micro-usb, lightning, dc]
-          nullable: true
-        rechargeable:
           type: boolean
           nullable: true
         image_blob:
@@ -2111,73 +2788,6 @@ components:
         is_default:
           type: boolean
           nullable: true
-        dose_count:
-          type: integer
-          nullable: true
-        calories:
-          type: number
-          format: float
-          nullable: true
-        calories_per_serving:
-          type: number
-          format: float
-          nullable: true
-        requires_water:
-          type: boolean
-          nullable: true
-        season:
-          type: string
-          enum: [summer, winter, year_round]
-          nullable: true
-        layer:
-          type: string
-          enum: [base, mid, shell, accessory]
-          nullable: true
-        waterproof:
-          type: boolean
-          nullable: true
-        size:
-          type: string
-          nullable: true
-        color:
-          type: string
-          nullable: true
-        capacity_people:
-          type: number
-          format: float
-          nullable: true
-        season_rating:
-          type: string
-          enum: [3-season, 4-season]
-          nullable: true
-        freestanding:
-          type: boolean
-          nullable: true
-        has_footprint:
-          type: boolean
-          nullable: true
-        comfort_temp_c:
-          type: number
-          format: float
-          nullable: true
-        fill_type:
-          type: string
-          enum: [down, synthetic, foam, air, other]
-          nullable: true
-        r_value:
-          type: number
-          format: float
-          nullable: true
-        capacity_mah:
-          type: integer
-          nullable: true
-        charge_port:
-          type: string
-          enum: [usb-c, micro-usb, lightning, dc]
-          nullable: true
-        rechargeable:
-          type: boolean
-          nullable: true
         image_blob:
           type: string
           format: byte
@@ -2199,6 +2809,61 @@ components:
           additionalProperties: true
           nullable: true
           description: Dynamic per-item values keyed by item type field definitions
+
+    Label:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        color:
+          type: string
+          nullable: true
+          description: Hex color code for UI display (e.g., #FF5733)
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    LabelCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+          nullable: true
+          description: Hex color code for UI display (e.g., #FF5733)
+
+    LabelUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+          nullable: true
+          description: Hex color code for UI display (e.g., #FF5733)
+
+    ItemLabelAdd:
+      type: object
+      required:
+        - label_id
+      properties:
+        label_id:
+          type: string
+          format: uuid
 
     ItemSet:
       type: object
@@ -2319,6 +2984,7 @@ components:
       type: object
       required:
         - id
+        - person_id
         - name
         - trip_type
         - created_at
@@ -2335,40 +3001,12 @@ components:
         person_id:
           type: string
           format: uuid
-          nullable: true
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
-
-    PackCreate:
-      type: object
-      required:
-        - name
-        - trip_type
-      properties:
-        name:
-          type: string
-        trip_type:
-          type: string
-          enum: [day_hike, overnight, multi_day, thru_hike]
-        person_id:
-          type: string
-          format: uuid
-
-    PackUpdate:
-      type: object
-      properties:
-        name:
-          type: string
-        trip_type:
-          type: string
-          enum: [day_hike, overnight, multi_day, thru_hike]
-        person_id:
-          type: string
-          format: uuid
 
     PackItem:
       type: object
@@ -2403,6 +3041,9 @@ components:
         carry_status:
           type: string
           enum: [packed, worn]
+        notes:
+          type: string
+          nullable: true
 
     PackItemUpdate:
       type: object
@@ -2413,15 +3054,22 @@ components:
         carry_status:
           type: string
           enum: [packed, worn]
+        notes:
+          type: string
+          nullable: true
 
     PackItemWithDetails:
       type: object
       required:
+        - id
         - item_id
         - quantity
         - carry_status
         - item
       properties:
+        id:
+          type: string
+          format: uuid
         item_id:
           type: string
           format: uuid
@@ -2431,17 +3079,417 @@ components:
         carry_status:
           type: string
           enum: [packed, worn]
+        notes:
+          type: string
+          nullable: true
         item:
           $ref: '#/components/schemas/Item'
 
-    PackSetCreate:
+    Trip:
       type: object
       required:
-        - set_id
+        - id
+        - name
+        - trip_type
+        - created_at
+        - updated_at
       properties:
-        set_id:
+        id:
           type: string
           format: uuid
+        name:
+          type: string
+        trip_type:
+          type: string
+          enum: [day_hike, overnight, multi_day, thru_hike]
+        duration:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        trip_komoot_url:
+          type: string
+          nullable: true
+        trip_strava_url:
+          type: string
+          nullable: true
+        trip_wanderer_url:
+          type: string
+          nullable: true
+        total_distance_km:
+          type: number
+          format: float
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TripRoutePreview:
+      type: object
+      required:
+        - service
+      properties:
+        service:
+          type: string
+          enum: [komoot, strava, wanderer, unknown]
+        image_url:
+          type: string
+          nullable: true
+        title:
+          type: string
+          nullable: true
+
+    TripWithDetails:
+      allOf:
+        - $ref: '#/components/schemas/Trip'
+        - type: object
+          required:
+            - persons
+          properties:
+            persons:
+              type: array
+              items:
+                $ref: '#/components/schemas/TripPersonDetailsNested'
+              description: All persons participating in this trip with their packs and items
+
+    TripCreate:
+      type: object
+      required:
+        - name
+        - trip_type
+      properties:
+        name:
+          type: string
+        trip_type:
+          type: string
+          enum: [day_hike, overnight, multi_day, thru_hike]
+        duration:
+          type: string
+        notes:
+          type: string
+        trip_komoot_url:
+          type: string
+        trip_strava_url:
+          type: string
+        trip_wanderer_url:
+          type: string
+        total_distance_km:
+          type: number
+          format: float
+
+    TripUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        trip_type:
+          type: string
+          enum: [day_hike, overnight, multi_day, thru_hike]
+        duration:
+          type: string
+        notes:
+          type: string
+        trip_komoot_url:
+          type: string
+        trip_strava_url:
+          type: string
+        trip_wanderer_url:
+          type: string
+        total_distance_km:
+          type: number
+          format: float
+
+    TripPersonCreate:
+      type: object
+      required:
+        - person_id
+      properties:
+        person_id:
+          type: string
+          format: uuid
+
+    TripPersonWithDetails:
+      type: object
+      required:
+        - person_id
+        - person
+      properties:
+        person_id:
+          type: string
+          format: uuid
+        person:
+          $ref: '#/components/schemas/Person'
+
+    TripPersonDetailsNested:
+      type: object
+      required:
+        - trip_person_id
+        - person_id
+        - person
+        - packs
+        - items
+      properties:
+        trip_person_id:
+          type: string
+          format: uuid
+          description: ID of the trip_persons junction record
+        person_id:
+          type: string
+          format: uuid
+        person:
+          $ref: '#/components/schemas/Person'
+        packs:
+          type: array
+          items:
+            $ref: '#/components/schemas/TripPersonPackDetailsNested'
+          description: Packs assigned to this person for the trip
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TripPersonItemWithDetails'
+          description: Items directly assigned to this person (worn or not in packs)
+
+    TripPersonPackCreate:
+      type: object
+      required:
+        - name
+        - trip_type
+      properties:
+        name:
+          type: string
+        trip_type:
+          type: string
+          enum: [day_hike, overnight, multi_day, thru_hike]
+        notes:
+          type: string
+          nullable: true
+
+    TripPersonPackWithDetails:
+      type: object
+      required:
+        - id
+        - trip_person_id
+        - pack_id
+        - pack
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        trip_person_id:
+          type: string
+          format: uuid
+        pack_id:
+          type: string
+          format: uuid
+        pack:
+          $ref: '#/components/schemas/Pack'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    TripPersonPackDetailsNested:
+      allOf:
+        - $ref: '#/components/schemas/TripPersonPackWithDetails'
+        - type: object
+          required:
+            - items
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/PackItemWithDetails'
+              description: Items in this pack
+
+    TripPersonItemCreate:
+      type: object
+      required:
+        - item_id
+        - quantity
+        - carry_status
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        carry_status:
+          type: string
+          enum: [packed, worn]
+        notes:
+          type: string
+
+    TripPersonItemUpdate:
+      type: object
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+        carry_status:
+          type: string
+          enum: [packed, worn]
+        notes:
+          type: string
+
+    TripPersonItemWithDetails:
+      type: object
+      required:
+        - id
+        - trip_person_id
+        - item_id
+        - quantity
+        - carry_status
+        - item
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        trip_person_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        carry_status:
+          type: string
+          enum: [packed, worn]
+        notes:
+          type: string
+          nullable: true
+        item:
+          $ref: '#/components/schemas/Item'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PackingList:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    PackingListCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    PackingListUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    PackingListLabelAdd:
+      type: object
+      required:
+        - label_id
+      properties:
+        label_id:
+          type: string
+          format: uuid
+
+    BackupImportResult:
+      type: object
+      required:
+        - mode
+        - counts
+      properties:
+        mode:
+          type: string
+          enum: [replace, merge]
+        counts:
+          type: object
+          additionalProperties:
+            type: integer
+
+    BackupConfig:
+      type: object
+      required:
+        - enabled
+        - schedule
+        - retention_count
+      properties:
+        enabled:
+          type: boolean
+        schedule:
+          type: string
+        retention_count:
+          type: integer
+        last_run_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_status:
+          type: string
+          enum: [success, error]
+          nullable: true
+        last_error:
+          type: string
+          nullable: true
+
+    BackupConfigUpdate:
+      type: object
+      required:
+        - enabled
+        - schedule
+        - retention_count
+      properties:
+        enabled:
+          type: boolean
+        schedule:
+          type: string
+        retention_count:
+          type: integer
+          minimum: 1
+
+    BackupRunResult:
+      type: object
+      required:
+        - path
+      properties:
+        path:
+          type: string
 
   responses:
     BadRequest:

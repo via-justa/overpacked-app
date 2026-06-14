@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import PrimeVue from 'primevue/config'
 import ToastService from 'primevue/toastservice'
+import Tooltip from 'primevue/tooltip'
 import Aura from '@primeuix/themes/aura'
 import { VueQueryPlugin } from '@tanstack/vue-query'
 import './style.css'
@@ -8,6 +9,7 @@ import 'primeicons/primeicons.css'
 import App from './App.vue'
 import router from './router'
 import { setApiAuthFailureHandler } from './lib/api/client'
+import { safeRedirectPath } from './lib/navigation/redirect'
 import { queryClient } from './lib/query/client'
 import { pinia } from './stores'
 import { useAuthStore } from './stores/auth'
@@ -23,8 +25,10 @@ setApiAuthFailureHandler((reason) => {
 	authStore.setAuthNotice(reason)
 	authStore.clearSession()
 
-	const redirectPath = `${globalThis.location.pathname}${globalThis.location.search}${globalThis.location.hash}`
-	const canRedirectBack = redirectPath.startsWith('/') && !redirectPath.startsWith('/login')
+	const redirectPath = safeRedirectPath(
+		`${globalThis.location.pathname}${globalThis.location.search}${globalThis.location.hash}`,
+	)
+	const canRedirectBack = redirectPath !== null && !redirectPath.startsWith('/login')
 
 	void router.replace({
 		name: 'login',
@@ -42,6 +46,7 @@ app.use(PrimeVue, {
 	},
 })
 app.use(ToastService)
+app.directive('tooltip', Tooltip)
 
 app.use(VueQueryPlugin, {
 	queryClient,

@@ -8,8 +8,13 @@ type Store struct {
 	Manufacturers *ManufacturerStore
 	Items         *ItemStore
 	ItemTypes     *ItemTypeStore
+	Labels        *LabelStore
 	Sets          *SetStore
 	Packs         *PackStore
+	PackingLists  *PackingListStore
+	Trips         *TripStore
+	Search        *SearchStore
+	BackupConfig  *BackupConfigStore
 }
 
 func New(db *sql.DB) *Store {
@@ -19,7 +24,12 @@ func New(db *sql.DB) *Store {
 		Manufacturers: NewManufacturerStore(db),
 		Items:         NewItemStore(db),
 		ItemTypes:     NewItemTypeStore(db),
+		Labels:        NewLabelStore(db),
 		Sets:          NewSetStore(db),
 		Packs:         NewPackStore(db),
+		PackingLists:  NewPackingListStore(db),
+		Trips:         NewTripStore(db),
+		Search:        NewSearchStore(db),
+		BackupConfig:  NewBackupConfigStore(db),
 	}
 }

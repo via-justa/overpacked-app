@@ -23,11 +23,11 @@ func NewSettingsHandler(st *store.Store, appPassword string) *SettingsHandler {
 func (h *SettingsHandler) GetSettings(w http.ResponseWriter, r *http.Request) {
 	settings, err := h.store.Settings.Get(r.Context())
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "settings not found"})
+		writeError(w, http.StatusNotFound, "settings not found")
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get settings"})
+		writeError(w, http.StatusInternalServerError, "failed to get settings")
 		return
 	}
 
@@ -37,18 +37,18 @@ func (h *SettingsHandler) GetSettings(w http.ResponseWriter, r *http.Request) {
 func (h *SettingsHandler) UpdateSettings(w http.ResponseWriter, r *http.Request) {
 	var req api.SettingsUpdate
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	defer r.Body.Close()
 
 	settings, err := h.store.Settings.Get(r.Context())
 	if errors.Is(err, domain.ErrNotFound) {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "settings not found"})
+		writeError(w, http.StatusNotFound, "settings not found")
 		return
 	}
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get settings"})
+		writeError(w, http.StatusInternalServerError, "failed to get settings")
 		return
 	}
 
@@ -69,7 +69,7 @@ func (h *SettingsHandler) UpdateSettings(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := h.store.Settings.Update(r.Context(), settings); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to update settings"})
+		writeError(w, http.StatusInternalServerError, "failed to update settings")
 		return
 	}
 
@@ -79,18 +79,18 @@ func (h *SettingsHandler) UpdateSettings(w http.ResponseWriter, r *http.Request)
 func (h *SettingsHandler) StartFresh(w http.ResponseWriter, r *http.Request) {
 	var req api.StartFreshRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 	defer r.Body.Close()
 
 	if subtle.ConstantTimeCompare([]byte(req.Password), []byte(h.appPassword)) != 1 {
-		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "password confirmation failed"})
+		writeError(w, http.StatusUnauthorized, "password confirmation failed")
 		return
 	}
 
 	if err := h.store.Settings.StartFresh(r.Context()); err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to reset data"})
+		writeError(w, http.StatusInternalServerError, "failed to reset data")
 		return
 	}
 
