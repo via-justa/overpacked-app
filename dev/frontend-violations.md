@@ -48,19 +48,16 @@ Status key: `open` (needs fixing) · `fixed` · `wontfix` (with reason).
 
 | # | File:line | Type | Status | Note |
 |---|-----------|------|--------|------|
-| 1 | `src/components/display/AppItemTableRowContent.vue:58` | 3 | open | Hardcoded contrast colors `#ffffff` / `#111827`; should be theme tokens. |
-| 2 | `src/components/display/AppItemTableRowContent.vue:91` | 3 | open | Hardcoded `#6b7280` fallback for `label.color`. Dynamic `label.color` (user data) is fine; the literal fallback should be a token. |
-| 3 | `src/features/items/components/ItemLabel.vue:45` | 3 | open | Same `#6b7280` label-color fallback literal. |
-| 4 | `src/features/items/views/ItemsPage.vue:494`, `src/components/layout/AppTopNav.vue:46`, `src/components/actions/AppActionsMenu.vue:63` | 15 | open | The `innerWidth < 768` mobile check + resize wiring is duplicated; extract a shared `useIsMobile()` composable. |
-| 5 | `src/composables/useRowActionsMenu.ts` | 12 | open | Handles positioning/dismissal but no keyboard navigation; row-action menus may not be keyboard-operable. Fold arrow/Enter/Escape handling in here. |
-| 6 | custom Teleport'd menus (`AppActionsMenu.vue`, `ItemsCreateOptionsMenu.vue`) | 12 | open | Verify focus is trapped while open and **restored to the trigger** on close (PrimeVue `Dialog` does this; these custom menus must too). |
-| 7 | `src/features/trips/api/tripsApi.ts` (whole file) | 6 | fixed | Whole `apiClient` was cast to `any` (`type AnyClient = any`), disabling openapi-fetch path/param/body typing for the entire trip API surface. Root cause: trip paths were missing from the hand-maintained `ApiPaths` in `src/lib/api/client.ts`. Superseded by the codegen migration (#10): the typed generated client makes the cast unnecessary. |
-| 10 | all `src/features/*/types.ts` + `src/lib/api/client.ts` | 9 | fixed | The whole frontend duplicated the OpenAPI schema by hand: `client.ts` carried a hand-maintained `ApiPaths` (loose `Record<string, unknown>` bodies) and every feature `types.ts` re-declared server types, bridged with ~57 `data as X` casts. Migrated to real codegen: added `npm run gen:api` (openapi-typescript → `src/lib/api/schema.ts`), `createClient<paths>`, and re-exported server types from `components['schemas']` (UI-only/form/`Staged*` types kept). Removed the casts. The stricter types caught two real latent issues — `searchApi` passed `string[]` for an enum query param, and `addTripPersonPack` claimed a with-items response the endpoint doesn't return (now typed `TripPersonPackCreated`). Note: `make gen-api` → `npm run gen:api` now works. |
-| 8 | `src/features/trips/components/TripPlannerDetailsForm.vue` | (forms) | open | Planner details form binds raw inputs to the shared reactive `details` object instead of vee-validate + zod via `buildTypedSchema`. Numeric fields (`durationDays`, `distanceKm`) get no validation and invalid values are silently dropped in `tripPersistence.buildTripPayload`. Nuance: multi-step wizard over provide/inject state doesn't map onto a single `useForm`; at minimum add a zod schema over `details`. |
-| 9 | `TripPlannerItemCard.vue`, `TripPlannerItemPool.vue:97`, `TripPlannerPeoplePicker.vue:55,64` | 11 | fixed | Icon-only buttons had `title` (tooltip) but no `aria-label`, so screen readers couldn't announce them. Added `aria-label` to each, matching the repo convention (`ItemsTypeTable.vue`, `AppActionsMenu.vue`, etc.). |
+| _(none open)_ | | | | |
 
-### Pending triage
+### Inline `style="…"` triage — complete (2026-06-14)
 
-- **Inline `style="…"`** appears at ~15 sites. Many are legitimate dynamic bindings (menu/tooltip
-  positioning, user-chosen label colors). Triage each for type 3: a *computed dynamic* value is
-  fine, a *themeable literal* is a violation. Not yet individually triaged.
+All inline-style sites were triaged for type 3 (themeable literals). The literal label-color
+values — contrast text `#ffffff`/`#111827`, the `#6b7280` background fallback, and a stray
+`backgroundColor: 'white'` — were replaced with theme tokens (`text-ink`/`text-ink-inverse`
+classes, `var(--color-label-fallback)`, `var(--color-surface-base)`) across
+`AppItemTableRowContent.vue`, `ItemLabel.vue`, `SetsCollectionView.vue`, `SetsSection.vue`, and
+`AppActionsMenu.vue`. The remaining inline styles are legitimate: computed menu/tooltip
+positioning, user-chosen `label.color` values, and fixed translucent border overlays
+(`rgba(255,255,255,0.2)` / `rgba(0,0,0,0.1)`) that intentionally film over any label color
+regardless of theme.

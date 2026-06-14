@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import { iconRegistry } from '../../lib/icons'
+import { useIsMobile } from '../../composables/useIsMobile'
 import { AppIcon } from '../icons'
 import { actionOptions, type ActionOption, type ActionTarget } from './actionOptions'
 
@@ -18,6 +19,8 @@ const emit = defineEmits<{
 const menuRef = ref<HTMLElement | null>(null)
 const focusedIndex = ref(0)
 const actionsExpanded = ref(false)
+// The element that opened the menu; focus is restored to it on close.
+let triggerEl: HTMLElement | null = null
 
 const mobileNavigationOptions: ActionOption[] = [
   { value: 'trips' as ActionTarget, label: 'Trips', description: 'Plan and manage trips.', icon: `pi ${iconRegistry.navigation.trips}` },
@@ -27,25 +30,7 @@ const mobileNavigationOptions: ActionOption[] = [
   { value: 'gear' as ActionTarget, label: 'Gear', description: 'Manage your gear items.', icon: `pi ${iconRegistry.navigation.gear}` },
 ]
 
-const isMobile = ref(false)
-
-// Detect mobile viewport for responsive menu options
-const updateMobile = () => {
-  isMobile.value = globalThis.window?.innerWidth < 768
-}
-
-onMounted(() => {
-  if (globalThis.window) {
-    updateMobile()
-    globalThis.window.addEventListener('resize', updateMobile)
-  }
-})
-
-onUnmounted(() => {
-  if (globalThis.window) {
-    globalThis.window.removeEventListener('resize', updateMobile)
-  }
-})
+const isMobile = useIsMobile()
 
 // Compute visible menu options based on viewport and mobile expansion state
 const allOptions = computed(() => {
@@ -108,6 +93,12 @@ const handleKeyDown = (event: KeyboardEvent) => {
       event.preventDefault()
       emit('update:open', false)
       break
+    case 'Tab':
+      // Trap focus within the menu while it's open.
+      event.preventDefault()
+      focusedIndex.value = (focusedIndex.value + (event.shiftKey ? -1 : 1) + optionsLength) % optionsLength
+      focusButton(focusedIndex.value)
+      break
   }
 }
 
@@ -143,7 +134,16 @@ const getOptionValueFromPath = (path: string): string => {
 watch(() => props.open, async (isOpen) => {
   setBodyScrollLock(isOpen)
 
-  if (!isOpen) return
+  if (!isOpen) {
+    // Return focus to whatever opened the menu (the nav trigger button).
+    triggerEl?.focus()
+    triggerEl = null
+    return
+  }
+
+  // Remember the trigger so focus can be restored when the menu closes.
+  const active = globalThis.document?.activeElement
+  triggerEl = active instanceof HTMLElement ? active : null
 
   // Reset actions expanded state on mobile
   if (isMobile.value) {
@@ -193,7 +193,7 @@ onUnmounted(() => {
         top: `${position.top}px`,
         left: `${position.left}px`,
         maxHeight: `calc(100vh - ${position.top}px - 1rem)`,
-        backgroundColor: 'white',
+        backgroundColor: 'var(--color-surface-base)',
       }" @click.stop>
       <section
         class="border-line-subtle bg-surface-elevated w-full rounded-2xl border shadow-panel backdrop-blur overflow-hidden flex flex-col h-full">

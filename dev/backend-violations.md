@@ -46,4 +46,4 @@ Status key: `open` (needs fixing) · `fixed` · `wontfix` (with reason).
 
 | # | File:line | Type | Status | Note |
 |---|-----------|------|--------|------|
-| 1 | `internal/store/pack.go` (`AssignSet`, `ListSets`, `RemoveSet`); `internal/domain/pack.go` (`PackSet`) | dead code | fixed | Removed — queried a `pack_sets` table no migration creates, wired to no route. Also removed unused `domain.PackingListLabel`. |
+| _(none open)_ | | | | |

@@ -261,32 +261,33 @@ const getExpandedFieldDisplays = (item: Item): ExpandedFieldDisplay[] => {
 
   <!-- Teleport menu to body to escape overflow container -->
   <Teleport to="body">
-    <div v-if="activeMenuItem" data-element="items-row-actions-menu"
+    <div v-if="activeMenuItem" data-element="items-row-actions-menu" role="menu"
+      :aria-label="`Actions for ${activeMenuItem.name}`"
       class="border-line-subtle bg-surface-elevated fixed z-30 w-44 rounded-lg border py-1 shadow-sm" :style="{
         top: `${rowActionsMenuPosition.top}px`,
         left: `${rowActionsMenuPosition.left}px`,
       }">
-      <button type="button"
+      <button type="button" role="menuitem"
         class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
         @click="emit('row:edit', activeMenuItem); closeRowActions()">
         Edit
       </button>
-      <button type="button"
+      <button type="button" role="menuitem"
         class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
         @click="emit('row:duplicate', activeMenuItem); closeRowActions()">
         Duplicate
       </button>
-      <button type="button"
+      <button type="button" role="menuitem"
         class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
         @click="emit('row:toggleActive', activeMenuItem); closeRowActions()">
         {{ activeMenuItem.is_active ? 'Deactivate' : 'Activate' }}
       </button>
-      <button type="button"
+      <button type="button" role="menuitem"
         class="text-copy-subtle hover:text-copy hover:bg-surface-soft block w-full px-3 py-2 text-left text-xs font-medium"
         @click="emit('row:toggleDefault', activeMenuItem); closeRowActions()">
         {{ activeMenuItem.is_default ? 'Unset default' : 'Set default' }}
       </button>
-      <button type="button"
+      <button type="button" role="menuitem"
         class="block w-full px-3 py-2 text-left text-xs font-medium hover:bg-[color-mix(in_srgb,var(--color-danger-500)_22%,var(--color-surface-elevated))]"
         :style="{ color: 'var(--color-danger-500)' }" @click="emit('row:delete', activeMenuItem); closeRowActions()">
         Delete

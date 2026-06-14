@@ -44,7 +44,11 @@ Analysis runs in **CI**, not via IDE/automatic analysis: `.github/workflows/sona
 
 ### `sonar-project.properties` conventions
 - `sonar.exclusions` — generated + non-source files: `frontend/src/lib/api/schema.ts`,
-  `backend/internal/api/api.gen.go`, `dev/test-data.sql`, `.claude/**`.
+  `backend/internal/api/api.gen.go`, `**/*.sql`, `.claude/**`.
+  - `**/*.sql` excludes the PostgreSQL migrations + seed data: SonarQube's PL/SQL analyzer is
+    **Oracle**-dialect, so on these files it warns "Data Dictionary not configured" (rules
+    S3641/S3921/S3618/S3651 can't run) and raises irrelevant rules. The dialect doesn't apply —
+    don't analyze SQL here rather than trying to configure a data dictionary.
 - `sonar.cpd.exclusions=**/*_test.go` — table-driven test setup is legitimately repetitive.
 - Coverage: `sonar.go.coverage.reportPaths=backend/coverage.out` (produced by the CI test step /
   `make test-backend-container`). **Scope** coverage with

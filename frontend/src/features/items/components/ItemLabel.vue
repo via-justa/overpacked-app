@@ -42,7 +42,7 @@ const getContrastColor = (color?: string | null): 'light' | 'dark' => {
 }
 
 const backgroundColor = computed(() => {
-  return props.label.color ?? '#6b7280'
+  return props.label.color ?? 'var(--color-label-fallback)'
 })
 
 const textColorClass = computed(() => {

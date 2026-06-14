@@ -35,23 +35,11 @@ The **code and SQL are the source of truth.** These are places where documentati
 `AGENTS.md`, historically) or an intended rule differs from what the code actually does. Keep them
 in mind and reconcile when you touch the area.
 
-- **AGENTS.md vs code (general):** `AGENTS.md` had drifted from the code and was reconciled
-  (2026-06). Continue to treat the code/SQL as truth; when you change behavior, update both the
-  code and the relevant skill/doc together.
 - **Packs — API rule vs DB schema:** the API enforces the trip → person → pack hierarchy (no
   standalone pack routes; only `AddTripPersonPack`), but the *database* is looser:
   `packs.person_id` is nullable (`ON DELETE SET NULL`) and there's an `is_template` flag. Don't
   rely on "a pack always has a person" as a DB invariant — the hierarchy is enforced at the
   API/handler layer. (`backend/internal/store/pack.go`, schema)
-- **Sets — `pack_sets` dead code:** `PackStore.AssignSet`/`ListSets`/`RemoveSet` and `domain.PackSet`
-  query a `pack_sets` table that no migration creates and no route wires up — incomplete/dead code
-  that fails at runtime. Don't build on it without adding the migration. Tracked in detail in
-  `dev/backend-violations.md` (#1).
-- **Frontend API types not fully generated:** the frontend has `openapi-typescript` /
-  `openapi-fetch` tooling and a `make gen-api` target, but many feature types are hand-maintained
-  (e.g. `frontend/src/features/persons/types.ts`), and `apiClient` types some request bodies as
-  `Record<string, unknown>`. Don't assume the client is fully generated — check the feature you
-  touch and update its hand-written type if needed.
 
 ## Logged violations (running)
 

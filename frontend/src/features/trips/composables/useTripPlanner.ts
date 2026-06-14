@@ -6,6 +6,7 @@ import { listPackingLists, listPackingListLabels } from '../../lists/api/listsAp
 import { listSetItems } from '../../sets/api/setsApi'
 import { getTrip } from '../api/tripsApi'
 import { getTripRouteService, getTripRouteUrl, intervalToDays } from '../utils'
+import { validatePlannerDetails } from '../schema'
 import { getPersonRecommendedMaxWeightGrams } from '../../persons/utils'
 import type { Item } from '../../items/types'
 import type { Person } from '../../persons/types'
@@ -230,8 +231,12 @@ function createTripPlannerContext(): TripPlannerContext {
         return { itemCount, totalWeightGrams, totalValue }
     })
 
+    // Block progression when the numeric detail fields are invalid, so bad values
+    // can't be silently dropped when the trip payload is built.
+    const detailsValid = computed(() => Object.keys(validatePlannerDetails(details)).length === 0)
+
     const canProceedToStep2 = computed(
-        () => details.name.trim().length > 0 && persons.value.length > 0,
+        () => details.name.trim().length > 0 && persons.value.length > 0 && detailsValid.value,
     )
 
     const canSave = computed(() => canProceedToStep2.value)

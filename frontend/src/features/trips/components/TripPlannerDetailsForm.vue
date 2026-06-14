@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import AppSelect from '../../../components/forms/AppSelect.vue'
 import { getRoutePreview } from '../api/tripsApi'
 import { cleanRouteTitle, detectRouteService, ROUTE_SERVICE_OPTIONS, TRIP_TYPE_OPTIONS } from '../utils'
 import { useTripPlanner } from '../composables/useTripPlanner'
+import { validatePlannerDetails } from '../schema'
 
 const planner = useTripPlanner()
 const details = planner.details
+
+// Surface validation for the numeric fields so invalid values aren't silently
+// dropped when the trip payload is built.
+const fieldErrors = computed(() => validatePlannerDetails(details))
 
 // Day hikes / overnights have an implied duration, so set it when the type changes.
 watch(
@@ -116,14 +121,22 @@ const autofillNameFromRoute = async (): Promise<void> => {
             <label v-if="details.tripType !== 'day_hike' && details.tripType !== 'overnight'" class="grid gap-1">
                 <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Duration (days)</span>
                 <input v-model="details.durationDays" class="input-shell" type="number" min="1" step="1"
-                    placeholder="3" />
+                    placeholder="3" :aria-invalid="Boolean(fieldErrors.durationDays)"
+                    :aria-describedby="fieldErrors.durationDays ? 'trip-duration-error' : undefined" />
+                <p v-if="fieldErrors.durationDays" id="trip-duration-error" class="text-danger-500 text-xs font-medium">
+                    {{ fieldErrors.durationDays }}
+                </p>
             </label>
-            
+
             <!-- Distance (km) -->
             <label class="grid gap-1">
                 <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Distance (km)</span>
                 <input v-model="details.distanceKm" class="input-shell" type="number" min="0" step="0.1"
-                    placeholder="42.5" />
+                    placeholder="42.5" :aria-invalid="Boolean(fieldErrors.distanceKm)"
+                    :aria-describedby="fieldErrors.distanceKm ? 'trip-distance-error' : undefined" />
+                <p v-if="fieldErrors.distanceKm" id="trip-distance-error" class="text-danger-500 text-xs font-medium">
+                    {{ fieldErrors.distanceKm }}
+                </p>
             </label>
         </div>
     </div>

@@ -152,7 +152,7 @@ const getContrastColor = (color?: string | null): 'light' | 'dark' => {
 
 const getLabelTextColor = (color?: string | null): string => {
   const contrast = getContrastColor(color)
-  return contrast === 'light' ? '#ffffff' : '#111827'
+  return contrast === 'light' ? 'text-ink-inverse' : 'text-ink'
 }
 
 const getLabelBorderColor = (color?: string | null): string => {
@@ -207,9 +207,9 @@ const getLabelBorderColor = (color?: string | null): string => {
 
           <div v-if="getSetLabels(set.id).length > 0" class="mt-2 flex flex-wrap gap-1">
             <span v-for="label in getSetLabels(set.id)" :key="label.id"
-              class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium" :style="{
-                backgroundColor: label.color ?? '#6b7280',
-                color: getLabelTextColor(label.color),
+              class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+              :class="getLabelTextColor(label.color)" :style="{
+                backgroundColor: label.color ?? 'var(--color-label-fallback)',
                 border: `1px solid ${getLabelBorderColor(label.color)}`
               }">
               {{ label.name }}

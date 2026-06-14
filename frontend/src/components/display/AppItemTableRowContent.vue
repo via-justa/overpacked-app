@@ -55,7 +55,7 @@ const getContrastColor = (color?: string | null): 'light' | 'dark' => {
 
 const getLabelTextColor = (color?: string | null): string => {
   const contrast = getContrastColor(color)
-  return contrast === 'light' ? '#ffffff' : '#111827'
+  return contrast === 'light' ? 'text-ink-inverse' : 'text-ink'
 }
 
 const getLabelBorderColor = (color?: string | null): string => {
@@ -88,9 +88,9 @@ const getLabelBorderColor = (color?: string | null): string => {
           class="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 w-max max-w-xs -translate-x-1/2 rounded-lg border border-line-subtle bg-surface-elevated px-3 py-2 opacity-0 shadow-panel transition-opacity group-hover/labels:opacity-100">
           <div class="flex flex-wrap gap-1.5">
             <span v-for="label in itemLabels" :key="label.id"
-              class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium" :style="{
-                backgroundColor: label.color ?? '#6b7280',
-                color: getLabelTextColor(label.color),
+              class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
+              :class="getLabelTextColor(label.color)" :style="{
+                backgroundColor: label.color ?? 'var(--color-label-fallback)',
                 border: `1px solid ${getLabelBorderColor(label.color)}`
               }">
               {{ label.name }}

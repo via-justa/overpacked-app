@@ -19,6 +19,9 @@
   --color-copy-subtle: rgb(168 162 158);
   --color-ink-inverse: rgb(255 255 255);
 
+  /* Neutral background for a label/chip that has no user-chosen color. */
+  --color-label-fallback: rgb(107 114 128);
+
   --color-brand-50: rgb(236 253 245);
   --color-brand-200: rgb(167 243 208);
   --color-brand-500: rgb(16 185 129);

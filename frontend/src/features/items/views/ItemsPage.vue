@@ -19,6 +19,7 @@ import { safeHttpUrl } from '../../../lib/navigation/url'
 import { listItems, listItemTypeFields, listItemTypes, listManufacturers, removeItem, updateItem, createItem, listItemLabels, listLabels, createLabel, addItemLabel, removeItemLabel } from '../api/itemsApi'
 import { useMutationWithToast } from '../../../composables/useMutationWithToast'
 import { useInlineMutation } from '../../../composables/useInlineMutation'
+import { useIsMobile } from '../../../composables/useIsMobile'
 import { useSettings } from '../../../composables/useSettings'
 import {
   gramsToInput,
@@ -483,12 +484,8 @@ const editingItemId = ref<string | null>(null)
 const editValues = ref<ItemFormValues>(emptyFormValues())
 const isFormDialogOpen = ref(false)
 const itemsViewMode = ref<ItemsViewMode>(readStoredItemsViewMode())
-const isMobileViewport = ref(false)
-
-// Detect mobile viewport: table view and the cards/table selector are desktop/tablet only
-const updateIsMobileViewport = () => {
-  isMobileViewport.value = (globalThis.window?.innerWidth ?? 1024) < 768
-}
+// Table view and the cards/table selector are desktop/tablet only
+const isMobileViewport = useIsMobile()
 
 // On mobile, only the cards view is available regardless of stored preference
 const effectiveViewMode = computed<ItemsViewMode>(() => (isMobileViewport.value ? 'cards' : itemsViewMode.value))
@@ -1168,21 +1165,12 @@ watch(isFormDialogOpen, (value) => {
 })
 
 onMounted(() => {
-  if (globalThis.window) {
-    updateIsMobileViewport()
-    globalThis.window.addEventListener('resize', updateIsMobileViewport)
-  }
-
   if (globalThis.document) {
     globalThis.document.addEventListener('click', onDocumentClickSettings)
   }
 })
 
 onBeforeUnmount(() => {
-  if (globalThis.window) {
-    globalThis.window.removeEventListener('resize', updateIsMobileViewport)
-  }
-
   if (globalThis.document) {
     globalThis.document.removeEventListener('click', onDocumentClickSettings)
   }

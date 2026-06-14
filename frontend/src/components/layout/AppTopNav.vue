@@ -5,6 +5,7 @@ import AppActionsMenu from '../actions/AppActionsMenu.vue'
 import type { ActionTarget } from '../actions/actionOptions'
 import { useActionRouter } from '../actions/useActionRouter'
 import { useActionRail } from '../../composables/useActionRail'
+import { useIsMobile } from '../../composables/useIsMobile'
 import AppGlobalSearch from './AppGlobalSearch.vue'
 import { AppIcon } from '../icons'
 import type { IconCategory } from '../../lib/icons'
@@ -31,15 +32,14 @@ const onLogout = () => {
 
 const { pinned, togglePinned } = useActionRail()
 const { selectAction } = useActionRouter(onLogout)
+const isMobile = useIsMobile()
 
 const isActionsMenuOpen = ref(false)
 const actionsMenuPosition = ref<{ top: number; left: number }>({ top: 84, left: 16 })
 
 // Desktop pins/unpins the action rail; mobile opens the overlay actions menu.
 const onMenuButtonClick = (event: Event) => {
-  const isMobile = (globalThis.window?.innerWidth ?? 1024) < 768
-
-  if (isMobile) {
+  if (isMobile.value) {
     openActionsMenu(event)
     return
   }
@@ -56,14 +56,11 @@ const openActionsMenu = (event: Event) => {
   }
 
   const rect = trigger.getBoundingClientRect()
-  const viewportWidth = globalThis.window?.innerWidth ?? 1024
 
   // On mobile, center the menu; on desktop, align to button
-  const isMobile = viewportWidth < 768
-
   actionsMenuPosition.value = {
     top: rect.bottom + 8,
-    left: isMobile ? 16 : Math.max(16, rect.left),
+    left: isMobile.value ? 16 : Math.max(16, rect.left),
   }
 
   isActionsMenuOpen.value = true
