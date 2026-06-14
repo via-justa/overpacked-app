@@ -6,6 +6,7 @@ on:
       - main
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -44,16 +45,16 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      # Installing frontend dependencies makes tsconfig.app.json's
-      # "extends": "@vue/tsconfig/tsconfig.dom.json" resolvable at analysis time.
-      # Without it SonarQube logs "referenced/extended tsconfig.json was not
-      # found" and runs a reduced TypeScript analysis.
-      - name: Install frontend dependencies
+      # Run the frontend suite with coverage so the scanner has an lcov report to
+      # ingest (sonar.javascript.lcov.reportPaths in sonar-project.properties),
+      # mirroring how the Go step produces coverage.out below. Installing deps also
+      # makes tsconfig.app.json's "extends": "@vue/tsconfig/tsconfig.dom.json"
+      # resolvable, so SonarQube runs full TypeScript analysis.
+      - name: Run frontend tests with coverage
         working-directory: frontend
-        # --ignore-scripts: analysis only needs node_modules present (so the
-        # tsconfig "extends" resolves); we never build here, so skip dependency
-        # lifecycle scripts to avoid running third-party code in CI.
-        run: npm ci --ignore-scripts
+        run: |
+          npm ci
+          npm run coverage
 
       - name: Set up Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5

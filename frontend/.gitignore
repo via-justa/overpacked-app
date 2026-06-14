@@ -13,6 +13,12 @@ dist-ssr
 .vite
 *.local
 
+# Test / coverage / e2e artifacts
+coverage
+playwright-report
+test-results
+.playwright
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

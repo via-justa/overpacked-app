@@ -41,6 +41,12 @@ Detail and the correct pattern for each are in the `vue-development` skill (SKIL
 14. **Direct `localStorage` access** instead of the `lib/storage/localStorage.ts` helpers.
 15. **Duplicated viewport/breakpoint logic** instead of a shared composable, or a threshold other
     than 768px (Tailwind `md`).
+16. **New/changed logic shipped without tests** — pure utils, composables, stores, api/persistence,
+    or behavioral components (conditional rendering, emits, derived display, forms) added or
+    modified without a co-located `*.test.ts`. Also covers tests that stub `apiClient` instead of
+    mocking the HTTP boundary with MSW, use the app's `queryClient` instead of
+    `makeTestQueryClient`, or assert internal state instead of role/label output.
+    `(gate: frontend-tests.yml · SonarQube new-code coverage ≥80%)`
 
 ## Logged violations
 

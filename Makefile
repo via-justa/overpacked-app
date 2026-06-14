@@ -1,4 +1,4 @@
-.PHONY: help install install-backend install-frontend up down logs backend frontend build build-backend build-frontend test test-backend test-backend-container test-frontend check-api-gen check-api-gen-go gen-api gen-api-go clean-frontend seed test-data
+.PHONY: help install install-backend install-frontend up down logs backend frontend build build-backend build-frontend test test-backend test-backend-container test-frontend coverage-frontend e2e check-api-gen check-api-gen-go gen-api gen-api-go clean-frontend seed test-data
 
 COMPOSE ?= docker compose -f dev/docker-compose.yml
 
@@ -17,7 +17,9 @@ help:
 	@echo "  make test-backend      		Run backend Go tests (incl. API-gen drift check)"
 	@echo "  make check-api-gen-go  		Fail if backend Go API types are stale vs the spec"
 	@echo "  make test-backend-container 	Run backend Go tests (incl. full-stack E2E) against containerized Postgres with coverage"
-	@echo "  make test-frontend     		Run frontend type-check (incl. API-gen drift check)"
+	@echo "  make test-frontend     		Run frontend type-check, unit tests + lints (incl. API-gen drift check)"
+	@echo "  make coverage-frontend 		Run frontend tests with coverage (lcov for SonarQube)"
+	@echo "  make e2e               		Run Playwright critical-path E2E (local dev stack)"
 	@echo "  make check-api-gen     		Fail if frontend OpenAPI types are stale vs the spec"
 	@echo "  make gen-api-go        		Regenerate Go API types from OpenAPI spec"
 	@echo "  make gen-api           		Regenerate frontend OpenAPI types"
@@ -86,7 +88,7 @@ test-backend-container:
 		go test -p 1 -covermode=atomic -coverpkg=./... -coverprofile=coverage.out ./...
 
 test-frontend: check-api-gen
-	cd frontend && npx vue-tsc -b && npm run lint:theme && npm run lint:icons
+	cd frontend && npx vue-tsc -b && npm run test && npm run lint:theme && npm run lint:icons
 
 # Fails if the generated OpenAPI types drift from dev/openapi.yaml.
 # Regenerates in place, then fails if the file is modified or not committed.
@@ -110,6 +112,20 @@ seed:
 
 test-data:
 	$(COMPOSE) run --rm test-data
+
+# Run the frontend unit/component suite with coverage. Writes frontend/coverage/lcov.info,
+# which the SonarQube workflow ingests (sonar.javascript.lcov.reportPaths).
+coverage-frontend:
+	cd frontend && npm run coverage
+
+# Playwright critical-path smoke against the local dev stack (vite dev proxies /api on :5173).
+# Brings up db+backend+frontend, loads dev test data, installs the browser, then runs the spec.
+# CI runs the same spec against the deployment stack on pre-release (.github/workflows/e2e.yml).
+e2e:
+	$(COMPOSE) up -d db backend frontend
+	$(COMPOSE) run --rm test-data
+	cd frontend && npx playwright install chromium
+	cd frontend && E2E_BASE_URL=$${E2E_BASE_URL:-http://localhost:5173} E2E_USER=$${APP_USERNAME:-admin} E2E_PASS=$${APP_PASSWORD:-pw123} npm run e2e
 
 clean-frontend:
 	rm -rf frontend/dist && rm -rf frontend/node_modules

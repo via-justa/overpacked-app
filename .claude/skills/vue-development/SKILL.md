@@ -68,6 +68,32 @@ When you touch markup that uses an icon or a color, check it against these befor
 - **Performance-aware.** Use `computed`/`watch` intentionally; avoid broad or deep watchers
   without a reason; lazy-load feature routes.
 
+## Testing (required)
+
+Frontend tests are a **blocking gate**: `frontend-tests.yml` runs `vue-tsc` + the Vitest suite
+on every PR, and coverage (`vitest run --coverage` → `frontend/coverage/lcov.info`) feeds the
+SonarQube new-code quality gate (≥80%). The stack is Vitest + happy-dom + `@testing-library/vue`
++ **MSW**, with Playwright for a thin pre-release E2E layer. Treat tests as part of the change,
+not a follow-up.
+
+- **New or changed logic ships with tests.** Cover pure utils, composables, stores, and the
+  api/persistence layer; give components with real behavior (conditional rendering, emits,
+  derived display, forms) a Testing Library test. Pure-markup components don't need one.
+- **Use the shared harness in `src/test/`** — `renderWithProviders` (PrimeVue + Pinia + router +
+  QueryClient), `withSetup` (composables that call `useQuery`/`provide`), typed `fixtures/`, and
+  the MSW server/handlers. **Mock at the HTTP boundary with MSW** (handlers typed from the
+  generated OpenAPI schema); never stub `apiClient` directly. Endpoints return **bare bodies**
+  (no `{ data }` envelope) — match that in handlers. Use the test QueryClient from
+  `makeTestQueryClient` (retry off, gcTime 0), never the app's.
+- **Query by role/label, not internal state.** The app leans on ARIA, so prefer
+  `getByRole`/`getByLabelText`; assert observable output and emitted events.
+- **Co-locate** unit/component tests as `*.test.ts` next to the source. Playwright E2E lives in
+  `frontend/e2e/` as `*.spec.ts` (run on pre-release, not per-PR).
+- **Run them:** `npm run test` / `npm run coverage` / `npm run type-check`, or `make test-frontend`.
+
+See `references/testing-and-migration.md` for the per-layer patterns, the shared infrastructure,
+fixtures, coverage scoping, and worked examples — read it before writing or reviewing tests.
+
 ## Routing table — where to find detailed guidance
 
 Read the matching reference file when your task touches that area. Don't preload them all.
@@ -80,7 +106,7 @@ Read the matching reference file when your task touches that area. Don't preload
 | Tailwind theme tokens, PrimeVue, the palette rule, AppIcon/iconRegistry, stylelint | `references/styling-and-icons.md` |
 | Rendering performance, `computed`/`watch` discipline, code splitting, a11y    | `references/performance-and-accessibility.md` |
 | Shared UI patterns/gotchas: dialogs, Teleport for fixed UI, row-action menus, localStorage, unit display, responsive layout | `references/ui-patterns.md` |
-| Adding tests, or migrating Options API / Vue 2 code to Composition API        | `references/testing-and-migration.md` |
+| Writing/reviewing tests (Vitest + MSW + Testing Library, the shared harness, coverage), or migrating Options API / Vue 2 code | `references/testing-and-migration.md` |
 
 ## Validating frontend code
 
@@ -94,8 +120,10 @@ bash scripts/check.sh          # auto-detects the frontend/ directory
 It runs `vue-tsc` (type check), `stylelint`, and the two custom lint scripts (`lint:theme`,
 `lint:icons`). Each step is skipped gracefully if the tool or directory isn't present. Run it
 after writing or editing frontend code, and when reviewing, so feedback is grounded in what
-actually fails. Note: this repo has **no unit/e2e test runner installed** (no Vitest, no
-Playwright) — see `references/testing-and-migration.md` before assuming you can run tests.
+actually fails. Also run the **Vitest suite**: `npm run test` (or `npm run coverage`) and
+`npm run type-check` — `make test-frontend` wraps type-check + tests + lints. Tests are a
+blocking PR gate (`frontend-tests.yml`) and coverage feeds SonarQube, so run them before
+finishing. See **Testing (required)** above and `references/testing-and-migration.md`.
 
 ## When reviewing Vue code
 
