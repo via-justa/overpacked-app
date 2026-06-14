@@ -135,6 +135,13 @@ update the OpenAPI spec, regenerate, add the handler method, and add the delegat
 - DB connection via `db.Connect(url)`; schema changes are goose migrations under
   `internal/migrations/sql`, run with `migrations.Run(ctx, db, "up", nil)`.
 
+## Go toolchain pin
+
+The `go` directive in `backend/go.mod` (e.g. `go 1.26.4`) must match the `golang:<ver>-alpine` tag
+in **both** `backend/Dockerfile` and `dev/docker-compose.yml`. The dev container runs with
+`GOTOOLCHAIN=local`, so a `go.mod` Go version newer than the image's toolchain won't auto-download —
+the container just fails to build/run. Bump all three together.
+
 ## Test conventions
 
 - Tests are white-box (same `package handlers`, etc.), in `_test.go` files next to the code.

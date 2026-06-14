@@ -146,7 +146,12 @@ func (h *PersonsHandler) UpdatePerson(w http.ResponseWriter, r *http.Request, pe
 func (h *PersonsHandler) DeletePerson(w http.ResponseWriter, r *http.Request, personId types.UUID) {
 	ctx := r.Context()
 
-	if err := h.store.Persons.Delete(ctx, uuid.UUID(personId)); err != nil {
+	err := h.store.Persons.Delete(ctx, uuid.UUID(personId))
+	if errors.Is(err, domain.ErrNotFound) {
+		writeError(w, http.StatusNotFound, "person not found")
+		return
+	}
+	if err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to delete person")
 		return
 	}

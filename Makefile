@@ -1,4 +1,4 @@
-.PHONY: help install install-backend install-frontend up down logs backend frontend build build-backend build-frontend test test-backend test-backend-container test-api-curl-compose test-frontend check-api-gen check-api-gen-go gen-api gen-api-go clean-frontend seed test-data
+.PHONY: help install install-backend install-frontend up down logs backend frontend build build-backend build-frontend test test-backend test-backend-container test-frontend check-api-gen check-api-gen-go gen-api gen-api-go clean-frontend seed test-data
 
 COMPOSE ?= docker compose -f dev/docker-compose.yml
 
@@ -16,8 +16,7 @@ help:
 	@echo "  make test              		Run backend and frontend checks"
 	@echo "  make test-backend      		Run backend Go tests (incl. API-gen drift check)"
 	@echo "  make check-api-gen-go  		Fail if backend Go API types are stale vs the spec"
-	@echo "  make test-backend-container 	Run backend Go tests against containerized Postgres"
-	@echo "  make test-api-curl-compose 	Run full endpoint curl test against docker-compose backend"
+	@echo "  make test-backend-container 	Run backend Go tests (incl. full-stack E2E) against containerized Postgres with coverage"
 	@echo "  make test-frontend     		Run frontend type-check (incl. API-gen drift check)"
 	@echo "  make check-api-gen     		Fail if frontend OpenAPI types are stale vs the spec"
 	@echo "  make gen-api-go        		Regenerate Go API types from OpenAPI spec"
@@ -80,10 +79,11 @@ test-backend-container:
 	$(COMPOSE) up -d db
 	# -p 1 serializes package test binaries: integration tests across packages share one
 	# database, so running them concurrently lets one package's TRUNCATE/migrations clobber another's.
-	$(COMPOSE) run --rm -e RUN_CONTAINERIZED_TESTS=true -e JWT_SECRET=test-secret backend go test -p 1 ./...
-
-test-api-curl-compose:
-	./dev/scripts/run_full_api_curl_test_with_compose.sh
+	# -coverpkg=./... credits store/backup/app code exercised by tests in other packages.
+	# The profile is written to /workspace/backend/coverage.out, which the compose
+	# ../:/workspace bind mount surfaces as host backend/coverage.out (gitignored).
+	$(COMPOSE) run --rm -e RUN_CONTAINERIZED_TESTS=true -e JWT_SECRET=test-secret backend \
+		go test -p 1 -covermode=atomic -coverpkg=./... -coverprofile=coverage.out ./...
 
 test-frontend: check-api-gen
 	cd frontend && npx vue-tsc -b && npm run lint:theme && npm run lint:icons

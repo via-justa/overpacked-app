@@ -79,5 +79,26 @@ export const useAuthStore = defineStore('auth', () => {
 })
 ```
 
-Persisted values (e.g. auth tokens) use namespaced localStorage keys like
-`overpacked-app.auth.accessToken`. Do not put component-local UI state or server data in Pinia.
+Genuinely-persisted UI preferences use namespaced localStorage keys like
+`overpacked-app.ui.<x>`. Do not put component-local UI state or server data in Pinia.
+
+### Auth tokens (security)
+
+Tokens are **not** persisted to `localStorage`. The access token is held in memory only (a
+non-persisted ref); the refresh token lives in an `HttpOnly` cookie set by the backend and is
+invisible to JS. On load the auth store re-establishes the session by calling `/auth/refresh`
+**silently** (no "session expired" notice when there simply is no cookie — that's a first-time
+visitor). Auth API calls (`lib/api/auth.ts`) use `credentials: 'include'` and send **no** token in
+the request body; the access token goes out as a `Bearer` header on normal API calls. The store
+clears any legacy `overpacked-app.auth.*` keys on startup.
+
+### URL safety guards
+
+Treat server- and user-supplied URLs as untrusted in the client:
+- `safeRedirectPath` (`lib/navigation/redirect.ts`) gates post-login redirects — only same-origin
+  paths, rejecting protocol-relative `//host` / `/\host` (open-redirect). Used in `LoginView`, the
+  router guard, and `main.ts`.
+- `safeHttpUrl` (`lib/navigation/url.ts`) returns the URL only if it's `http(s)`, else `undefined`;
+  apply it at **every** `:href` bound from server data (item `source_url`, manufacturer website,
+  trip route URL) so a stored `javascript:`/`data:` URL never renders as a clickable link. The
+  backend validates schemes too, but this also covers imported/CSV data.

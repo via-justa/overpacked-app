@@ -19,7 +19,9 @@ make frontend         # frontend only
 
 ```bash
 make test             # backend + frontend checks
-make test-backend     # go test ./...
+make test-backend     # go test ./... (unit; integration tests self-skip without a DB)
+make test-backend-container  # full Go suite incl. the full-stack E2E, against a containerized
+                             # Postgres, with a coverage profile (backend/coverage.out)
 make test-frontend    # vue-tsc + theme/icon lint
 make build            # build backend + frontend
 make gen-api-go       # regenerate Go API types from dev/openapi.yaml

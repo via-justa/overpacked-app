@@ -43,21 +43,11 @@ func New(ctx context.Context, cfg *config.Config) (*App, error) {
 		_ = database.Close()
 		return nil, fmt.Errorf("init auth service: %w", err)
 	}
-	authHandler := handlers.NewAuthHandler(authService)
 	st := store.New(database)
 
 	backupService := backup.NewService(database, cfg.BackupBaseDir)
 	scheduler := backup.NewScheduler(backupService, st.BackupConfig)
 	backupHandler := handlers.NewBackupHandler(backupService, st, scheduler, cfg.AppPassword)
-
-	router := chi.NewRouter()
-	router.Use(chimiddleware.Recoverer)
-	router.Use(chimiddleware.RequestID)
-	router.Use(chimiddleware.Logger)
-	router.Use(securityHeaders)
-	router.Use(limitBody)
-	router.Use(requireAuth(authService))
-	router.Mount("/", setupRoutes(authHandler, st, cfg.AppPassword, backupHandler))
 
 	app := &App{
 		cfg:       cfg,
@@ -66,7 +56,7 @@ func New(ctx context.Context, cfg *config.Config) (*App, error) {
 		scheduler: scheduler,
 		server: &http.Server{
 			Addr:              cfg.ServerAddr,
-			Handler:           router,
+			Handler:           NewHTTPHandler(authService, st, cfg.AppPassword, backupHandler),
 			ReadHeaderTimeout: 10 * time.Second,
 			ReadTimeout:       15 * time.Second,
 			WriteTimeout:      15 * time.Second,
@@ -75,6 +65,22 @@ func New(ctx context.Context, cfg *config.Config) (*App, error) {
 	}
 
 	return app, nil
+}
+
+// NewHTTPHandler builds the full API handler — the production middleware chain
+// (panic recovery, request IDs, logging, security headers, body limits, bearer
+// auth) plus the mounted routes. It is used by New for the running server and by
+// end-to-end tests that drive the assembled stack via httptest.
+func NewHTTPHandler(authService *auth.Service, st *store.Store, appPassword string, backupHandler *handlers.BackupHandler) http.Handler {
+	router := chi.NewRouter()
+	router.Use(chimiddleware.Recoverer)
+	router.Use(chimiddleware.RequestID)
+	router.Use(chimiddleware.Logger)
+	router.Use(securityHeaders)
+	router.Use(limitBody)
+	router.Use(requireAuth(authService))
+	router.Mount("/", setupRoutes(handlers.NewAuthHandler(authService), st, appPassword, backupHandler))
+	return router
 }
 
 func (a *App) Start() error {

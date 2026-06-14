@@ -58,3 +58,15 @@ The repo draws a deliberate line between routed pages and the components they re
 - Build on the generated OpenAPI types and the feature `types.ts`; don't redeclare API shapes.
 - Prefer precise types and discriminated unions over `any` or loose `object`. The build runs
   `vue-tsc`, so type errors are build failures, not warnings.
+
+## Fire-and-forget calls and SonarQube TS rules
+
+SonarQube analyzes the TS in CI; keep these idioms (each is a rule it enforces):
+- **Don't use the `void` operator** to discard a promise (`go:S3735`). For vue-query, call
+  `mutation.mutate(...)` (returns void, errors go to the mutation's `onError`/toast) instead of
+  `void mutation.mutateAsync(...)`. For `router.push(...)`, just call it — vue-router 4 resolves
+  navigation failures rather than rejecting, and there is no `no-floating-promises` linter here.
+- Prefer optional chaining (`a?.b`) over `a && a.b` (`S6582`); use `x ??= y` over
+  `if (x == null) x = y` (`S6606`); give `.sort()` an explicit comparator for strings
+  (`(a, b) => a.localeCompare(b)`, `S2871`); and drop assertions that don't change the type
+  (`S4325`).

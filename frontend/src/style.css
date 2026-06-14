@@ -441,7 +441,6 @@ body {
 /* ─── Global checkbox style ─── */
 input[type='checkbox'] {
   appearance: none;
-  -webkit-appearance: none;
   width: var(--checkbox-size);
   height: var(--checkbox-size);
   flex-shrink: 0;

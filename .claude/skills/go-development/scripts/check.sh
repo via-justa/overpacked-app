@@ -9,6 +9,12 @@
 
 set -uo pipefail
 
+# This repo's Go module lives in backend/. When run from the repo root for the
+# whole module (the default), switch into it so `go` finds the module.
+if [ "${1:-./...}" = "./..." ] && [ ! -f go.mod ] && [ -f backend/go.mod ]; then
+  cd backend || exit 1
+fi
+
 TARGET="${1:-./...}"
 # For gofmt we need a directory/file, not a package pattern.
 FMT_PATH="."
