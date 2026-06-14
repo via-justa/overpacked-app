@@ -12,6 +12,10 @@ import (
 	"github.com/via-justa/overpacked-app/backend/internal/store"
 )
 
+const (
+	errPersonNotFound = "person not found"
+)
+
 type PersonsHandler struct {
 	store *store.Store
 }
@@ -83,7 +87,7 @@ func (h *PersonsHandler) GetPerson(w http.ResponseWriter, r *http.Request, perso
 
 	person, err := h.store.Persons.GetByID(ctx, uuid.UUID(personId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "person not found")
+		writeError(w, http.StatusNotFound, errPersonNotFound)
 		return
 	}
 	if err != nil {
@@ -106,7 +110,7 @@ func (h *PersonsHandler) UpdatePerson(w http.ResponseWriter, r *http.Request, pe
 
 	person, err := h.store.Persons.GetByID(ctx, uuid.UUID(personId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "person not found")
+		writeError(w, http.StatusNotFound, errPersonNotFound)
 		return
 	}
 	if err != nil {
@@ -148,7 +152,7 @@ func (h *PersonsHandler) DeletePerson(w http.ResponseWriter, r *http.Request, pe
 
 	err := h.store.Persons.Delete(ctx, uuid.UUID(personId))
 	if errors.Is(err, domain.ErrNotFound) {
-		writeError(w, http.StatusNotFound, "person not found")
+		writeError(w, http.StatusNotFound, errPersonNotFound)
 		return
 	}
 	if err != nil {
