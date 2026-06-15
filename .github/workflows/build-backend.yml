@@ -36,10 +36,15 @@ jobs:
         uses: docker/metadata-action@80c7e94dd9b9319bd5eb7a0e0fe9291e23a2a2e9 # v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # The release is tagged `vX.Y.Z`, so derive the version from the tag via
+          # semver: `v0.1.0` -> `0.1.0` and `0.1`. `latest` moves only for full
+          # (non-prerelease) releases.
           tags: |
-            type=match,pattern=backend-v(.*),group=1
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix=backend-
-            type=raw,value=latest
+          flavor: |
+            latest=${{ github.event.release.prerelease == false }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7

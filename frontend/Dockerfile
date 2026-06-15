@@ -1,5 +1,8 @@
 # Build stage
-FROM node:24-alpine AS builder
+# Pin the builder to the build host's platform (BUILDPLATFORM): node:*-alpine has
+# no linux/arm/v7 manifest, and the build only emits architecture-independent static
+# assets, so we always build natively and copy the result into the target-arch runtime.
+FROM --platform=$BUILDPLATFORM node:24-alpine AS builder
 
 WORKDIR /app
 
