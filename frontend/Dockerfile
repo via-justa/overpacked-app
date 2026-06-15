@@ -10,7 +10,7 @@ ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 COPY package.json package-lock.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 # Copy source code
 COPY . .
