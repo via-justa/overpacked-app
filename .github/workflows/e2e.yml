@@ -48,7 +48,7 @@ jobs:
         run: docker build -t ghcr.io/via-justa/overpacked-app/backend:latest ./backend
 
       - name: Build frontend image
-        run: docker build --build-arg VITE_API_BASE_URL=/api -t ghcr.io/via-justa/overpacked-app/frontend:latest ./frontend
+        run: docker build -t ghcr.io/via-justa/overpacked-app/frontend:latest ./frontend
 
       - name: Start the stack
         # --wait blocks until healthchecks pass (frontend depends on backend healthy,
