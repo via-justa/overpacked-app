@@ -100,7 +100,7 @@ const removeLabel = (labelId: string) => {
     </div>
 
     <div class="relative">
-      <input v-model="searchInput" data-element="item-labels-search" class="input-shell w-full" type="text"
+      <input v-model="searchInput" data-element="item-labels-search" aria-label="Search or create label" class="input-shell w-full" type="text"
         placeholder="Search or create label..." :disabled="loading" @focus="onInputFocus" @blur="onInputBlur"
         @keydown="onInputKeydown" />
 

@@ -47,8 +47,8 @@ jobs:
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7
         with:
           context: ./frontend
-          build-args: |
-            VITE_API_BASE_URL=/api
+          # VITE_API_BASE_URL intentionally left at the Dockerfile default (empty):
+          # the SPA talks to the backend same-origin via nginx's /api proxy.
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
           tags: ${{ steps.meta.outputs.tags }}

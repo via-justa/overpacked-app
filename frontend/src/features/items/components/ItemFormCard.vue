@@ -357,7 +357,7 @@ defineExpose({
             <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Image</span>
 
             <div class="flex flex-wrap items-center gap-2">
-              <input data-element="item-image-upload"
+              <input data-element="item-image-upload" aria-label="Upload item image"
                 class="text-copy text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-surface-soft file:px-3 file:py-2 file:text-sm file:font-medium file:text-copy hover:file:bg-surface-muted"
                 type="file" accept="image/*" @change="onImageChange" />
               <Button v-if="imagePreviewSrc" data-element="item-image-clear" label="Remove"
