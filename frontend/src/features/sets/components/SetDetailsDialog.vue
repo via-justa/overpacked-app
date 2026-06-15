@@ -249,9 +249,9 @@ watch(() => props.addItemId, (newItemId) => {
               {{ normalizeTitleWords(item.name) }}
             </option>
           </AppSelect>
-          <input v-model="addItemQuantityModel" class="input-shell" type="number" min="0.1" step="0.1"
+          <input v-model="addItemQuantityModel" aria-label="Quantity" class="input-shell" type="number" min="0.1" step="0.1"
             placeholder="Qty" />
-          <input v-model="addItemNotesModel" class="input-shell" type="text" placeholder="Notes (optional)" />
+          <input v-model="addItemNotesModel" aria-label="Notes" class="input-shell" type="text" placeholder="Notes (optional)" />
           <Button :label="isEditingExistingItem ? 'Update' : 'Add'"
             :icon="`pi ${isEditingExistingItem ? iconRegistry.action.confirm : iconRegistry.action.create}`"
             :loading="isAddingItem" :disabled="!addItemIdModel" @click="emit('addItem')" />

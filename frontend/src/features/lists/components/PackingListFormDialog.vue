@@ -129,7 +129,7 @@ const canSubmit = computed(() => formValues.value.name.trim().length > 0)
             No labels available. Create labels in the gear section first.
           </div>
           <template v-else>
-            <input v-model="labelSearch" type="text" class="input-shell w-full" placeholder="Search labels..." />
+            <input v-model="labelSearch" aria-label="Search labels" type="text" class="input-shell w-full" placeholder="Search labels..." />
 
             <div v-if="filteredAvailableLabels.length === 0" class="text-copy-muted text-sm">
               No labels match your search.

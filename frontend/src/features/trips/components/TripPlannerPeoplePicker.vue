@@ -60,7 +60,7 @@ const onAddPack = (personId: string): void => {
                                 :name="person.mainPackLocalId === pack.localId ? 'active' : 'incomplete'" size="sm"
                                 :color="person.mainPackLocalId === pack.localId ? 'text-brand-500' : 'text-copy-subtle'" />
                         </button>
-                        <input :value="pack.name" class="input-shell flex-1 py-1 text-sm"
+                        <input :value="pack.name" aria-label="Pack name" class="input-shell flex-1 py-1 text-sm"
                             @input="planner.renamePack(person.personId, pack.localId, ($event.target as HTMLInputElement).value)" />
                         <button type="button" class="text-copy-subtle hover:text-danger shrink-0" title="Remove pack"
                             aria-label="Remove pack" @click="planner.removePack(person.personId, pack.localId)">
@@ -70,7 +70,7 @@ const onAddPack = (personId: string): void => {
                 </ul>
 
                 <div class="flex items-center gap-2">
-                    <input v-model="newPackName[person.personId]" class="input-shell flex-1 py-1 text-sm"
+                    <input v-model="newPackName[person.personId]" aria-label="New pack name" class="input-shell flex-1 py-1 text-sm"
                         placeholder="New pack name" @keyup.enter="onAddPack(person.personId)" />
                     <Button label="Add pack" size="small" outlined @click="onAddPack(person.personId)" />
                 </div>

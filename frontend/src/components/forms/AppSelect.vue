@@ -38,6 +38,12 @@ const slots = useSlots()
 const { parsedOptions } = useSelectOptions(slots)
 const resolvedMessageClass = useFieldMessageClass(props)
 
+// Give the underlying <select> an accessible name. Consumers can override via an
+// explicit aria-label or placeholder; otherwise fall back to a generic label.
+const resolvedAriaLabel = computed(
+  () => (attrs['aria-label'] as string) || (attrs.placeholder as string) || 'Select option',
+)
+
 const resolvedSelectClass = computed(() => {
   const classes = ['app-select-field']
 
@@ -64,7 +70,7 @@ const onPrimeChange = (event: { value: string; originalEvent: Event }) => {
 
 <template>
   <div :class="wrapperClass">
-    <Select v-bind="attrs" :model-value="modelValue ?? ''" :options="parsedOptions" option-label="label"
+    <Select v-bind="attrs" :aria-label="resolvedAriaLabel" :model-value="modelValue ?? ''" :options="parsedOptions" option-label="label"
       option-value="value" option-disabled="disabled" :pt="selectPassThrough" :class="resolvedSelectClass" fluid
       @change="onPrimeChange" />
     <span :class="resolvedMessageClass">{{ message || ' ' }}</span>

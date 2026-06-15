@@ -69,7 +69,7 @@ const toggleCarry = (placement: PlannerPlacement): void => {
                     : 'bg-surface-soft text-copy'" @click="toggleCarry(placement)">
                     {{ placement.carryStatus === 'worn' ? 'Worn' : 'Packed' }}
                 </button>
-                <input :value="placement.quantity" type="number" min="1" step="1" class="input-shell w-16 py-1 text-sm"
+                <input :value="placement.quantity" aria-label="Quantity" type="number" min="1" step="1" class="input-shell w-16 py-1 text-sm"
                     @input="onQuantityInput(placement, $event)" />
                 <button type="button" class="text-copy-subtle hover:text-danger shrink-0" title="Remove"
                     aria-label="Remove from pool" @click="planner.removePlacement(placement)">

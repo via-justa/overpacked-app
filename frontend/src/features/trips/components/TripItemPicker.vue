@@ -36,7 +36,7 @@ const onAdd = (): void => {
             <option value="">Select item</option>
             <option v-for="item in items" :key="item.id" :value="item.id">{{ normalizeTitleWords(item.name) }}</option>
         </AppSelect>
-        <input v-model="quantity" class="input-shell" type="number" min="1" step="1" />
+        <input v-model="quantity" aria-label="Quantity" class="input-shell" type="number" min="1" step="1" />
         <AppSelect v-model="carryStatus">
             <option value="packed">Packed</option>
             <option value="worn">Worn</option>

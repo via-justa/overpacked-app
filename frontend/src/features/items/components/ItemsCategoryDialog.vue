@@ -359,7 +359,7 @@ const onDelete = async () => {
           <div v-for="(field, index) in fieldValues" :key="`field-${index}`"
             class="border-line-subtle bg-surface-muted grid gap-2 rounded-lg border p-2">
             <div class="grid gap-2 sm:grid-cols-[1fr,12rem,auto]">
-              <input :data-element="`category-field-name-${index}`" class="input-shell" :value="field.name" type="text"
+              <input :data-element="`category-field-name-${index}`" aria-label="Property name" class="input-shell" :value="field.name" type="text"
                 placeholder="Property name"
                 @input="updateField(index, { ...field, name: ($event.target as HTMLInputElement).value })" />
               <AppSelect :data-element="`category-field-type-${index}`" :model-value="field.type"
@@ -371,7 +371,7 @@ const onDelete = async () => {
               <Button :data-element="`category-field-remove-${index}`" :icon="`pi ${iconRegistry.action.delete}`"
                 severity="secondary" outlined :disabled="fieldValues.length <= 1" @click="removeField(index)" />
             </div>
-            <input v-if="field.type === 'select'" :data-element="`category-field-options-${index}`" class="input-shell"
+            <input v-if="field.type === 'select'" :data-element="`category-field-options-${index}`" aria-label="Select options" class="input-shell"
               :value="field.selectOptions" type="text" placeholder="Select options (comma separated)"
               @input="updateField(index, { ...field, selectOptions: ($event.target as HTMLInputElement).value })" />
           </div>
