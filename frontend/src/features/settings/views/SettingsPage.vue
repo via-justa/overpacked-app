@@ -46,8 +46,8 @@ const updateMutation = useMutationWithToast<Settings, Error, SettingsUpdate>({
   },
 })
 
-const startFreshMutation = useMutationWithToast<void, Error, string>({
-  mutationFn: async (password: string) => startFresh(password),
+const startFreshMutation = useMutationWithToast<void, Error, { password: string; reseed: boolean }>({
+  mutationFn: async ({ password, reseed }) => startFresh(password, reseed),
   successMessage: {
     summary: 'Fresh start complete',
     detail: 'All app data was cleared and settings were reset to defaults.',
@@ -162,8 +162,8 @@ const onSave = async () => {
   await updateMutation.mutateAsync(payload)
 }
 
-const onConfirmStartFresh = async (password: string) => {
-  await startFreshMutation.mutateAsync(password)
+const onConfirmStartFresh = async (payload: { password: string; reseed: boolean }) => {
+  await startFreshMutation.mutateAsync(payload)
 }
 
 const setFieldValue = (

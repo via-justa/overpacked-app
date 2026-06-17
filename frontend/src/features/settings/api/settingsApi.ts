@@ -8,8 +8,8 @@ export const getSettings = async (): Promise<Settings> =>
 export const patchSettings = async (payload: SettingsUpdate): Promise<Settings> =>
   unwrapApiResponse(apiClient.PATCH('/api/v1/settings', { body: payload }), 'Unable to save settings')
 
-export const startFresh = async (password: string): Promise<void> =>
+export const startFresh = async (password: string, reseed: boolean): Promise<void> =>
   ensureApiResponse(
-    apiClient.POST('/api/v1/settings/start-fresh', { body: { password } }),
+    apiClient.POST('/api/v1/settings/start-fresh', { body: { password, reseed } }),
     'Unable to reset data',
   )

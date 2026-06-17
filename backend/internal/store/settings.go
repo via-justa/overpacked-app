@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"github.com/via-justa/overpacked-app/backend/internal/domain"
+	"github.com/via-justa/overpacked-app/backend/internal/seeds"
 )
 
 const singletonSettingsID = 1
@@ -88,7 +89,10 @@ func (s *SettingsStore) Update(ctx context.Context, settings *domain.Settings) e
 	return nil
 }
 
-func (s *SettingsStore) StartFresh(ctx context.Context) error {
+// StartFresh wipes all user data and resets settings to defaults. When reseed is
+// true, the default catalog seed data (labels and manufacturers) is restored
+// after the wipe; otherwise the database is left fully empty.
+func (s *SettingsStore) StartFresh(ctx context.Context, reseed bool) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin start fresh tx: %w", err)
@@ -141,6 +145,12 @@ func (s *SettingsStore) StartFresh(ctx context.Context) error {
 
 	if err = tx.Commit(); err != nil {
 		return fmt.Errorf("commit start fresh tx: %w", err)
+	}
+
+	if reseed {
+		if err = seeds.Run(ctx, s.db); err != nil {
+			return fmt.Errorf("reseed catalog data: %w", err)
+		}
 	}
 
 	return nil

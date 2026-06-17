@@ -182,3 +182,44 @@ func TestSettingsHandlerIntegrationStartFresh(t *testing.T) {
 		t.Fatalf("expected manufacturers to be cleared, got count %d", manufacturersCount)
 	}
 }
+
+func TestSettingsHandlerIntegrationStartFreshReseed(t *testing.T) {
+	h, dbConn := newContainerizedSettingsHandler(t)
+	defer func() { _ = dbConn.Close() }()
+
+	if _, err := dbConn.ExecContext(context.Background(), "INSERT INTO persons (name, body_weight_grams) VALUES ($1, $2)", "Reset Test Person", 70000); err != nil {
+		t.Fatalf("seed person: %v", err)
+	}
+
+	startFreshReq := httptest.NewRequest(http.MethodPost, "/api/v1/settings/start-fresh", bytes.NewReader([]byte(`{"password":"pw123","reseed":true}`)))
+	startFreshW := httptest.NewRecorder()
+	h.StartFresh(startFreshW, startFreshReq)
+	if startFreshW.Code != http.StatusNoContent {
+		t.Fatalf("expected 204 from start fresh, got %d", startFreshW.Code)
+	}
+
+	var personsCount int
+	if err := dbConn.QueryRowContext(context.Background(), "SELECT COUNT(*) FROM persons").Scan(&personsCount); err != nil {
+		t.Fatalf("count persons: %v", err)
+	}
+	if personsCount != 0 {
+		t.Fatalf("expected user data to be cleared, got persons count %d", personsCount)
+	}
+
+	// Catalog seed data should be restored when reseed is requested.
+	var manufacturersCount int
+	if err := dbConn.QueryRowContext(context.Background(), "SELECT COUNT(*) FROM manufacturers").Scan(&manufacturersCount); err != nil {
+		t.Fatalf("count manufacturers: %v", err)
+	}
+	if manufacturersCount == 0 {
+		t.Fatalf("expected manufacturers to be reseeded, got count %d", manufacturersCount)
+	}
+
+	var labelsCount int
+	if err := dbConn.QueryRowContext(context.Background(), "SELECT COUNT(*) FROM labels").Scan(&labelsCount); err != nil {
+		t.Fatalf("count labels: %v", err)
+	}
+	if labelsCount == 0 {
+		t.Fatalf("expected labels to be reseeded, got count %d", labelsCount)
+	}
+}

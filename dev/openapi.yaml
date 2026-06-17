@@ -2324,6 +2324,13 @@ components:
       properties:
         password:
           type: string
+        reseed:
+          type: boolean
+          default: false
+          description: >-
+            When true, restore the default catalog seed data (labels and
+            manufacturers) after wiping. When false or omitted, the database is
+            left fully empty.
 
     Person:
       type: object

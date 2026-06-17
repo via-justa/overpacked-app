@@ -850,6 +850,11 @@ export interface components {
         };
         StartFreshRequest: {
             password: string;
+            /**
+             * @description When true, restore the default catalog seed data (labels and manufacturers) after wiping. When false or omitted, the database is left fully empty.
+             * @default false
+             */
+            reseed: boolean;
         };
         Person: {
             /** Format: uuid */
