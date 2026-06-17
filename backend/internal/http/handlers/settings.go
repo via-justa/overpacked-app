@@ -89,7 +89,8 @@ func (h *SettingsHandler) StartFresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.store.Settings.StartFresh(r.Context()); err != nil {
+	reseed := req.Reseed != nil && *req.Reseed
+	if err := h.store.Settings.StartFresh(r.Context(), reseed); err != nil {
 		writeError(w, http.StatusInternalServerError, "failed to reset data")
 		return
 	}

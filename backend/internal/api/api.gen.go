@@ -1391,6 +1391,9 @@ type SettingsUpdateWeightUnit string
 // StartFreshRequest defines model for StartFreshRequest.
 type StartFreshRequest struct {
 	Password string `json:"password"`
+
+	// Reseed When true, restore the default catalog seed data (labels and manufacturers) after wiping. When false or omitted, the database is left fully empty.
+	Reseed *bool `json:"reseed,omitempty"`
 }
 
 // TokenResponse defines model for TokenResponse.

@@ -11,11 +11,12 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  startFresh: [password: string]
+  startFresh: [payload: { password: string; reseed: boolean }]
 }>()
 
 const isDialogOpen = ref(false)
 const password = ref('')
+const reseed = ref(true)
 
 const canSubmit = computed(() => password.value.trim().length > 0)
 
@@ -26,11 +27,13 @@ const dangerZoneCardStyle = {
 
 const openDialog = () => {
   password.value = ''
+  reseed.value = true
   isDialogOpen.value = true
 }
 
 const closeDialog = () => {
   password.value = ''
+  reseed.value = true
   isDialogOpen.value = false
 }
 
@@ -46,7 +49,7 @@ const submit = () => {
     return
   }
 
-  emit('startFresh', password.value)
+  emit('startFresh', { password: password.value, reseed: reseed.value })
 }
 </script>
 
@@ -82,6 +85,17 @@ const submit = () => {
         <span class="text-copy text-xs font-semibold uppercase tracking-[0.06em]">Enter password to continue</span>
         <input data-element="settings-start-fresh-password" v-model="password" class="input-shell" type="password"
           autocomplete="current-password" :disabled="isPending" />
+      </label>
+
+      <label class="text-copy mt-4 flex items-start gap-2 text-sm">
+        <input data-element="settings-start-fresh-reseed" v-model="reseed" type="checkbox" class="mt-0.5"
+          :disabled="isPending" />
+        <span>
+          Restore default catalog data (labels &amp; manufacturers)
+          <span class="text-copy-subtle block text-xs">
+            Leave unchecked to start with a completely empty database.
+          </span>
+        </span>
       </label>
 
       <footer class="mt-5 flex justify-end gap-2">
